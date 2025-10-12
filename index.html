@@ -802,10 +802,17 @@
             
             function formatCurrency(value) {
                 if (typeof value !== 'number') return `${getCurrency()}0.00`;
-                // Handle -0 bug
+                
+                // Handle floating point inaccuracies around zero
+                if (Math.abs(value) < 0.001) {
+                    value = 0;
+                }
+
+                // Handle -0 specifically after potential rounding
                 if (Object.is(value, -0)) {
                     value = 0;
                 }
+                
                 return value.toLocaleString('en-US', { style: 'currency', currency: 'USD', currencyDisplay: 'narrowSymbol' }).replace('$', getCurrency());
             }
 
@@ -1727,7 +1734,8 @@
                 document.getElementById('total-withdrawals').textContent = formatCurrency(totalWithdrawals);
 
                 const totalPnl = validTrades.reduce((acc, trade) => acc + trade.pnl, 0);
-                totalAccountValueEl.textContent = formatCurrency(totalDeposits - totalWithdrawals + totalPnl);
+                const totalAccountValue = totalDeposits - totalWithdrawals + totalPnl;
+                totalAccountValueEl.textContent = formatCurrency(totalAccountValue);
                 
                 // --- Performance Stats Card (Dynamic) ---
                 document.getElementById('performance-stats-title').textContent = `Performance Stats (${equityCurveFilterSelect.options[equityCurveFilterSelect.selectedIndex].text})`;
@@ -2444,6 +2452,5 @@
     </script>
 </body>
 </html>
-
 
 
