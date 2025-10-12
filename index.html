@@ -90,7 +90,7 @@
         <div class="grid grid-cols-1 gap-6 mb-6">
             <div class="bg-gray-800 p-5 rounded-xl shadow-lg flex flex-col justify-between">
                  <div id="account-switcher" class="flex flex-wrap items-center gap-2 mb-4 border-b border-gray-700 pb-4">
-                      <!-- Account tabs will be injected here -->
+                     <!-- Account tabs will be injected here -->
                  </div>
                 <div class="flex justify-between items-center w-full">
                     <div>
@@ -417,23 +417,6 @@
                     </div>
                 </div>
                 
-                <div class="mb-4">
-                    <label class="flex items-center text-sm font-medium text-gray-300">
-                        <input type="checkbox" id="include_timestamps" class="h-4 w-4 bg-gray-700 border-gray-600 text-indigo-600 focus:ring-indigo-500 rounded">
-                        <span class="ml-2">Include Timestamps</span>
-                    </label>
-                </div>
-                <div id="time-inputs-container" class="hidden grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-                    <div>
-                        <label for="open_time" class="block text-sm font-medium text-gray-300 mb-1">Open Time</label>
-                        <input type="time" id="open_time" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-                    </div>
-                    <div>
-                        <label for="close_time" class="block text-sm font-medium text-gray-300 mb-1">Close Time</label>
-                        <input type="time" id="close_time" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-                    </div>
-                </div>
-
                 <!-- Contract Details -->
                 <div class="mb-4">
                     <label class="block text-sm font-medium text-gray-300 mb-1">Expiration Date</label>
@@ -537,7 +520,6 @@
                          <li><strong class="text-gray-300">Ticker:</strong> Stock symbol (e.g., AAPL)</li>
                          <li><strong class="text-gray-300">TradeType:</strong> See dropdown for available types.</li>
                          <li><strong class="text-gray-300">OpenDate / CloseDate / ExpirationDate:</strong> YYYY-MM-DD format</li>
-                         <li><strong class="text-gray-300">OpenTime / CloseTime (Optional):</strong> HH:MM format (24-hour)</li>
                          <li><strong class="text-gray-300">Strikes:</strong> Single value, or multiple values separated by a comma (e.g., "450,455,470,475" for an Iron Condor)</li>
                          <li><strong class="text-gray-300">Quantity / EntryPrice / ExitPrice / CommissionsPerContract / MaxRisk:</strong> Numerical values</li>
                          <li><strong class="text-gray-300">Notes / Tags (Optional):</strong> Your text notes for the trade. For tags, use a comma-separated list.</li>
@@ -673,8 +655,6 @@
             const strikeContainer = document.getElementById('strike-price-container');
             const tradesBody = document.getElementById('recent-trades-body');
             const tradeFilters = document.getElementById('trade-filters');
-            const timestampCheckbox = document.getElementById('include_timestamps');
-            const timeInputsContainer = document.getElementById('time-inputs-container');
             const equityCurveFilterSelect = document.getElementById('equity-curve-filter-select');
             
             // Transaction Modal Elements
@@ -951,8 +931,6 @@
                 if (form) form.reset();
 
                 if (modalElement.id === 'tradeModal') {
-                    timestampCheckbox.checked = false;
-                    timeInputsContainer.classList.add('hidden');
                     document.getElementById('trade_id').value = '';
                     document.getElementById('modal-title').textContent = 'Log New Trade';
                     document.getElementById('saveBtn').textContent = 'Save Trade';
@@ -1051,16 +1029,16 @@
             settingsModal.addEventListener('change', (e) => {
                 let settingsChanged = false;
                  if (e.target.id === 'setting-currency') {
-                    appData.settings.currency = e.target.value || '$';
-                    settingsChanged = true;
+                     appData.settings.currency = e.target.value || '$';
+                     settingsChanged = true;
                  }
                  if (e.target.id === 'setting-commission') {
-                    appData.settings.defaultCommission = parseFloat(e.target.value) || 0;
-                    settingsChanged = true;
+                     appData.settings.defaultCommission = parseFloat(e.target.value) || 0;
+                     settingsChanged = true;
                  }
                  if(settingsChanged) {
-                    saveState();
-                    updateDashboard(); // Re-render to apply currency/commission changes
+                     saveState();
+                     updateDashboard(); // Re-render to apply currency/commission changes
                  }
             });
 
@@ -1113,15 +1091,6 @@
                 updateDashboard();
                 renderSettingsModal(); // Re-render modal to hide the button
                 flashButton(loadSampleDataBtn, 'Data Loaded!', 'bg-green-500');
-            });
-
-
-            timestampCheckbox.addEventListener('change', () => {
-                timeInputsContainer.classList.toggle('hidden', !timestampCheckbox.checked);
-                if (!timestampCheckbox.checked) {
-                    document.getElementById('open_time').value = '';
-                    document.getElementById('close_time').value = '';
-                }
             });
             
              separateCommissionsCheckbox.addEventListener('change', () => {
@@ -1272,16 +1241,12 @@
                     return;
                 }
 
-                const openTime = document.getElementById('open_time').value;
-                const closeTime = document.getElementById('close_time').value;
-                const includeTimestamps = timestampCheckbox.checked;
-
                 const tradeData = {
                     transaction_type: 'trade',
                     ticker: document.getElementById('underlying_ticker').value.toUpperCase(),
                     type: document.getElementById('trade_type').value,
-                    open: includeTimestamps && openTime ? `${openDate}T${openTime}` : openDate,
-                    close: includeTimestamps && closeTime ? `${closeDate}T${closeTime}` : closeDate,
+                    open: openDate,
+                    close: closeDate,
                     expiration: document.getElementById('expiration_date').value,
                     strikes: Array.from(strikeContainer.querySelectorAll('input')).map(input => parseFloat(input.value)),
                     quantity: parseInt(document.getElementById('quantity').value),
@@ -1324,23 +1289,8 @@
                 document.getElementById('underlying_ticker').value = item.ticker;
                 document.getElementById('trade_type').value = item.type;
                 
-                const [openDate, openTime] = item.open.split('T');
-                const [closeDate, closeTime] = item.close.split('T');
-
-                document.getElementById('open_date').value = openDate;
-                document.getElementById('close_date').value = closeDate;
-
-                if (openTime || closeTime) {
-                    timestampCheckbox.checked = true;
-                    timeInputsContainer.classList.remove('hidden');
-                    document.getElementById('open_time').value = openTime || '';
-                    document.getElementById('close_time').value = closeTime || '';
-                } else {
-                    timestampCheckbox.checked = false;
-                    timeInputsContainer.classList.add('hidden');
-                    document.getElementById('open_time').value = '';
-                    document.getElementById('close_time').value = '';
-                }
+                document.getElementById('open_date').value = item.open.split('T')[0];
+                document.getElementById('close_date').value = item.close.split('T')[0];
 
                 document.getElementById('expiration_date').value = item.expiration;
                 document.getElementById('quantity').value = item.quantity;
@@ -1391,8 +1341,8 @@
             
             // --- IMPORT LOGIC ---
             downloadTemplateBtn.addEventListener('click', () => {
-                const headers = "Ticker,TradeType,OpenDate,CloseDate,OpenTime,CloseTime,ExpirationDate,Strikes,Quantity,EntryPrice,ExitPrice,CommissionsPerContract,MaxRisk,Tags,Notes";
-                const exampleRow = "SPY,Short Put Spread,2025-10-01,2025-10-10,09:45,15:30,2025-10-17,\"450,445\",10,1.20,0.40,0.65,400,\"spy,index\",\"Managed for profit\"";
+                const headers = "Ticker,TradeType,OpenDate,CloseDate,ExpirationDate,Strikes,Quantity,EntryPrice,ExitPrice,CommissionsPerContract,MaxRisk,Tags,Notes";
+                const exampleRow = "SPY,Short Put Spread,2025-10-01,2025-10-10,2025-10-17,\"450,445\",10,1.20,0.40,0.65,400,\"spy,index\",\"Managed for profit\"";
                 const csvContent = "data:text/csv;charset=utf-8," + headers + "\n" + exampleRow;
                 const encodedUri = encodeURI(csvContent);
                 const link = document.createElement("a");
@@ -1460,8 +1410,8 @@
                                 transaction_type: 'trade',
                                 ticker: row.Ticker.toUpperCase(),
                                 type: row.TradeType,
-                                open: row.OpenTime ? `${row.OpenDate}T${row.OpenTime}` : row.OpenDate,
-                                close: row.CloseTime ? `${row.CloseDate}T${row.CloseTime}` : row.CloseDate,
+                                open: row.OpenDate,
+                                close: row.CloseDate,
                                 expiration: row.ExpirationDate,
                                 strikes: (row.Strikes || '').split(',').map(s => parseFloat(s.trim())).filter(s => !isNaN(s)),
                                 quantity: parseInt(row.Quantity),
@@ -2452,5 +2402,3 @@
     </script>
 </body>
 </html>
-
-
