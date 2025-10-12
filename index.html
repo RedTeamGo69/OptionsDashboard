@@ -75,7 +75,12 @@
                     <h3 class="text-sm font-medium text-gray-400">Total Account Value</h3>
                     <p id="total-account-value" class="text-4xl font-bold text-white mt-1">$0.00</p>
                 </div>
-                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-indigo-500"><path d="M20 6 9 17l-5-5"></path></svg>
+                <div class="text-right">
+                    <p class="text-sm font-medium text-gray-400">Total Deposits</p>
+                    <p id="total-deposits" class="text-lg font-semibold text-green-400">$0.00</p>
+                    <p class="text-sm font-medium text-gray-400 mt-2">Total Withdrawals</p>
+                    <p id="total-withdrawals" class="text-lg font-semibold text-red-400">$0.00</p>
+                </div>
             </div>
             <div class="bg-gray-800 p-5 rounded-xl shadow-lg">
                 <label class="block text-sm font-medium text-gray-400 mb-2">Starting Balance</label>
@@ -390,17 +395,33 @@
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-                    <div>
+                <div class="mb-4">
+                    <label class="flex items-center text-sm font-medium text-gray-300 mb-2">
+                        <input type="checkbox" id="separate_commissions" class="h-4 w-4 bg-gray-700 border-gray-600 text-indigo-600 focus:ring-indigo-500 rounded">
+                        <span class="ml-2">Use Separate Commissions</span>
+                    </label>
+                    <div id="single_commission_container">
                         <label for="commissions" class="block text-sm font-medium text-gray-300 mb-1">Commissions (Per Side)</label>
-                        <input type="number" step="0.01" id="commissions" value="0" required class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="0.65">
+                        <input type="number" step="0.01" id="commissions" value="0" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="0.65">
                     </div>
-                    <div>
-                        <label for="max_risk" class="block text-sm font-medium text-gray-300 mb-1">Max Risk / Collateral</label>
-                        <div class="flex">
-                            <input type="number" step="1" id="max_risk" value="0" required class="w-full bg-gray-700 border border-gray-600 rounded-l-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="500">
-                             <button type="button" id="autoCalcRiskBtn" class="bg-gray-600 hover:bg-gray-500 text-white font-semibold py-2 px-4 rounded-r-lg transition hidden">Auto</button>
+                    <div id="separate_commissions_container" class="hidden grid grid-cols-2 gap-4">
+                        <div>
+                             <label for="opening_commission" class="block text-sm font-medium text-gray-300 mb-1">Opening Commission</label>
+                             <input type="number" step="0.01" id="opening_commission" value="0" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="0.65">
                         </div>
+                        <div>
+                             <label for="closing_commission" class="block text-sm font-medium text-gray-300 mb-1">Closing Commission</label>
+                             <input type="number" step="0.01" id="closing_commission" value="0" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="0.65">
+                        </div>
+                    </div>
+                </div>
+
+
+                <div class="mb-4">
+                    <label for="max_risk" class="block text-sm font-medium text-gray-300 mb-1">Max Risk / Collateral</label>
+                    <div class="flex">
+                        <input type="number" step="1" id="max_risk" value="0" required class="w-full bg-gray-700 border border-gray-600 rounded-l-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="500">
+                         <button type="button" id="autoCalcRiskBtn" class="bg-gray-600 hover:bg-gray-500 text-white font-semibold py-2 px-4 rounded-r-lg transition hidden">Auto</button>
                     </div>
                 </div>
 
@@ -549,6 +570,9 @@
             const activityLogFooter = document.getElementById('activity-log-footer');
             const paginationControls = document.getElementById('pagination-controls');
             const expiredCheckbox = document.getElementById('expired_worthless');
+            const separateCommissionsCheckbox = document.getElementById('separate_commissions');
+            const singleCommissionContainer = document.getElementById('single_commission_container');
+            const separateCommissionsContainer = document.getElementById('separate_commissions_container');
             
             // Main View Toggle Elements
             const mainViewToggle = document.getElementById('main-view-toggle');
@@ -666,6 +690,12 @@
                     exitPriceInput.disabled = false;
                     exitPriceInput.classList.remove('bg-gray-600');
                     expiredCheckbox.checked = false;
+                    separateCommissionsCheckbox.checked = false;
+                    singleCommissionContainer.classList.remove('hidden');
+                    separateCommissionsContainer.classList.add('hidden');
+                    document.getElementById('closing_commission').disabled = false;
+                    document.getElementById('closing_commission').classList.remove('bg-gray-600');
+
                     updateStrikeInputs();
                 } else if (modalElement.id === 'importModal') {
                     fileNameSpan.textContent = 'No file selected';
@@ -735,15 +765,31 @@
                 }
             });
             
+             separateCommissionsCheckbox.addEventListener('change', () => {
+                singleCommissionContainer.classList.toggle('hidden', separateCommissionsCheckbox.checked);
+                separateCommissionsContainer.classList.toggle('hidden', !separateCommissionsCheckbox.checked);
+            });
+
             expiredCheckbox.addEventListener('change', () => {
                 const exitPriceInput = document.getElementById('exit_price');
+                const closingCommInput = document.getElementById('closing_commission');
                 if (expiredCheckbox.checked) {
                     exitPriceInput.value = 0;
                     exitPriceInput.disabled = true;
                     exitPriceInput.classList.add('bg-gray-600');
+                    
+                    if (!separateCommissionsCheckbox.checked) {
+                       separateCommissionsCheckbox.click();
+                    }
+                    closingCommInput.value = 0;
+                    closingCommInput.disabled = true;
+                    closingCommInput.classList.add('bg-gray-600');
+
                 } else {
                     exitPriceInput.disabled = false;
                     exitPriceInput.classList.remove('bg-gray-600');
+                    closingCommInput.disabled = false;
+                    closingCommInput.classList.remove('bg-gray-600');
                 }
             });
 
@@ -793,23 +839,32 @@
 
             tradeTypeSelect.addEventListener('change', updateStrikeInputs);
             updateStrikeInputs();
-
-            function calculatePnl(trade) {
-                const { entry_price, exit_price, quantity, commissions, type } = trade;
+            
+            function calculateRawPnl(trade) {
+                const { entry_price, exit_price, quantity, type } = trade;
                 const multiplier = 100;
                 let pnl = 0;
-                const totalCommissions = commissions * quantity * 2; // In and Out
-
-                // Debit strategies (buy to open, sell to close)
                 const debitStrategies = ['Long Call', 'Long Put', 'Long Call Spread', 'Long Put Spread', 'Long Straddle', 'Long Strangle', 'Long Butterfly'];
                 if (debitStrategies.includes(type)) {
                     pnl = (exit_price - entry_price) * quantity * multiplier;
                 } 
-                // Credit strategies (sell to open, buy to close)
                 else {
                     pnl = (entry_price - exit_price) * quantity * multiplier;
                 }
-                return pnl - totalCommissions;
+                return pnl;
+            }
+
+            function calculatePnl(trade) {
+                const { commissions, opening_commission, closing_commission, quantity, isExpired } = trade;
+                const rawPnl = calculateRawPnl(trade);
+                let totalCommissions = 0;
+
+                if(opening_commission !== undefined && closing_commission !== undefined) {
+                    totalCommissions = (opening_commission + closing_commission) * quantity;
+                } else {
+                     totalCommissions = isExpired ? (commissions * quantity) : (commissions * quantity * 2); 
+                }
+                return rawPnl - totalCommissions;
             }
             
             transactionForm.addEventListener('submit', (e) => {
@@ -859,9 +914,12 @@
                     entry_price: parseFloat(document.getElementById('entry_price').value),
                     exit_price: parseFloat(document.getElementById('exit_price').value),
                     commissions: parseFloat(document.getElementById('commissions').value),
+                    opening_commission: separateCommissionsCheckbox.checked ? parseFloat(document.getElementById('opening_commission').value) : undefined,
+                    closing_commission: separateCommissionsCheckbox.checked ? parseFloat(document.getElementById('closing_commission').value) : undefined,
                     max_risk: parseFloat(document.getElementById('max_risk').value) || 0,
                     tags: document.getElementById('tags').value,
                     notes: document.getElementById('notes').value,
+                    isExpired: expiredCheckbox.checked,
                 };
                 
                 tradeData.pnl = calculatePnl(tradeData);
@@ -912,10 +970,22 @@
                 document.getElementById('quantity').value = item.quantity;
                 document.getElementById('entry_price').value = item.entry_price;
                 document.getElementById('exit_price').value = item.exit_price;
-                document.getElementById('commissions').value = item.commissions;
                 document.getElementById('max_risk').value = item.max_risk;
                 document.getElementById('tags').value = item.tags;
                 document.getElementById('notes').value = item.notes;
+                
+                if(item.opening_commission !== undefined) {
+                    separateCommissionsCheckbox.checked = true;
+                    singleCommissionContainer.classList.add('hidden');
+                    separateCommissionsContainer.classList.remove('hidden');
+                    document.getElementById('opening_commission').value = item.opening_commission;
+                    document.getElementById('closing_commission').value = item.closing_commission;
+                } else {
+                    separateCommissionsCheckbox.checked = false;
+                    singleCommissionContainer.classList.remove('hidden');
+                    separateCommissionsContainer.classList.add('hidden');
+                    document.getElementById('commissions').value = item.commissions;
+                }
 
                 updateStrikeInputs();
                 item.strikes.forEach((strike, index) => {
@@ -924,11 +994,20 @@
                 });
                 
                 const exitPriceInput = document.getElementById('exit_price');
-                const debitStrategies = ['Long Call', 'Long Put', 'Long Call Spread', 'Long Put Spread', 'Long Straddle', 'Long Strangle', 'Long Butterfly'];
-                if(item.exit_price === 0 && debitStrategies.includes(item.type)) {
+                const closingCommInput = document.getElementById('closing_commission');
+
+                if(item.isExpired) {
                     expiredCheckbox.checked = true;
                     exitPriceInput.disabled = true;
                     exitPriceInput.classList.add('bg-gray-600');
+                    closingCommInput.disabled = true;
+                    closingCommInput.classList.add('bg-gray-600');
+                } else {
+                    expiredCheckbox.checked = false;
+                    exitPriceInput.disabled = false;
+                    exitPriceInput.classList.remove('bg-gray-600');
+                    closingCommInput.disabled = false;
+                    closingCommInput.classList.remove('bg-gray-600');
                 }
 
                 modal.classList.remove('hidden');
@@ -1231,7 +1310,7 @@
                     const winningTrades = hasTrades ? tradeList.filter(trade => trade.pnl > 0) : [];
                     const winRate = hasTrades ? (winningTrades.length / tradeList.length) * 100 : 0;
                     const rocTrades = tradeList.filter(t => t.max_risk > 0);
-                    const avgRoc = rocTrades.length > 0 ? (rocTrades.reduce((acc, t) => acc + (t.pnl / t.max_risk), 0) / rocTrades.length) * 100 : 0;
+                    const avgRoc = rocTrades.length > 0 ? (rocTrades.reduce((acc, t) => acc + (calculateRawPnl(t) / t.max_risk), 0) / rocTrades.length) * 100 : 0;
                     return { totalPnl, winRate, avgRoc, tradeCount: tradeList.length };
                 };
 
@@ -1247,12 +1326,16 @@
                 document.getElementById('kpi-total-trades').textContent = currentKpis.tradeCount;
                 
                 // --- ACCOUNT VALUE & OVERALL STATS---
-                const allCashFlowEvents = allTransactions
-                    .filter(t => t.transaction_type !== 'trade')
-                    .map(t => ({ amount: t.transaction_type === 'deposit' ? t.amount : -t.amount }));
-                const totalCashFlow = allCashFlowEvents.reduce((acc, event) => acc + event.amount, 0);
+                const allDeposits = allTransactions.filter(t => t.transaction_type === 'deposit');
+                const totalDeposits = allDeposits.reduce((acc, t) => acc + t.amount, 0);
+                const allWithdrawals = allTransactions.filter(t => t.transaction_type === 'withdrawal');
+                const totalWithdrawals = allWithdrawals.reduce((acc, t) => acc + t.amount, 0);
+
+                document.getElementById('total-deposits').textContent = totalDeposits.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+                document.getElementById('total-withdrawals').textContent = totalWithdrawals.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+
                 const totalPnl = trades.reduce((acc, trade) => acc + trade.pnl, 0);
-                totalAccountValueEl.textContent = (totalCashFlow + totalPnl).toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+                totalAccountValueEl.textContent = (totalDeposits - totalWithdrawals + totalPnl).toLocaleString('en-US', { style: 'currency', currency: 'USD' });
                 
                 // --- Performance Stats Card (Dynamic) ---
                 document.getElementById('performance-stats-title').textContent = `Performance Stats (${equityCurveFilterSelect.options[equityCurveFilterSelect.selectedIndex].text})`;
@@ -1432,7 +1515,7 @@
                 }, 0);
 
                 const totalRocTrades = filteredActivity.filter(t => t.transaction_type === 'trade' && t.max_risk > 0);
-                const avgRocTotal = totalRocTrades.length > 0 ? (totalRocTrades.reduce((acc, t) => acc + (t.pnl / t.max_risk), 0) / totalRocTrades.length) * 100 : 0;
+                const avgRocTotal = totalRocTrades.length > 0 ? (totalRocTrades.reduce((acc, t) => acc + (calculateRawPnl(t) / t.max_risk), 0) / totalRocTrades.length) * 100 : 0;
 
                 // Pagination Logic
                 const totalPages = Math.ceil(filteredActivity.length / itemsPerPage);
@@ -1457,7 +1540,7 @@
                         amountColor = item.pnl >= 0 ? 'text-green-400' : 'text-red-400';
                         duration = dayjs(item.close).diff(dayjs(item.open), 'day') + 'd';
                         if (item.max_risk > 0) {
-                            roc = `${((item.pnl / item.max_risk) * 100).toFixed(1)}%`;
+                            roc = `${((calculateRawPnl(item) / item.max_risk) * 100).toFixed(1)}%`;
                         }
                     } else {
                         date = dayjs(item.date).format('YYYY-MM-DD');
@@ -1670,7 +1753,7 @@
                             `"${item.type} on ${item.ticker}"`,
                             dayjs(item.close).diff(dayjs(item.open), 'day'),
                             item.pnl.toFixed(2),
-                            item.max_risk > 0 ? `${((item.pnl / item.max_risk) * 100).toFixed(1)}%` : 'N/A',
+                            item.max_risk > 0 ? `${((calculateRawPnl(item) / item.max_risk) * 100).toFixed(1)}%` : 'N/A',
                             `"${(item.notes || '').replace(/"/g, '""')}"`,
                             `"${(item.tags || '').replace(/"/g, '""')}"`
                         ];
