@@ -36,16 +36,18 @@
     <div id="app" class="p-4 sm:p-6 lg:p-8">
         <!-- Header -->
         <header class="flex flex-wrap justify-between items-center mb-6 gap-4">
-            <h1 class="text-2xl sm:text-3xl font-bold text-white flex items-center gap-3">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M4 12C4 7.58172 7.58172 4 12 4C16.4183 4 20 7.58172 20 12C20 16.4183 16.4183 20 12 20" stroke="#818cf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    <path d="M12 14C13.1046 14 14 13.1046 14 12C14 10.8954 13.1046 10 12 10C10.8954 10 10 10.8954 10 12C10 13.1046 10.8954 14 12 14Z" stroke="#a78bfa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    <path d="M12 4V2" stroke="#818cf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    <path d="M20 12L22 12" stroke="#818cf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    <path d="M12 20V22" stroke="#818cf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-                <span>Options Odyssey</span>
-            </h1>
+            <div>
+                <h1 class="text-2xl sm:text-3xl font-bold text-white flex items-center gap-3">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M4 12C4 7.58172 7.58172 4 12 4C16.4183 4 20 7.58172 20 12C20 16.4183 16.4183 20 12 20" stroke="#818cf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M12 14C13.1046 14 14 13.1046 14 12C14 10.8954 13.1046 10 12 10C10.8954 10 10 10.8954 10 12C10 13.1046 10.8954 14 12 14Z" stroke="#a78bfa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M12 4V2" stroke="#818cf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M20 12L22 12" stroke="#818cf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M12 20V22" stroke="#818cf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <span>Options Odyssey</span>
+                </h1>
+            </div>
             <div class="flex items-center gap-2 flex-wrap">
                 <button id="importTradesBtn" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition flex items-center">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
@@ -114,7 +116,7 @@
             </div>
 
             <!-- Visualizations -->
-            <div class="bg-gray-800 p-5 rounded-xl shadow-lg md:col-span-2 lg:col-span-3">
+            <div class="bg-gray-800 p-5 rounded-xl shadow-lg col-span-1 md:col-span-4 lg:col-span-3">
                 <div class="flex flex-wrap justify-between items-center mb-4 gap-4">
                     <h3 class="text-lg font-semibold text-white">P&L Curve</h3>
                      <select id="equity-curve-filter-select" class="bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none">
@@ -135,7 +137,7 @@
                     <canvas id="pnlCurveChart"></canvas>
                 </div>
             </div>
-            <div class="bg-gray-800 p-5 rounded-xl shadow-lg md:col-span-2 lg:col-span-1">
+            <div class="bg-gray-800 p-5 rounded-xl shadow-lg col-span-1 md:col-span-4 lg:col-span-1">
                 <h3 id="performance-stats-title" class="text-lg font-semibold text-white mb-4">Performance Stats (All Time)</h3>
                 <div id="performance-stats" class="space-y-3 pt-2 text-sm">
                     <div class="flex justify-between items-center">
@@ -208,9 +210,9 @@
             
             <!-- Recent Trades Table -->
             <div class="bg-gray-800 p-5 rounded-xl shadow-lg col-span-1 md:col-span-2 lg:col-span-4">
-                <div class="flex flex-wrap justify-between items-center mb-4 gap-4">
+                <div class="flex flex-wrap justify-between items-center mb-4 gap-y-4">
                     <h3 class="text-lg font-semibold text-white">Activity Log</h3>
-                    <div class="flex-grow flex items-center gap-4">
+                    <div class="flex-grow flex flex-wrap items-center gap-4">
                         <div id="trade-filters" class="flex items-center gap-2 flex-wrap">
                             <button data-filter="all" class="filter-btn bg-indigo-600 text-white py-1 px-3 rounded-lg text-sm transition">All</button>
                             <button data-filter="trades" class="filter-btn bg-gray-700 hover:bg-gray-600 text-gray-300 py-1 px-3 rounded-lg text-sm transition">Trades</button>
@@ -219,12 +221,12 @@
                             <button data-filter="winners" class="filter-btn bg-gray-700 hover:bg-gray-600 text-gray-300 py-1 px-3 rounded-lg text-sm transition">Winners</button>
                             <button data-filter="losers" class="filter-btn bg-gray-700 hover:bg-gray-600 text-gray-300 py-1 px-3 rounded-lg text-sm transition">Losers</button>
                         </div>
-                         <div class="relative flex-grow max-w-xs ml-4">
+                         <div class="relative w-full sm:w-auto sm:flex-grow max-w-xs ml-auto">
                             <input type="text" id="logSearch" class="w-full bg-gray-700 border border-gray-600 rounded-lg pl-10 pr-4 py-2 text-white text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="Search Ticker or Tag...">
                             <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" /></svg>
                         </div>
                     </div>
-                     <button id="exportCsvBtn" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition flex items-center">
+                     <button id="exportCsvBtn" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition flex items-center ml-auto md:ml-4">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor"><path d="M10 12a2 2 0 100-4 2 2 0 000 4z" /><path fill-rule="evenodd" d="M.458 10C3.732 4.943 9.522 3 10 3s6.268 1.943 9.542 7c-3.274 5.057-9.064 7-9.542 7S3.732 15.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd" /></svg>
                         Export
                     </button>
@@ -253,6 +255,10 @@
                 <div id="pagination-controls" class="flex justify-between items-center mt-4 text-sm"></div>
             </div>
         </main>
+
+        <footer class="text-center py-8 text-gray-600 text-sm">
+             <p>created by Luis G. Quezada</p>
+        </footer>
     </div>
 
     <!-- Transaction Modal -->
@@ -1167,50 +1173,72 @@
                 const latestDate = allTransactions.length > 0 ? dayjs(Math.max(...allTransactions.map(t => dayjs(t.transaction_type === 'trade' ? t.close : t.date)))) : dayjs();
                 const now = latestDate;
                 let currentPeriodTrades = trades;
-                
+                let previousPeriodTrades = [];
+
                 // Determine date ranges for current and previous periods
                 let currentStartDate, currentEndDate;
+                let prevStartDate, prevEndDate;
                 
                 switch (equityTimeFilter) {
                     case 'today':
                         currentStartDate = now.clone().startOf('day');
                         currentEndDate = now.clone().endOf('day');
+                        prevStartDate = now.clone().subtract(1, 'day').startOf('day');
+                        prevEndDate = now.clone().subtract(1, 'day').endOf('day');
                         break;
                     case 'yesterday':
                         currentStartDate = now.clone().subtract(1, 'day').startOf('day');
                         currentEndDate = now.clone().subtract(1, 'day').endOf('day');
+                        prevStartDate = now.clone().subtract(2, 'day').startOf('day');
+                        prevEndDate = now.clone().subtract(2, 'day').endOf('day');
                         break;
                     case 'this-week':
                         currentStartDate = now.clone().startOf('week');
                         currentEndDate = now.clone().endOf('week');
+                        prevStartDate = now.clone().subtract(1, 'week').startOf('week');
+                        prevEndDate = now.clone().subtract(1, 'week').endOf('week');
                         break;
                     case 'last-week':
                         currentStartDate = now.clone().subtract(1, 'week').startOf('week');
                         currentEndDate = now.clone().subtract(1, 'week').endOf('week');
+                        prevStartDate = now.clone().subtract(2, 'week').startOf('week');
+                        prevEndDate = now.clone().subtract(2, 'week').endOf('week');
                         break;
                     case 'this-month':
                         currentStartDate = now.clone().startOf('month');
                         currentEndDate = now.clone().endOf('month');
+                        prevStartDate = now.clone().subtract(1, 'month').startOf('month');
+                        prevEndDate = now.clone().subtract(1, 'month').endOf('month');
                         break;
                     case 'last-month':
                         currentStartDate = now.clone().subtract(1, 'month').startOf('month');
                         currentEndDate = now.clone().subtract(1, 'month').endOf('month');
+                        prevStartDate = now.clone().subtract(2, 'month').startOf('month');
+                        prevEndDate = now.clone().subtract(2, 'month').endOf('month');
                         break;
                     case 'qtd':
                         currentStartDate = now.clone().startOf('quarter');
                         currentEndDate = now.clone().endOf('quarter');
+                        prevStartDate = now.clone().subtract(1, 'quarter').startOf('quarter');
+                        prevEndDate = now.clone().subtract(1, 'quarter').endOf('quarter');
                         break;
                     case 'last-quarter':
                         currentStartDate = now.clone().subtract(1, 'quarter').startOf('quarter');
                         currentEndDate = now.clone().subtract(1, 'quarter').endOf('quarter');
+                        prevStartDate = now.clone().subtract(2, 'quarter').startOf('quarter');
+                        prevEndDate = now.clone().subtract(2, 'quarter').endOf('quarter');
                         break;
                     case 'ytd':
                         currentStartDate = now.clone().startOf('year');
                         currentEndDate = now.clone().endOf('year');
+                        prevStartDate = now.clone().subtract(1, 'year').startOf('year');
+                        prevEndDate = now.clone().subtract(1, 'year').endOf('year');
                         break;
                     case 'last-year':
                         currentStartDate = now.clone().subtract(1, 'year').startOf('year');
                         currentEndDate = now.clone().subtract(1, 'year').endOf('year');
+                        prevStartDate = now.clone().subtract(2, 'year').startOf('year');
+                        prevEndDate = now.clone().subtract(2, 'year').endOf('year');
                         break;
                     case 'all':
                     default:
@@ -1222,6 +1250,10 @@
                     currentPeriodTrades = trades.filter(t => {
                         const closeDate = dayjs(t.close);
                         return !closeDate.isBefore(currentStartDate, 'day') && !closeDate.isAfter(currentEndDate, 'day');
+                    });
+                     previousPeriodTrades = trades.filter(t => {
+                        const closeDate = dayjs(t.close);
+                        return !closeDate.isBefore(prevStartDate, 'day') && !closeDate.isAfter(prevEndDate, 'day');
                     });
                 }
                 
@@ -1237,7 +1269,7 @@
                 };
 
                 const currentKpis = calculateKpis(currentPeriodTrades);
-
+                
                 // Update KPI cards
                 const pnlElement = document.getElementById('kpi-total-pnl');
                 pnlElement.textContent = `${currentKpis.totalPnl.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}`;
@@ -1246,7 +1278,7 @@
                 document.getElementById('kpi-win-rate').textContent = `${currentKpis.winRate.toFixed(1)}%`;
                 document.getElementById('kpi-avg-roc').textContent = `${currentKpis.avgRoc.toFixed(1)}%`;
                 document.getElementById('kpi-total-trades').textContent = currentKpis.tradeCount;
-
+                
                 // --- ACCOUNT VALUE & OVERALL STATS---
                 const allCashFlowEvents = allTransactions
                     .filter(t => t.transaction_type !== 'trade')
