@@ -484,7 +484,7 @@
                             <div class="flex justify-between items-center mb-1">
                                 <label for="exit_price" class="block text-sm font-medium text-gray-300">Exit Price</label>
                                 <label class="flex items-center text-xs text-gray-400 cursor-pointer">
-                                    <input type="checkbox" id="expired_worthless" class="h-3 w-3 bg-gray-700 border-gray-600 text-indigo-600 focus:ring-indigo-500 rounded">
+                                    <input type="checkbox" id="expired_worthless" class="h-3 w-3 bg-gray-700 border border-gray-600 text-indigo-600 focus:ring-indigo-500 rounded">
                                     <span class="ml-1.5">Expired</span>
                                 </label>
                             </div>
@@ -807,6 +807,7 @@
             accountSwitcherEl: document.getElementById('account-switcher'),
             accountListManagerEl: document.getElementById('accounts-list-manager'),
             chartFilterDisplay: document.getElementById('chart-filter-display'),
+            sampleDataWrapper: document.getElementById('sample-data-wrapper'),
         };
 
         const viewElements = {
@@ -843,7 +844,7 @@
         const { tradeModal, transactionModal, importModal, resetModal, settingsModal } = modalElements;
         const { addTradeBtn, cancelBtn, addTransactionBtn, cancelTransactionBtn, importTradesBtn, cancelImportBtn, processImportBtn, downloadTemplateBtn, resetDataBtn, cancelResetBtn, confirmResetBtn, settingsBtn, closeSettingsBtn, addAccountBtn, saveStartingBalanceBtn, exportCsvBtn, autoCalcRiskBtn, loadSampleDataBtn, clearChartFilterBtn } = btnElements;
         const { tradeForm, transactionForm, tradeTypeSelect, strikeContainer, expiredCheckbox, separateCommissionsCheckbox, singleCommissionContainer, separateCommissionsContainer, resetConfirmInput, csvFileInput, startingBalanceInput, startingBalanceDateInput, currencySettingInput, commissionSettingInput } = formElements;
-        const { tradesBody, totalAccountValueEl, totalDepositsEl, totalWithdrawalsEl, fileNameSpan, importStatus, activityLogFooter, paginationControls, accountSwitcherEl, accountListManagerEl, chartFilterDisplay } = displayElements;
+        const { tradesBody, totalAccountValueEl, totalDepositsEl, totalWithdrawalsEl, fileNameSpan, importStatus, activityLogFooter, paginationControls, accountSwitcherEl, accountListManagerEl, chartFilterDisplay, sampleDataWrapper } = displayElements;
         const { mainViewToggle, calendarViewEl, strategyViewEl, analyticsViewEl, mainViewTitle, calendarControlsWrapper } = viewElements;
         const { calendarGrid, calendarPeriodLabel, prevPeriodBtn, nextPeriodBtn, calendarMonthWeekToggle, calendarSummary } = calendarElements;
         const { tradeFilters, equityCurveFilterSelect, logSearchInput, dateModeToggle, dateModeDynamicLabel, dateModeLiveLabel, customDateFilterWrapper, customStartDateInput, customEndDateInput, activityLogHeader } = filterElements;
@@ -886,9 +887,12 @@
                     if (user) {
                         userId = user.uid;
                         console.log("User signed in with UID:", userId);
+                        btnElements.settingsBtn.disabled = false;
                         attachFirestoreListeners();
                     } else {
                         userId = null;
+                        btnElements.settingsBtn.disabled = true;
+                        btnElements.resetDataBtn.disabled = true;
                         detachFirestoreListeners();
                         console.log("User signed out.");
                     }
@@ -906,26 +910,35 @@
         }
 
         function attachFirestoreListeners() {
-            detachFirestoreListeners(); // Unsubscribe from any previous listeners
+            detachFirestoreListeners();
 
             const accountsCol = collection(db, 'artifacts', appId, 'users', userId, 'accounts');
             unsubscribeAccounts = onSnapshot(accountsCol, (snapshot) => {
                 const accounts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 appData.accounts = accounts;
 
-                if (isInitialLoad && accounts.length > 0) {
-                     if (!appData.activeAccountId || !accounts.find(a => a.id === appData.activeAccountId)) {
-                        appData.activeAccountId = accounts[0].id;
-                     }
-                }
-                
-                // Enable buttons once accounts are loaded
+                const currentActiveAccountExists = accounts.some(acc => acc.id === appData.activeAccountId);
+
                 if (accounts.length > 0) {
-                    btnElements.settingsBtn.disabled = false;
                     btnElements.resetDataBtn.disabled = false;
+                    if (!currentActiveAccountExists) {
+                        setActiveAccount(accounts[0].id);
+                    } else {
+                        // If it exists, just update dashboard. The transaction listener is already active.
+                        updateDashboard();
+                    }
+                } else {
+                     // This is a new user with no accounts
+                    btnElements.resetDataBtn.disabled = true;
+                    appData.activeAccountId = null;
+                    appData.transactions = {};
+                     if (isInitialLoad) {
+                        // Create a default account for the new user
+                        addDoc(accountsCol, { name: 'Account 1' });
+                    }
+                    updateDashboard();
                 }
-                
-                updateDashboard();
+                isInitialLoad = false;
             });
 
             const settingsDoc = doc(db, 'artifacts', appId, 'users', userId, 'settings', 'userSettings');
@@ -933,14 +946,10 @@
                  if (docSnap.exists()) {
                     appData.settings = docSnap.data();
                 } else {
-                    // Create default settings if they don't exist
                     setDoc(settingsDoc, { currency: '$', defaultCommission: 0.65 });
                 }
                 updateDashboard();
             });
-
-            // This listener will be re-attached whenever activeAccountId changes
-            setupTransactionListener();
         }
 
         function setupTransactionListener() {
@@ -950,7 +959,6 @@
                 const transCol = collection(db, 'artifacts', appId, 'users', userId, 'accounts', appData.activeAccountId, 'transactions');
                 unsubscribeTransactions = onSnapshot(transCol, (snapshot) => {
                     appData.transactions[appData.activeAccountId] = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    isInitialLoad = false;
                     updateDashboard();
                 });
             }
@@ -958,9 +966,8 @@
 
         async function setActiveAccount(accountId) {
             appData.activeAccountId = accountId;
-            // No need to save to DB, this is local state. We just need to re-listen.
-            setupTransactionListener();
-            updateDashboard();
+            // The setupTransactionListener will be called which will trigger updateDashboard
+            await setupTransactionListener(); 
         }
 
 
@@ -1242,6 +1249,10 @@
         });
 
         loadSampleDataBtn.addEventListener('click', async () => {
+             if (!appData.activeAccountId) {
+                flashButton(loadSampleDataBtn, 'Create an account first!', 'bg-red-500');
+                return;
+            }
             const batch = writeBatch(db);
             const transCol = collection(db, 'artifacts', appId, 'users', userId, 'accounts', appData.activeAccountId, 'transactions');
             const sampleData = generateDummyData();
@@ -1477,7 +1488,6 @@
                 open: openDate,
                 close: closeDate,
                 expiration: document.getElementById('expiration_date').value,
-                expiration_2: details.expirations === 2 ? document.getElementById('expiration_date_2').value : undefined,
                 strikes: Array.from(strikeContainer.querySelectorAll('input')).map(input => parseFloat(input.value)),
                 quantity: parseInt(document.getElementById('quantity').value),
                 entry_price: parseFloat(document.getElementById('entry_price').value),
@@ -1490,10 +1500,16 @@
                 notes: document.getElementById('notes').value,
                 isExpired: expiredCheckbox.checked,
                 ratio: details.ratio === true,
-                quantity_2: details.ratio === true ? parseInt(document.getElementById('quantity_2').value) : undefined,
-                entry_price_2: details.ratio === true ? parseFloat(document.getElementById('entry_price_2').value) : undefined,
-                exit_price_2: details.ratio === true ? parseFloat(document.getElementById('exit_price_2').value) : undefined,
             };
+
+            if (details.expirations === 2) {
+                tradeData.expiration_2 = document.getElementById('expiration_date_2').value;
+            }
+            if (details.ratio === true) {
+                tradeData.quantity_2 = parseInt(document.getElementById('quantity_2').value);
+                tradeData.entry_price_2 = parseFloat(document.getElementById('entry_price_2').value);
+                tradeData.exit_price_2 = parseFloat(document.getElementById('exit_price_2').value);
+            }
             
             tradeData.pnl = calculatePnl(tradeData);
             
@@ -2966,11 +2982,15 @@
                     notes: 'Sample trade data.',
                     isExpired: Math.random() > 0.9,
                     ratio: details.ratio === true,
-                    expiration_2: details.expirations === 2 ? closeDate.add(Math.floor(Math.random() * 20) + 28, 'day').format('YYYY-MM-DD') : undefined,
-                    quantity_2: details.ratio === true ? (Math.floor(Math.random() * 5) + 1) * 2 : undefined,
-                    entry_price_2: details.ratio === true ? parseFloat((entryPrice * 0.7).toFixed(2)) : undefined,
-                    exit_price_2: details.ratio === true ? parseFloat((exitPrice * 0.6).toFixed(2)) : undefined,
                 };
+                 if (details.expirations === 2) {
+                    trade.expiration_2 = closeDate.add(Math.floor(Math.random() * 20) + 28, 'day').format('YYYY-MM-DD');
+                }
+                if (details.ratio === true) {
+                    trade.quantity_2 = (Math.floor(Math.random() * 5) + 1) * 2;
+                    trade.entry_price_2 = parseFloat((entryPrice * 0.7).toFixed(2));
+                    trade.exit_price_2 = parseFloat((exitPrice * 0.6).toFixed(2));
+                }
                 
                 trade.pnl = calculatePnl(trade); // Recalculate PNL with commissions
                 data.push(trade);
