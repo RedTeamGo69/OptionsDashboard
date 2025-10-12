@@ -47,6 +47,7 @@
         .calendar-pnl-text {
             font-size: 0.65rem; /* approx 10.4px */
             line-height: 0.8rem;
+            word-break: break-all;
         }
 
         @media (min-width: 640px) { /* sm breakpoint */
@@ -54,6 +55,10 @@
                 font-size: 0.75rem; /* back to text-xs */
                 line-height: 1rem;
             }
+        }
+        /* Make chart bars clickable */
+        #pnlByStrategyChart, #pnlByTickerChart, #pnlByTagChart, #pnlByDayChart, #pnlDistributionChart {
+            cursor: pointer;
         }
     </style>
 </head>
@@ -110,9 +115,9 @@
                     </div>
                     <div class="text-right">
                         <p class="text-sm font-medium text-gray-400">Total Deposits</p>
-                        <p id="total-deposits" class="text-lg font-semibold text-green-400">$0.00</p>
+                        <p id="total-deposits" class="text-lg font-semibold text-blue-400">$0.00</p>
                         <p class="text-sm font-medium text-gray-400 mt-2">Total Withdrawals</p>
-                        <p id="total-withdrawals" class="text-lg font-semibold text-red-400">$0.00</p>
+                        <p id="total-withdrawals" class="text-lg font-semibold text-orange-400">$0.00</p>
                     </div>
                 </div>
             </div>
@@ -295,7 +300,13 @@
             <!-- Recent Trades Table -->
             <div class="bg-gray-800 p-5 rounded-xl shadow-lg col-span-1 md:col-span-2 lg:col-span-4">
                 <div class="flex flex-wrap justify-between items-center mb-4 gap-y-4">
-                    <h3 class="text-lg font-semibold text-white">Activity Log</h3>
+                    <div class="flex items-center gap-4">
+                        <h3 class="text-lg font-semibold text-white">Activity Log</h3>
+                        <div id="chart-filter-display" class="hidden items-center gap-2 bg-gray-700 rounded-lg pr-2">
+                            <span class="text-sm text-gray-300 pl-3 py-1"></span>
+                            <button id="clear-chart-filter" class="text-red-400 hover:text-red-300 font-bold text-xl leading-none pb-1">&times;</button>
+                        </div>
+                    </div>
                     <div class="ml-auto flex items-center gap-4 flex-wrap">
                         <div id="trade-filters" class="flex items-center gap-2 flex-wrap">
                             <button data-filter="all" class="filter-btn bg-indigo-600 text-white py-1 px-3 rounded-lg text-sm transition">All</button>
@@ -319,14 +330,22 @@
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left">
-                        <thead>
+                        <thead id="activity-log-header">
                             <tr class="border-b border-gray-700 text-sm">
-                                <th class="p-3 font-semibold">Date</th>
+                                <th class="p-3 font-semibold">
+                                    <button class="sort-btn flex items-center gap-1 hover:text-white transition" data-sort="date">Date<span class="sort-indicator"></span></button>
+                                </th>
                                 <th class="p-3 font-semibold">Type</th>
                                 <th class="p-3 font-semibold">Description</th>
-                                <th class="p-3 font-semibold text-right">Duration</th>
-                                <th class="p-3 font-semibold text-right">Amount</th>
-                                <th class="p-3 font-semibold text-right">ROC %</th>
+                                <th class="p-3 font-semibold text-right">
+                                     <button class="sort-btn flex items-center gap-1 w-full justify-end hover:text-white transition" data-sort="duration">Duration<span class="sort-indicator"></span></button>
+                                </th>
+                                <th class="p-3 font-semibold text-right">
+                                     <button class="sort-btn flex items-center gap-1 w-full justify-end hover:text-white transition" data-sort="amount">Amount<span class="sort-indicator"></span></button>
+                                </th>
+                                <th class="p-3 font-semibold text-right">
+                                     <button class="sort-btn flex items-center gap-1 w-full justify-end hover:text-white transition" data-sort="roc">ROC %<span class="sort-indicator"></span></button>
+                                </th>
                                 <th class="p-3 font-semibold text-right">Actions</th>
                             </tr>
                         </thead>
@@ -404,6 +423,9 @@
                             <option>Long Put Spread</option>
                             <option>Short Call Spread</option>
                             <option>Short Put Spread</option>
+                            <option>Calendar Spread</option>
+                            <option>Long Ratio Spread</option>
+                            <option>Short Ratio Spread</option>
                             <option>Long Straddle</option>
                             <option>Short Straddle</option>
                             <option>Long Strangle</option>
@@ -429,35 +451,69 @@
                 </div>
                 
                 <!-- Contract Details -->
-                <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-300 mb-1">Expiration Date</label>
-                    <input type="date" id="expiration_date" required class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                    <div id="expiration_date_container">
+                        <label for="expiration_date" class="block text-sm font-medium text-gray-300 mb-1">Expiration Date</label>
+                        <input type="date" id="expiration_date" required class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                    </div>
+                    <div id="expiration_date_2_container" class="hidden">
+                        <label for="expiration_date_2" class="block text-sm font-medium text-gray-300 mb-1">Expiration Date 2</label>
+                        <input type="date" id="expiration_date_2" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                    </div>
                 </div>
+
                 <div id="strike-price-container" class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
                     <!-- Strike price fields will be injected here -->
                 </div>
                 
-                <!-- Financials -->
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
-                    <div>
-                        <label for="quantity" class="block text-sm font-medium text-gray-300 mb-1">Quantity</label>
-                        <input type="number" id="quantity" required min="1" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="5">
-                    </div>
-                    <div>
-                        <label for="entry_price" class="block text-sm font-medium text-gray-300 mb-1">Entry Price</label>
-                         <input type="number" step="0.01" id="entry_price" required class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="1.25">
-                    </div>
-                     <div>
-                        <div class="flex justify-between items-center mb-1">
-                            <label for="exit_price" class="block text-sm font-medium text-gray-300">Exit Price</label>
-                            <label class="flex items-center text-xs text-gray-400 cursor-pointer">
-                                <input type="checkbox" id="expired_worthless" class="h-3 w-3 bg-gray-700 border-gray-600 text-indigo-600 focus:ring-indigo-500 rounded">
-                                <span class="ml-1.5">Expired</span>
-                            </label>
+                <div class="border-t border-gray-700/50 my-4"></div>
+                
+                <!-- Leg 1 Financials -->
+                <div id="leg_1_container">
+                    <h4 class="text-md font-semibold text-indigo-400 mb-3" id="leg_1_title">Financials</h4>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+                        <div>
+                            <label for="quantity" class="block text-sm font-medium text-gray-300 mb-1">Quantity</label>
+                            <input type="number" id="quantity" required min="1" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="5">
                         </div>
-                        <input type="number" step="0.01" id="exit_price" required class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="0.65">
+                        <div>
+                            <label for="entry_price" class="block text-sm font-medium text-gray-300 mb-1">Entry Price</label>
+                            <input type="number" step="0.01" id="entry_price" required class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="1.25">
+                        </div>
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <label for="exit_price" class="block text-sm font-medium text-gray-300">Exit Price</label>
+                                <label class="flex items-center text-xs text-gray-400 cursor-pointer">
+                                    <input type="checkbox" id="expired_worthless" class="h-3 w-3 bg-gray-700 border-gray-600 text-indigo-600 focus:ring-indigo-500 rounded">
+                                    <span class="ml-1.5">Expired</span>
+                                </label>
+                            </div>
+                            <input type="number" step="0.01" id="exit_price" required class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="0.65">
+                        </div>
                     </div>
                 </div>
+
+                <!-- Leg 2 Financials (for Ratios) -->
+                <div id="ratio-inputs-container" class="hidden">
+                    <h4 class="text-md font-semibold text-indigo-400 mb-3">Leg 2 Financials</h4>
+                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+                        <div>
+                            <label for="quantity_2" class="block text-sm font-medium text-gray-300 mb-1">Quantity 2</label>
+                            <input type="number" id="quantity_2" min="1" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="2">
+                        </div>
+                        <div>
+                            <label for="entry_price_2" class="block text-sm font-medium text-gray-300 mb-1">Entry Price 2</label>
+                            <input type="number" step="0.01" id="entry_price_2" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="0.80">
+                        </div>
+                        <div>
+                            <label for="exit_price_2" class="block text-sm font-medium text-gray-300 mb-1">Exit Price 2</label>
+                            <input type="number" step="0.01" id="exit_price_2" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="0.30">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="border-t border-gray-700/50 my-4"></div>
+
 
                 <div class="mb-4">
                     <label class="flex items-center text-sm font-medium text-gray-300 mb-2">
@@ -465,7 +521,7 @@
                         <span class="ml-2">Use Separate Commissions</span>
                     </label>
                     <div id="single_commission_container">
-                        <label for="commissions" class="block text-sm font-medium text-gray-300 mb-1">Commissions (Per Contract)</label>
+                        <label for="commissions" class="block text-sm font-medium text-gray-300 mb-1">Commissions (Per Contract, Per Leg)</label>
                         <input type="number" step="0.01" id="commissions" value="0" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="0.65">
                     </div>
                     <div id="separate_commissions_container" class="hidden grid grid-cols-2 gap-4">
@@ -522,6 +578,7 @@
                         <li>Save your file as a CSV.</li>
                         <li>Click "Choose File" and select your saved CSV file.</li>
                         <li>Click "Import" to add the trades to your currently active account.</li>
+                        <li class="text-amber-400">Note: Complex strategies like Calendar and Ratio Spreads are not currently supported via CSV import.</li>
                     </ol>
                 </div>
 
@@ -648,6 +705,10 @@
             const itemsPerPage = 10;
             let mainView = 'calendar'; // 'calendar', 'strategy', or 'analytics'
             let dateMode = 'live'; // 'live' or 'dynamic'
+            let sortBy = 'date';
+            let sortDirection = 'desc';
+            let selectedCalendarDate = null;
+            let chartFilter = { type: null, value: null, displayValue: null };
 
             // --- CHART INSTANCES ---
             let pnlCurveChart;
@@ -708,6 +769,9 @@
             const customDateFilterWrapper = document.getElementById('custom-date-filter-wrapper');
             const customStartDateInput = document.getElementById('custom-start-date');
             const customEndDateInput = document.getElementById('custom-end-date');
+            const activityLogHeader = document.getElementById('activity-log-header');
+            const chartFilterDisplay = document.getElementById('chart-filter-display');
+            const clearChartFilterBtn = document.getElementById('clear-chart-filter');
             
             // Main View Toggle Elements
             const mainViewToggle = document.getElementById('main-view-toggle');
@@ -1112,13 +1176,23 @@
             expiredCheckbox.addEventListener('change', () => {
                 const exitPriceInput = document.getElementById('exit_price');
                 const closingCommInput = document.getElementById('closing_commission');
+                const type = tradeTypeSelect.value;
+                const details = strategyDetails[type];
+                const exitPrice2Input = document.getElementById('exit_price_2');
+
                 if (expiredCheckbox.checked) {
                     exitPriceInput.value = 0;
                     exitPriceInput.disabled = true;
                     exitPriceInput.classList.add('bg-gray-600');
                     
+                    if (details.ratio) {
+                        exitPrice2Input.value = 0;
+                        exitPrice2Input.disabled = true;
+                        exitPrice2Input.classList.add('bg-gray-600');
+                    }
+
                     if (!separateCommissionsCheckbox.checked) {
-                       separateCommissionsCheckbox.click();
+                       separateCommissionsCheckbox.click(); // This forces separate commissions
                     }
                     document.getElementById('opening_commission').value = appData.settings.defaultCommission || 0;
                     closingCommInput.value = 0;
@@ -1128,8 +1202,17 @@
                 } else {
                     exitPriceInput.disabled = false;
                     exitPriceInput.classList.remove('bg-gray-600');
+                    if (details.ratio) {
+                        exitPrice2Input.disabled = false;
+                        exitPrice2Input.classList.remove('bg-gray-600');
+                    }
                     closingCommInput.disabled = false;
                     closingCommInput.classList.remove('bg-gray-600');
+
+                    // Revert commission setting
+                    if (separateCommissionsCheckbox.checked) {
+                        separateCommissionsCheckbox.click();
+                    }
                 }
             });
 
@@ -1142,6 +1225,9 @@
                 'Long Put Spread': { strikes: ['Short Strike', 'Long Strike'], risk: 'debit' },
                 'Short Call Spread': { strikes: ['Short Strike', 'Long Strike'], risk: 'spread' },
                 'Short Put Spread': { strikes: ['Short Strike', 'Long Strike'], risk: 'spread' },
+                'Calendar Spread': { strikes: ['Strike'], risk: 'debit', expirations: 2 },
+                'Long Ratio Spread': { strikes: ['Long Strike', 'Short Strike'], ratio: true, risk: 'custom' },
+                'Short Ratio Spread': { strikes: ['Short Strike', 'Long Strike'], ratio: true, risk: 'custom' },
                 'Long Straddle': { strikes: ['Strike'], risk: 'debit' },
                 'Short Straddle': { strikes: ['Strike'], risk: 'undefined' },
                 'Long Strangle': { strikes: ['Put Strike', 'Call Strike'], risk: 'debit' },
@@ -1156,6 +1242,10 @@
                 const type = tradeTypeSelect.value;
                 const details = strategyDetails[type] || { strikes: ['Strike'], risk: 'undefined' };
                 const maxRiskInput = document.getElementById('max_risk');
+                const ratioContainer = document.getElementById('ratio-inputs-container');
+                const leg1Title = document.getElementById('leg_1_title');
+                const exp2Container = document.getElementById('expiration_date_2_container');
+                
                 strikeContainer.innerHTML = '';
                 details.strikes.forEach((label, i) => {
                     strikeContainer.innerHTML += `
@@ -1165,10 +1255,23 @@
                         </div>
                     `;
                 });
+                
+                // Handle complex strategies visibility
+                const isRatio = details.ratio === true;
+                const isCalendar = details.expirations === 2;
+                ratioContainer.classList.toggle('hidden', !isRatio);
+                exp2Container.classList.toggle('hidden', !isCalendar);
+                leg1Title.textContent = isRatio ? 'Leg 1 Financials' : 'Financials';
+                document.getElementById('expiration_date_2').required = isCalendar;
+                document.getElementById('quantity_2').required = isRatio;
+                document.getElementById('entry_price_2').required = isRatio;
+                document.getElementById('exit_price_2').required = isRatio;
+
+
                 const riskTypesWithAutoCalc = ['spread', 'debit', 'collateral'];
                 autoCalcRiskBtn.classList.toggle('hidden', !riskTypesWithAutoCalc.includes(details.risk));
                 
-                if (details.risk === 'undefined') {
+                if (details.risk === 'undefined' || details.risk === 'custom') {
                     maxRiskInput.required = false;
                     maxRiskInput.placeholder = 'Collateral (Optional)';
                 } else {
@@ -1181,10 +1284,29 @@
             updateStrikeInputs();
             
             function calculateRawPnl(trade) {
-                const { entry_price, exit_price, quantity, type } = trade;
                 const multiplier = 100;
+                
+                // Handle Ratio Spreads
+                if (trade.ratio) {
+                    let pnl1 = 0;
+                    let pnl2 = 0;
+
+                    if (trade.type === 'Long Ratio Spread') {
+                        // Leg 1 is long, Leg 2 is short
+                        pnl1 = (trade.exit_price - trade.entry_price) * trade.quantity * multiplier;
+                        pnl2 = (trade.entry_price_2 - trade.exit_price_2) * trade.quantity_2 * multiplier;
+                    } else { // Short Ratio Spread
+                        // Leg 1 is short, Leg 2 is long
+                        pnl1 = (trade.entry_price - trade.exit_price) * trade.quantity * multiplier;
+                        pnl2 = (trade.exit_price_2 - trade.entry_price_2) * trade.quantity_2 * multiplier;
+                    }
+                    return pnl1 + pnl2;
+                }
+
+                // Handle Standard Spreads
+                const { entry_price, exit_price, quantity, type } = trade;
                 let pnl = 0;
-                const debitStrategies = ['Long Call', 'Long Put', 'Long Call Spread', 'Long Put Spread', 'Long Straddle', 'Long Strangle', 'Long Butterfly'];
+                const debitStrategies = ['Long Call', 'Long Put', 'Long Call Spread', 'Long Put Spread', 'Long Straddle', 'Long Strangle', 'Long Butterfly', 'Calendar Spread'];
                 if (debitStrategies.includes(type)) {
                     pnl = (exit_price - entry_price) * quantity * multiplier;
                 } 
@@ -1195,11 +1317,22 @@
             }
 
             function getTradeCommissions(trade) {
-                const { commissions, opening_commission, closing_commission, quantity, isExpired } = trade;
+                const { commissions, opening_commission, closing_commission, quantity, quantity_2, isExpired, ratio } = trade;
+                const totalQuantity = ratio ? quantity + quantity_2 : quantity;
+
                 if (opening_commission !== undefined && closing_commission !== undefined) {
-                    return (opening_commission + closing_commission) * quantity;
+                    return (opening_commission + closing_commission) * totalQuantity;
                 } else {
-                    return isExpired ? (commissions * quantity) : (commissions * quantity * 2);
+                    // For single commission, assume it's per leg per side.
+                    // For a ratio spread, that's 4 transactions total if not expired.
+                    const sides = ratio ? 4 : 2;
+                    const effectiveQty = ratio ? (quantity + quantity_2) : quantity;
+
+                    if(isExpired) {
+                        return ratio ? (commissions * quantity) + (commissions * quantity_2) : (commissions * quantity);
+                    } else {
+                         return ratio ? (commissions * quantity * 2) + (commissions * quantity_2 * 2) : (commissions * quantity * 2);
+                    }
                 }
             }
 
@@ -1252,13 +1385,17 @@
                     return;
                 }
 
+                const type = document.getElementById('trade_type').value;
+                const details = strategyDetails[type];
+
                 const tradeData = {
                     transaction_type: 'trade',
                     ticker: document.getElementById('underlying_ticker').value.toUpperCase(),
-                    type: document.getElementById('trade_type').value,
+                    type: type,
                     open: openDate,
                     close: closeDate,
                     expiration: document.getElementById('expiration_date').value,
+                    expiration_2: details.expirations === 2 ? document.getElementById('expiration_date_2').value : undefined,
                     strikes: Array.from(strikeContainer.querySelectorAll('input')).map(input => parseFloat(input.value)),
                     quantity: parseInt(document.getElementById('quantity').value),
                     entry_price: parseFloat(document.getElementById('entry_price').value),
@@ -1270,6 +1407,10 @@
                     tags: document.getElementById('tags').value,
                     notes: document.getElementById('notes').value,
                     isExpired: expiredCheckbox.checked,
+                    ratio: details.ratio === true,
+                    quantity_2: details.ratio === true ? parseInt(document.getElementById('quantity_2').value) : undefined,
+                    entry_price_2: details.ratio === true ? parseFloat(document.getElementById('entry_price_2').value) : undefined,
+                    exit_price_2: details.ratio === true ? parseFloat(document.getElementById('exit_price_2').value) : undefined,
                 };
                 
                 tradeData.pnl = calculatePnl(tradeData);
@@ -1292,7 +1433,7 @@
             function populateFormForEdit(tradeId) {
                 const allTransactions = getActiveTransactions();
                 const item = allTransactions.find(t => t.id === tradeId);
-                if (!item || item.transaction_type !== 'trade') return; // For now, only edit trades
+                if (!item || item.transaction_type !== 'trade') return;
 
                 document.getElementById('modal-title').textContent = 'Edit Trade';
                 document.getElementById('saveBtn').textContent = 'Update Trade';
@@ -1304,9 +1445,20 @@
                 document.getElementById('close_date').value = item.close.split('T')[0];
 
                 document.getElementById('expiration_date').value = item.expiration;
+                if (item.expiration_2) {
+                     document.getElementById('expiration_date_2').value = item.expiration_2;
+                }
+
                 document.getElementById('quantity').value = item.quantity;
                 document.getElementById('entry_price').value = item.entry_price;
                 document.getElementById('exit_price').value = item.exit_price;
+
+                if (item.ratio) {
+                    document.getElementById('quantity_2').value = item.quantity_2;
+                    document.getElementById('entry_price_2').value = item.entry_price_2;
+                    document.getElementById('exit_price_2').value = item.exit_price_2;
+                }
+
                 document.getElementById('max_risk').value = item.max_risk;
                 document.getElementById('tags').value = item.tags;
                 document.getElementById('notes').value = item.notes;
@@ -1410,10 +1562,10 @@
                                 return obj;
                             }, {});
                             
-                            if (!row.Ticker || !row.TradeType || !row.OpenDate || !row.CloseDate) {
+                            if (!row.Ticker || !row.TradeType || !row.OpenDate || !row.CloseDate || !row.ExpirationDate) {
                                 throw new Error(`Missing required data on row ${i + 1}.`);
                             }
-                            if (!dayjs(row.OpenDate).isValid() || !dayjs(row.CloseDate).isValid()) {
+                            if (!dayjs(row.OpenDate).isValid() || !dayjs(row.CloseDate).isValid() || !dayjs(row.ExpirationDate).isValid()) {
                                 throw new Error(`Invalid date format on row ${i + 1}. Please use YYYY-MM-DD.`);
                             }
                             
@@ -1460,6 +1612,21 @@
 
 
             // --- TABLE & CHART EVENT LISTENERS ---
+            activityLogHeader.addEventListener('click', (e) => {
+                const sortBtn = e.target.closest('.sort-btn');
+                if (sortBtn) {
+                    const newSortBy = sortBtn.dataset.sort;
+                    if (sortBy === newSortBy) {
+                        sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+                    } else {
+                        sortBy = newSortBy;
+                        sortDirection = 'desc';
+                    }
+                    currentPage = 1; // Reset to page 1 on new sort
+                    updateDashboard();
+                }
+            });
+
             tradesBody.addEventListener('click', (e) => {
                 const allTransactions = getActiveTransactions();
                 const editButton = e.target.closest('.edit-btn');
@@ -1504,39 +1671,98 @@
                         const detailsRow = document.createElement('tr');
                         detailsRow.className = 'details-row bg-gray-800';
 
-                        const rocValue = item.max_risk > 0 ? ((calculateRawPnl(item) / item.max_risk) * 100).toFixed(2) + '%' : 'N/A';
                         const totalCommissions = getTradeCommissions(item);
-                        const rocColor = rocValue === 'N/A' ? 'text-gray-300' : parseFloat(rocValue) >= 0 ? 'text-green-400' : 'text-red-400';
-
                         let content = `<td colspan="7" class="p-0">`;
 
-                        // Financial Details Grid
-                        content += `
-                            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-x-6 gap-y-4 p-4 text-gray-400 text-sm">
-                                <div class="flex flex-col">
-                                    <span class="text-xs text-gray-500">Entry / Exit</span>
-                                    <span class="font-semibold text-gray-300">${formatCurrency(item.entry_price)} / ${formatCurrency(item.exit_price)}</span>
-                                </div>
-                                <div class="flex flex-col">
-                                    <span class="text-xs text-gray-500">Quantity</span>
-                                    <span class="font-semibold text-gray-300">${item.quantity}</span>
-                                </div>
-                                <div class="flex flex-col">
-                                    <span class="text-xs text-gray-500">Commissions</span>
-                                    <span class="font-semibold text-gray-300">${formatCurrency(totalCommissions)}</span>
-                                </div>
-                                <div class="flex flex-col">
-                                    <span class="text-xs text-gray-500">Max Risk</span>
-                                    <span class="font-semibold text-gray-300">${formatCurrency(item.max_risk)}</span>
-                                </div>
-                                <div class="flex flex-col">
-                                    <span class="text-xs text-gray-500">Return on Capital</span>
-                                    <span class="font-semibold ${rocColor}">${rocValue}</span>
-                                </div>
-                            </div>
-                        `;
+                        if (item.ratio) {
+                            // Custom layout for Ratio Spreads
+                            const rocValue = item.max_risk > 0 ? ((calculateRawPnl(item) / item.max_risk) * 100).toFixed(2) + '%' : 'N/A';
+                            const rocColor = rocValue === 'N/A' ? 'text-gray-300' : parseFloat(rocValue) >= 0 ? 'text-green-400' : 'text-red-400';
 
-                        // Notes and Tags Section
+                            content += `
+                                <div class="p-4">
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <!-- Leg 1 -->
+                                        <div>
+                                            <h5 class="text-sm font-semibold text-indigo-400 mb-2">Leg 1: ${item.strikes[0]}</h5>
+                                            <div class="space-y-2 text-sm text-gray-400">
+                                                <div class="flex justify-between"><span>Quantity:</span> <span class="font-semibold text-gray-300">${item.quantity}</span></div>
+                                                <div class="flex justify-between"><span>Entry / Exit:</span> <span class="font-semibold text-gray-300">${formatCurrency(item.entry_price)} / ${formatCurrency(item.exit_price)}</span></div>
+                                            </div>
+                                        </div>
+                                        <!-- Leg 2 -->
+                                        <div>
+                                            <h5 class="text-sm font-semibold text-indigo-400 mb-2">Leg 2: ${item.strikes[1]}</h5>
+                                            <div class="space-y-2 text-sm text-gray-400">
+                                                <div class="flex justify-between"><span>Quantity:</span> <span class="font-semibold text-gray-300">${item.quantity_2}</span></div>
+                                                <div class="flex justify-between"><span>Entry / Exit:</span> <span class="font-semibold text-gray-300">${formatCurrency(item.entry_price_2)} / ${formatCurrency(item.exit_price_2)}</span></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="border-t border-gray-700/50 mt-4 pt-4 grid grid-cols-2 sm:grid-cols-3 gap-4 text-sm">
+                                        <div class="flex flex-col">
+                                            <span class="text-xs text-gray-500">Commissions</span>
+                                            <span class="font-semibold text-gray-300">${formatCurrency(totalCommissions)}</span>
+                                        </div>
+                                        <div class="flex flex-col">
+                                            <span class="text-xs text-gray-500">Max Risk</span>
+                                            <span class="font-semibold text-gray-300">${formatCurrency(item.max_risk)}</span>
+                                        </div>
+                                        <div class="flex flex-col">
+                                            <span class="text-xs text-gray-500">Return on Capital</span>
+                                            <span class="font-semibold ${rocColor}">${rocValue}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+
+                        } else {
+                            // Original layout for all other trades
+                            const rocValue = item.max_risk > 0 ? ((calculateRawPnl(item) / item.max_risk) * 100).toFixed(2) + '%' : 'N/A';
+                            const rocColor = rocValue === 'N/A' ? 'text-gray-300' : parseFloat(rocValue) >= 0 ? 'text-green-400' : 'text-red-400';
+                            content += `
+                                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-x-6 gap-y-4 p-4 text-gray-400 text-sm">
+                                    <div class="flex flex-col">
+                                        <span class="text-xs text-gray-500">Strikes</span>
+                                        <span class="font-semibold text-gray-300">${item.strikes.join(' / ')}</span>
+                                    </div>
+                                    <div class="flex flex-col">
+                                        <span class="text-xs text-gray-500">Entry / Exit</span>
+                                        <span class="font-semibold text-gray-300">${formatCurrency(item.entry_price)} / ${formatCurrency(item.exit_price)}</span>
+                                    </div>
+                                    <div class="flex flex-col">
+                                        <span class="text-xs text-gray-500">Quantity</span>
+                                        <span class="font-semibold text-gray-300">${item.quantity}</span>
+                                    </div>
+                                    <div class="flex flex-col">
+                                        <span class="text-xs text-gray-500">Commissions</span>
+                                        <span class="font-semibold text-gray-300">${formatCurrency(totalCommissions)}</span>
+                                    </div>
+                                    <div class="flex flex-col">
+                                        <span class="text-xs text-gray-500">Max Risk</span>
+                                        <span class="font-semibold text-gray-300">${formatCurrency(item.max_risk)}</span>
+                                    </div>
+                                    <div class="flex flex-col">
+                                        <span class="text-xs text-gray-500">Return on Capital</span>
+                                        <span class="font-semibold ${rocColor}">${rocValue}</span>
+                                    </div>
+                                </div>
+                            `;
+                            
+                            // Calendar Spread Details
+                            if(item.expiration_2) {
+                                content += `
+                                <div class="border-t border-gray-700/50 p-4">
+                                    <div class="flex flex-col text-sm">
+                                        <span class="text-xs text-gray-500">Expirations</span>
+                                        <span class="font-semibold text-gray-300">${dayjs(item.expiration).format('YYYY-MM-DD')} / ${dayjs(item.expiration_2).format('YYYY-MM-DD')}</span>
+                                    </div>
+                                </div>
+                            `;
+                            }
+                        }
+
+                        // Notes and Tags Section (common for both layouts)
                         if (item.notes || item.tags) {
                             content += `<div class="border-t border-gray-700/50 p-4 space-y-3">`;
                             if (item.notes) {
@@ -1568,22 +1794,38 @@
                 }
             });
 
+            function clearAllFilters() {
+                tradeTableFilter = 'all';
+                selectedCalendarDate = null;
+                chartFilter = { type: null, value: null, displayValue: null };
+
+                document.querySelectorAll('#trade-filters .filter-btn').forEach(btn => {
+                    const isAllButton = btn.dataset.filter === 'all';
+                    btn.classList.toggle('bg-indigo-600', isAllButton);
+                    btn.classList.toggle('text-white', isAllButton);
+                    btn.classList.toggle('bg-gray-700', !isAllButton);
+                    btn.classList.toggle('text-gray-300', !isAllButton);
+                });
+            }
+
             tradeFilters.addEventListener('click', (e) => {
                 const filterButton = e.target.closest('.filter-btn');
                 if (!filterButton) return;
-
+                clearAllFilters();
                 tradeTableFilter = filterButton.dataset.filter;
-                currentPage = 1; // Reset to first page on filter change
+                currentPage = 1; 
 
-                document.querySelectorAll('#trade-filters .filter-btn').forEach(btn => {
-                    btn.classList.remove('bg-indigo-600', 'text-white');
-                    btn.classList.add('bg-gray-700', 'hover:bg-gray-600', 'text-gray-300');
-                });
                 filterButton.classList.add('bg-indigo-600', 'text-white');
-                filterButton.classList.remove('bg-gray-700', 'hover:bg-gray-600', 'text-gray-300');
+                filterButton.classList.remove('bg-gray-700', 'text-gray-300');
 
                 updateDashboard();
             });
+
+            clearChartFilterBtn.addEventListener('click', () => {
+                clearAllFilters();
+                updateDashboard();
+            });
+
 
             equityCurveFilterSelect.addEventListener('change', (e) => {
                 equityTimeFilter = e.target.value;
@@ -1655,6 +1897,25 @@
                 }
                 updateDashboard();
             });
+
+            function setChartFilter(type, value, displayValue = null) {
+                const currentDisplayValue = chartFilter.displayValue || chartFilter.value;
+                const newDisplayValue = displayValue || value;
+
+                if (chartFilter.type === type && currentDisplayValue === newDisplayValue) {
+                    // If clicking the same thing again, clear the filter
+                    clearAllFilters();
+                } else {
+                    clearAllFilters(); // Clear other filters before setting a new one
+                    chartFilter.type = type;
+                    chartFilter.value = value;
+                    chartFilter.displayValue = displayValue; // Store the pretty display value
+                }
+                currentPage = 1;
+                setTimeout(() => {
+                    updateDashboard();
+                }, 0);
+            }
 
 
             // --- DASHBOARD UPDATE LOGIC ---
@@ -1932,7 +2193,15 @@
                         labels: Object.keys(strategyPnl),
                         datasets: [{ label: 'Total P&L', data: Object.values(strategyPnl), backgroundColor: Object.values(strategyPnl).map(pnl => pnl >= 0 ? 'rgba(34, 197, 94, 0.7)' : 'rgba(239, 68, 68, 0.7)'), }]
                     },
-                    options: { maintainAspectRatio: false, responsive: true, scales: { y: { ticks: { color: '#9ca3af' } }, x: { ticks: { color: '#9ca3af' } } }, plugins: { legend: { display: false } } }
+                    options: { maintainAspectRatio: false, responsive: true, scales: { y: { ticks: { color: '#9ca3af' } }, x: { ticks: { color: '#9ca3af' } } }, plugins: { legend: { display: false } }, 
+                        onClick: (event, elements) => {
+                            if (elements.length > 0) {
+                                const elementIndex = elements[0].index;
+                                const clickedLabel = event.chart.data.labels[elementIndex];
+                                setChartFilter('strategy', clickedLabel);
+                            }
+                        },
+                    }
                 });
                 
                 // --- Analytics Charts ---
@@ -1972,27 +2241,66 @@
                 // Update Recent Activity Table based on filter
                 let filteredActivity = allTransactions;
                 
-                // Category filter
-                switch(tradeTableFilter) {
-                    case 'trades':
-                        filteredActivity = allTransactions.filter(t => t.transaction_type === 'trade');
-                        break;
-                    case 'deposits':
-                        filteredActivity = allTransactions.filter(t => t.transaction_type === 'deposit');
-                        break;
-                    case 'withdrawals':
-                        filteredActivity = allTransactions.filter(t => t.transaction_type === 'withdrawal');
-                        break;
-                    case 'winners':
-                        filteredActivity = allTransactions.filter(t => t.transaction_type === 'trade' && t.pnl > 0);
-                        break;
-                    case 'losers':
-                        filteredActivity = allTransactions.filter(t => t.transaction_type === 'trade' && t.pnl <= 0);
-                        break;
-                    case 'all':
-                    default:
-                        filteredActivity = allTransactions;
-                        break;
+                if (chartFilter.type) {
+                    switch (chartFilter.type) {
+                        case 'strategy':
+                            filteredActivity = allTransactions.filter(t => t.transaction_type === 'trade' && t.type === chartFilter.value);
+                            break;
+                        case 'ticker':
+                            filteredActivity = allTransactions.filter(t => t.transaction_type === 'trade' && t.ticker === chartFilter.value);
+                            break;
+                        case 'tag':
+                            filteredActivity = allTransactions.filter(t => t.transaction_type === 'trade' && t.tags && t.tags.split(',').map(tag => tag.trim()).includes(chartFilter.value));
+                            break;
+                        case 'day':
+                            const dayMap = { 'Mon': 1, 'Tue': 2, 'Wed': 3, 'Thu': 4, 'Fri': 5 };
+                            const dayIndex = dayMap[chartFilter.value];
+                            filteredActivity = allTransactions.filter(t => t.transaction_type === 'trade' && dayjs(t.close).day() === dayIndex);
+                            break;
+                        case 'pnlRange':
+                            const [min, max] = chartFilter.value;
+                            filteredActivity = allTransactions.filter(t => t.transaction_type === 'trade' && t.pnl >= min && t.pnl < max);
+                            break;
+                    }
+                    document.querySelectorAll('#trade-filters .filter-btn').forEach(btn => {
+                        btn.classList.remove('bg-indigo-600', 'text-white');
+                        btn.classList.add('bg-gray-700', 'hover:bg-gray-600', 'text-gray-300');
+                    });
+                } else if (selectedCalendarDate) {
+                    filteredActivity = allTransactions.filter(item => {
+                        if (item.transaction_type === 'trade') {
+                            return dayjs(item.close).isSame(selectedCalendarDate, 'day');
+                        }
+                        return false;
+                    });
+                    document.querySelectorAll('#trade-filters .filter-btn').forEach(btn => {
+                        btn.classList.remove('bg-indigo-600', 'text-white');
+                        btn.classList.add('bg-gray-700', 'hover:bg-gray-600', 'text-gray-300');
+                    });
+                    document.querySelector('#trade-filters .filter-btn[data-filter="trades"]').classList.add('bg-indigo-600', 'text-white');
+                } else {
+                    // Category filter
+                    switch(tradeTableFilter) {
+                        case 'trades':
+                            filteredActivity = allTransactions.filter(t => t.transaction_type === 'trade');
+                            break;
+                        case 'deposits':
+                            filteredActivity = allTransactions.filter(t => t.transaction_type === 'deposit');
+                            break;
+                        case 'withdrawals':
+                            filteredActivity = allTransactions.filter(t => t.transaction_type === 'withdrawal');
+                            break;
+                        case 'winners':
+                            filteredActivity = allTransactions.filter(t => t.transaction_type === 'trade' && t.pnl > 0);
+                            break;
+                        case 'losers':
+                            filteredActivity = allTransactions.filter(t => t.transaction_type === 'trade' && t.pnl <= 0);
+                            break;
+                        case 'all':
+                        default:
+                            filteredActivity = allTransactions;
+                            break;
+                    }
                 }
                 
                 // Search filter
@@ -2004,6 +2312,55 @@
                         }
                         return false; // Don't show non-trades in search results for now
                     });
+                }
+
+                // Sorting logic
+                const getItemDate = (item) => dayjs(item.transaction_type === 'trade' ? item.close : item.date);
+
+                filteredActivity.sort((a, b) => {
+                    let valA, valB;
+                    switch (sortBy) {
+                        case 'date':
+                            valA = getItemDate(a);
+                            valB = getItemDate(b);
+                            return sortDirection === 'asc' ? valA - valB : valB - valA;
+                        case 'duration':
+                            valA = a.transaction_type === 'trade' ? dayjs(a.close).diff(dayjs(a.open), 'day') : -1;
+                            valB = b.transaction_type === 'trade' ? dayjs(b.close).diff(dayjs(b.open), 'day') : -1;
+                            break;
+                        case 'amount':
+                            valA = a.transaction_type === 'trade' ? a.pnl : (a.transaction_type === 'deposit' ? a.amount : -a.amount);
+                            valB = b.transaction_type === 'trade' ? b.pnl : (b.transaction_type === 'deposit' ? b.amount : -b.amount);
+                            break;
+                        case 'roc':
+                            valA = (a.transaction_type === 'trade' && a.max_risk > 0) ? (calculateRawPnl(a) / a.max_risk) : -Infinity;
+                            valB = (b.transaction_type === 'trade' && b.max_risk > 0) ? (calculateRawPnl(b) / b.max_risk) : -Infinity;
+                            break;
+                        default:
+                            return 0;
+                    }
+                    
+                    if (valA < valB) return sortDirection === 'asc' ? -1 : 1;
+                    if (valA > valB) return sortDirection === 'asc' ? 1 : -1;
+                    return 0;
+                });
+
+                // Update sort indicators in the header
+                document.querySelectorAll('.sort-indicator').forEach(span => span.textContent = '');
+                const activeIndicator = document.querySelector(`.sort-btn[data-sort="${sortBy}"] .sort-indicator`);
+                if (activeIndicator) {
+                    activeIndicator.textContent = sortDirection === 'asc' ? ' ▲' : ' ▼';
+                }
+
+                const filterSpan = chartFilterDisplay.querySelector('span');
+                if (chartFilter.type) {
+                    chartFilterDisplay.classList.remove('hidden');
+                    const displayValue = chartFilter.displayValue || chartFilter.value;
+                    let typeDisplay = chartFilter.type.charAt(0).toUpperCase() + chartFilter.type.slice(1);
+                    if (typeDisplay === 'PnlRange') typeDisplay = 'P&L Range';
+                    filterSpan.textContent = `${typeDisplay}: ${displayValue}`;
+                } else {
+                    chartFilterDisplay.classList.add('hidden');
                 }
                 
                 filteredActivityForExport = filteredActivity; // Save for export function
@@ -2026,29 +2383,23 @@
                 const paginatedActivity = filteredActivity.slice(startIndex, endIndex);
 
                 tradesBody.innerHTML = '';
-                const recentActivity = [...paginatedActivity].sort((a,b) => new Date(a.transaction_type === 'trade' ? a.close : a.date) - new Date(b.transaction_type === 'trade' ? b.close : b.date)).reverse();
-                recentActivity.forEach(item => {
+                paginatedActivity.forEach(item => {
                     const row = document.createElement('tr');
                     row.className = 'border-b border-gray-700 hover:bg-gray-700/50 cursor-pointer text-sm';
                     row.dataset.id = item.id;
                     
                     let date, type, description, amount, amountColor, duration = 'N/A', roc = 'N/A';
+                    
+                    const itemDate = getItemDate(item);
 
                     if (item.transaction_type === 'trade') {
-                        date = dayjs(item.close).format('YYYY-MM-DD');
+                        date = itemDate.format('YYYY-MM-DD');
                         type = 'Trade';
                         
                         let strikeDescription = '';
                         if (item.strikes && item.strikes.length > 0) {
-                            if (item.strikes.length === 1) {
-                                strikeDescription = `${item.strikes[0]}`;
-                            } else if (item.strikes.length === 2) {
-                                strikeDescription = `${item.strikes[0]}/${item.strikes[1]}`;
-                            } else if (item.strikes.length === 4) { // For Iron Condors
-                                strikeDescription = `${item.strikes[0]}/${item.strikes[1]}, ${item.strikes[2]}/${item.strikes[3]}`;
-                            } else { // For Butterflies etc.
-                                strikeDescription = item.strikes.join('/');
-                            }
+                            // Creates a clean strike description like "450/445" or just "450"
+                            strikeDescription = item.strikes.join('/');
                         }
                         description = `${item.ticker} ${strikeDescription} ${item.type}`;
 
@@ -2059,7 +2410,7 @@
                             roc = `${((calculateRawPnl(item) / item.max_risk) * 100).toFixed(1)}%`;
                         }
                     } else {
-                        date = dayjs(item.date).format('YYYY-MM-DD');
+                        date = itemDate.format('YYYY-MM-DD');
                         type = item.isInitial ? 'Initial Deposit' : item.transaction_type.charAt(0).toUpperCase() + item.transaction_type.slice(1);
                         description = item.notes || type;
                         amount = item.transaction_type === 'deposit' ? item.amount : -item.amount;
@@ -2163,7 +2514,13 @@
                         labels: Object.keys(pnlByTicker),
                         datasets: [{ label: 'Total P&L', data: Object.values(pnlByTicker), backgroundColor: Object.values(pnlByTicker).map(pnl => pnl >= 0 ? 'rgba(74, 222, 128, 0.7)' : 'rgba(248, 113, 113, 0.7)') }]
                     },
-                    options: horizontalAnalyticsChartOptions
+                    options: { ...horizontalAnalyticsChartOptions, onClick: (event, elements) => {
+                        if (elements.length > 0) {
+                            const elementIndex = elements[0].index;
+                            const clickedLabel = event.chart.data.labels[elementIndex];
+                            setChartFilter('ticker', clickedLabel);
+                        }
+                    }}
                 });
 
                 // P&L by Tag
@@ -2183,7 +2540,13 @@
                         labels: Object.keys(pnlByTag),
                         datasets: [{ label: 'Total P&L', data: Object.values(pnlByTag), backgroundColor: Object.values(pnlByTag).map(pnl => pnl >= 0 ? 'rgba(96, 165, 250, 0.7)' : 'rgba(251, 146, 60, 0.7)') }]
                     },
-                    options: horizontalAnalyticsChartOptions
+                    options: { ...horizontalAnalyticsChartOptions, onClick: (event, elements) => {
+                        if (elements.length > 0) {
+                            const elementIndex = elements[0].index;
+                            const clickedLabel = event.chart.data.labels[elementIndex];
+                            setChartFilter('tag', clickedLabel);
+                        }
+                    }}
                 });
 
                 // P&L by Day of Week
@@ -2201,7 +2564,13 @@
                         labels: Object.keys(pnlByDay),
                         datasets: [{ label: 'Total P&L', data: Object.values(pnlByDay), backgroundColor: Object.values(pnlByDay).map(pnl => pnl >= 0 ? 'rgba(52, 211, 153, 0.7)' : 'rgba(251, 113, 133, 0.7)') }]
                     },
-                     options: analyticsChartOptions
+                     options: { ...analyticsChartOptions, onClick: (event, elements) => {
+                        if (elements.length > 0) {
+                            const elementIndex = elements[0].index;
+                            const clickedLabel = event.chart.data.labels[elementIndex];
+                            setChartFilter('day', clickedLabel);
+                        }
+                    }}
                 });
                 
                 // P&L Distribution
@@ -2229,7 +2598,17 @@
                             backgroundColor: sortedBins.map(b => parseInt(b) + binSize/2 >= 0 ? 'rgba(34, 197, 94, 0.7)' : 'rgba(239, 68, 68, 0.7)')
                         }]
                     },
-                    options: { maintainAspectRatio: false, responsive: true, scales: { y: { ticks: { color: '#9ca3af', stepSize: 1 }, title: { display: true, text: 'Number of Trades', color: '#9ca3af' } }, x: { ticks: { color: '#9ca3af' } } }, plugins: { legend: { display: false } } }
+                    options: { maintainAspectRatio: false, responsive: true, scales: { y: { ticks: { color: '#9ca3af', stepSize: 1 }, title: { display: true, text: 'Number of Trades', color: '#9ca3af' } }, x: { ticks: { color: '#9ca3af' } } }, plugins: { legend: { display: false } },
+                        onClick: (event, elements) => {
+                            if (elements.length > 0) {
+                                const elementIndex = elements[0].index;
+                                const clickedBinStart = parseInt(sortedBins[elementIndex]);
+                                const range = [clickedBinStart, clickedBinStart + binSize];
+                                const displayValue = `${formatCurrency(range[0])} to ${formatCurrency(range[1])}`;
+                                setChartFilter('pnlRange', range, displayValue);
+                            }
+                        },
+                    }
                 });
             }
 
@@ -2278,6 +2657,7 @@
                         
                         const isToday = day.isSame(dayjs(), 'day');
                         const isWeekend = day.day() === 0 || day.day() === 6;
+                        const isSelected = selectedCalendarDate && day.isSame(selectedCalendarDate, 'day');
 
                         
                         let tradeDots = '';
@@ -2290,7 +2670,9 @@
 
 
                         calendarGrid.innerHTML += `
-                            <div class="calendar-day p-1 sm:p-2 rounded-lg text-left flex flex-col border border-transparent ${isToday ? '!border-indigo-500' : ''} ${isWeekend ? 'bg-gray-800/50 text-gray-600' : ''}" style="${!isWeekend ? `background-color: ${bgColor};` : ''}">
+                            <div class="calendar-day p-1 sm:p-2 rounded-lg text-left flex flex-col border-2 transition ${isToday ? 'border-indigo-500/50' : 'border-transparent'} ${isSelected ? '!border-indigo-500' : ''} ${isWeekend ? 'bg-gray-800/50 text-gray-600' : 'cursor-pointer'}" 
+                                 style="${!isWeekend ? `background-color: ${bgColor};` : ''}"
+                                 data-date="${dateStr}">
                                 <span class="font-semibold text-xs sm:text-sm ${isToday ? 'text-indigo-400' : ''}">${i}</span>
                                 ${tradeDots}
                                 ${data.pnl !== 0 ? `<span class="calendar-pnl-text mt-auto font-bold ${data.pnl > 0 ? 'text-green-300' : 'text-red-300'}">${formatCurrency(data.pnl)}</span>` : ''}
@@ -2336,7 +2718,7 @@
                         
                         const isToday = day.isSame(dayjs(), 'day');
                         const isWeekend = day.day() === 0 || day.day() === 6;
-
+                        const isSelected = selectedCalendarDate && day.isSame(selectedCalendarDate, 'day');
                         
                         let tradeDots = '';
                         if (data.wins > 0 || data.losses > 0) {
@@ -2347,7 +2729,9 @@
                         }
 
                         calendarGrid.innerHTML += `
-                            <div class="calendar-day p-1 sm:p-2 rounded-lg text-left flex flex-col border border-transparent ${isToday ? '!border-indigo-500' : ''} ${isWeekend ? 'bg-gray-800/50 text-gray-600' : ''}" style="${!isWeekend ? `background-color: ${bgColor};` : ''}">
+                            <div class="calendar-day p-1 sm:p-2 rounded-lg text-left flex flex-col border-2 transition ${isToday ? 'border-indigo-500/50' : 'border-transparent'} ${isSelected ? '!border-indigo-500' : ''} ${isWeekend ? 'bg-gray-800/50 text-gray-600' : 'cursor-pointer'}" 
+                                 style="${!isWeekend ? `background-color: ${bgColor};` : ''}"
+                                 data-date="${dateStr}">
                                 <span class="font-semibold text-xs sm:text-sm ${isToday ? 'text-indigo-400' : ''}">${day.format('D')}</span>
                                 ${tradeDots}
                                 ${data.pnl !== 0 ? `<span class="calendar-pnl-text mt-auto font-bold ${data.pnl > 0 ? 'text-green-300' : 'text-red-300'}">${formatCurrency(data.pnl)}</span>` : ''}
@@ -2356,6 +2740,21 @@
                 }
                  calendarSummary.textContent = `Period P&L: ${formatCurrency(periodPnl)}`;
             }
+
+            calendarGrid.addEventListener('click', (e) => {
+                const dayEl = e.target.closest('.calendar-day');
+                if (dayEl && dayEl.dataset.date) {
+                    const date = dayEl.dataset.date;
+                    if (selectedCalendarDate === date) {
+                        selectedCalendarDate = null; // Toggle off
+                    } else {
+                        selectedCalendarDate = date;
+                    }
+                    chartFilter = { type: null, value: null, displayValue: null }; // Clear chart filter
+                    currentPage = 1;
+                    updateDashboard();
+                }
+            });
 
             prevPeriodBtn.addEventListener('click', () => {
                 calendarDate = calendarDate.subtract(1, calendarView);
@@ -2454,15 +2853,23 @@
                         exitPrice = parseFloat((entryPrice * (1 - (Math.random() * 0.8 + 0.1))).toFixed(2));
                     }
                     
+                    const type = strategies[Math.floor(Math.random() * strategies.length)];
+                    const details = strategyDetails[type];
+                    let strikes = [];
+                    const startStrike = 100 + Math.floor(Math.random() * 50);
+                    for (let j = 0; j < details.strikes.length; j++) {
+                        strikes.push(startStrike + (j * 5)); // e.g., 150, 155, 160...
+                    }
+
                     const trade = {
                         id: i,
                         transaction_type: 'trade',
                         ticker: tickers[Math.floor(Math.random() * tickers.length)],
-                        type: strategies[Math.floor(Math.random() * strategies.length)],
+                        type: type,
                         open: openDate.format('YYYY-MM-DD'),
                         close: closeDate.format('YYYY-MM-DD'),
                         expiration: closeDate.add(Math.floor(Math.random() * 20) + 5, 'day').format('YYYY-MM-DD'),
-                        strikes: [100 + Math.floor(Math.random() * 20)],
+                        strikes: strikes,
                         quantity: Math.floor(Math.random() * 5) + 1,
                         entry_price: entryPrice,
                         exit_price: exitPrice,
@@ -2470,8 +2877,14 @@
                         max_risk: (entryPrice * 100) * (Math.floor(Math.random() * 5) + 1),
                         tags: tags[Math.floor(Math.random() * tags.length)],
                         notes: 'Sample trade data.',
-                        isExpired: Math.random() > 0.9
+                        isExpired: Math.random() > 0.9,
+                        ratio: details.ratio === true,
+                        expiration_2: details.expirations === 2 ? closeDate.add(Math.floor(Math.random() * 20) + 28, 'day').format('YYYY-MM-DD') : undefined,
+                        quantity_2: details.ratio === true ? (Math.floor(Math.random() * 5) + 1) * 2 : undefined,
+                        entry_price_2: details.ratio === true ? parseFloat((entryPrice * 0.7).toFixed(2)) : undefined,
+                        exit_price_2: details.ratio === true ? parseFloat((exitPrice * 0.6).toFixed(2)) : undefined,
                     };
+
                     trade.pnl = calculatePnl(trade); // Recalculate PNL with commissions
                     data.push(trade);
                 }
