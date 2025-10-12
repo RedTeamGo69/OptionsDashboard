@@ -379,8 +379,14 @@
                          <input type="number" step="0.01" id="entry_price" required class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="1.25">
                     </div>
                      <div>
-                        <label for="exit_price" class="block text-sm font-medium text-gray-300 mb-1">Exit Price</label>
-                         <input type="number" step="0.01" id="exit_price" required class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="0.65">
+                        <div class="flex justify-between items-center mb-1">
+                            <label for="exit_price" class="block text-sm font-medium text-gray-300">Exit Price</label>
+                            <label class="flex items-center text-xs text-gray-400 cursor-pointer">
+                                <input type="checkbox" id="expired_worthless" class="h-3 w-3 bg-gray-700 border-gray-600 text-indigo-600 focus:ring-indigo-500 rounded">
+                                <span class="ml-1.5">Expired</span>
+                            </label>
+                        </div>
+                        <input type="number" step="0.01" id="exit_price" required class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="0.65">
                     </div>
                 </div>
 
@@ -542,6 +548,7 @@
             const autoCalcRiskBtn = document.getElementById('autoCalcRiskBtn');
             const activityLogFooter = document.getElementById('activity-log-footer');
             const paginationControls = document.getElementById('pagination-controls');
+            const expiredCheckbox = document.getElementById('expired_worthless');
             
             // Main View Toggle Elements
             const mainViewToggle = document.getElementById('main-view-toggle');
@@ -655,6 +662,10 @@
                     document.getElementById('trade_id').value = '';
                     document.getElementById('modal-title').textContent = 'Log New Trade';
                     document.getElementById('saveBtn').textContent = 'Save Trade';
+                    const exitPriceInput = document.getElementById('exit_price');
+                    exitPriceInput.disabled = false;
+                    exitPriceInput.classList.remove('bg-gray-600');
+                    expiredCheckbox.checked = false;
                     updateStrikeInputs();
                 } else if (modalElement.id === 'importModal') {
                     fileNameSpan.textContent = 'No file selected';
@@ -721,6 +732,18 @@
                 if (!timestampCheckbox.checked) {
                     document.getElementById('open_time').value = '';
                     document.getElementById('close_time').value = '';
+                }
+            });
+            
+            expiredCheckbox.addEventListener('change', () => {
+                const exitPriceInput = document.getElementById('exit_price');
+                if (expiredCheckbox.checked) {
+                    exitPriceInput.value = 0;
+                    exitPriceInput.disabled = true;
+                    exitPriceInput.classList.add('bg-gray-600');
+                } else {
+                    exitPriceInput.disabled = false;
+                    exitPriceInput.classList.remove('bg-gray-600');
                 }
             });
 
@@ -899,6 +922,14 @@
                     const strikeInput = document.getElementById(`strike_price_${index}`);
                     if (strikeInput) strikeInput.value = strike;
                 });
+                
+                const exitPriceInput = document.getElementById('exit_price');
+                const debitStrategies = ['Long Call', 'Long Put', 'Long Call Spread', 'Long Put Spread', 'Long Straddle', 'Long Strangle', 'Long Butterfly'];
+                if(item.exit_price === 0 && debitStrategies.includes(item.type)) {
+                    expiredCheckbox.checked = true;
+                    exitPriceInput.disabled = true;
+                    exitPriceInput.classList.add('bg-gray-600');
+                }
 
                 modal.classList.remove('hidden');
             }
@@ -1569,7 +1600,7 @@
                     const endOfWeek = calendarDate.endOf('week');
                     calendarPeriodLabel.textContent = `${startOfWeek.format('MMM D')} - ${endOfWeek.format('MMM D, YYYY')}`;
 
-                    const days = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+                    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
                     calendarGrid.innerHTML = days.map(day => `<div class="font-bold text-xs text-gray-500 p-2">${day}</div>`).join('');
 
                     for (let i = 0; i < 7; i++) {
