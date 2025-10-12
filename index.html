@@ -87,8 +87,8 @@
         </header>
 
         <!-- Account Value & Settings -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-            <div class="lg:col-span-2 bg-gray-800 p-5 rounded-xl shadow-lg flex flex-col justify-between">
+        <div class="grid grid-cols-1 gap-6 mb-6">
+            <div class="bg-gray-800 p-5 rounded-xl shadow-lg flex flex-col justify-between">
                  <div id="account-switcher" class="flex flex-wrap items-center gap-2 mb-4 border-b border-gray-700 pb-4">
                       <!-- Account tabs will be injected here -->
                  </div>
@@ -104,14 +104,6 @@
                         <p id="total-withdrawals" class="text-lg font-semibold text-red-400">$0.00</p>
                     </div>
                 </div>
-            </div>
-            <div class="bg-gray-800 p-5 rounded-xl shadow-lg">
-                <label class="block text-sm font-medium text-gray-400 mb-2">Starting Balance</label>
-                <div class="grid grid-cols-2 gap-2">
-                    <input type="number" id="startingBalance" step="100" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="10000">
-                    <input type="date" id="startingBalanceDate" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-                </div>
-                 <button id="saveStartingBalance" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition w-full mt-2">Save</button>
             </div>
         </div>
 
@@ -147,7 +139,7 @@
             <div class="bg-gray-800 p-5 rounded-xl shadow-lg col-span-1 md:col-span-4 lg:col-span-3">
                 <div class="flex flex-wrap justify-between items-center mb-4 gap-4">
                     <h3 class="text-lg font-semibold text-white">P&L Curve</h3>
-                     <div class="flex items-center gap-4">
+                     <div class="flex items-center gap-4 flex-wrap">
                          <div class="flex items-center gap-2 text-sm">
                              <span id="date-mode-dynamic-label" class="text-gray-400">Dynamic</span>
                              <label for="date-mode-toggle" class="relative inline-flex items-center cursor-pointer">
@@ -156,19 +148,25 @@
                              </label>
                              <span id="date-mode-live-label" class="text-indigo-400 font-semibold">Live</span>
                          </div>
-                      <select id="equity-curve-filter-select" class="bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                        <select id="equity-curve-filter-select" class="bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none">
                             <option value="all">All Time</option>
-                            <option value="today">Today</option>
-                            <option value="yesterday">Yesterday</option>
-                            <option value="this-week">This Week</option>
-                            <option value="last-week">Last Week</option>
-                            <option value="this-month">This Month (MTD)</option>
-                            <option value="last-month">Last Month</option>
-                            <option value="qtd">This Quarter (QTD)</option>
-                            <option value="last-quarter">Last Quarter</option>
                             <option value="ytd">Year to Date (YTD)</option>
-                            <option value="last-year">Last Year</option>
+                            <option value="qtd">This Quarter (QTD)</option>
+                            <option value="mtd">This Month (MTD)</option>
+                            <option value="this-week">This Week</option>
+                            <option value="today">Today</option>
+                            <option value="custom">Custom...</option>
                         </select>
+                    </div>
+                </div>
+                <div id="custom-date-filter-wrapper" class="hidden flex items-center gap-4 mb-4 p-3 bg-gray-900/50 rounded-lg">
+                    <div class="flex items-center gap-2">
+                         <label for="custom-start-date" class="text-sm text-gray-400">From:</label>
+                         <input type="date" id="custom-start-date" class="bg-gray-700 border border-gray-600 rounded-lg px-3 py-1 text-white text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                    </div>
+                    <div class="flex items-center gap-2">
+                         <label for="custom-end-date" class="text-sm text-gray-400">To:</label>
+                         <input type="date" id="custom-end-date" class="bg-gray-700 border border-gray-600 rounded-lg px-3 py-1 text-white text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
                     </div>
                 </div>
                 <div class="relative h-80 sm:h-96">
@@ -206,6 +204,22 @@
                         <span class="text-gray-400">Max Drawdown</span>
                         <span id="stats-max-drawdown" class="font-semibold text-white">$0.00</span>
                     </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-400">Avg Holding Period</span>
+                        <span id="stats-avg-hold" class="font-semibold text-white">0 days</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-400">Longest Win Streak</span>
+                        <span id="stats-win-streak" class="font-semibold text-white">0</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-400">Longest Loss Streak</span>
+                        <span id="stats-loss-streak" class="font-semibold text-white">0</span>
+                    </div>
+                     <div class="flex justify-between items-center">
+                        <span class="text-gray-400">Total Commissions</span>
+                        <span id="stats-total-comm" class="font-semibold text-white">$0.00</span>
+                    </div>
                 </div>
             </div>
 
@@ -227,6 +241,7 @@
                     <div class="flex items-center gap-2" id="main-view-toggle">
                        <button data-view="calendar" class="main-view-btn bg-indigo-600 text-white py-1 px-3 rounded-lg text-sm transition">Calendar</button>
                        <button data-view="strategy" class="main-view-btn bg-gray-700 hover:bg-gray-600 text-gray-300 py-1 px-3 rounded-lg text-sm transition">Strategy</button>
+                       <button data-view="analytics" class="main-view-btn bg-gray-700 hover:bg-gray-600 text-gray-300 py-1 px-3 rounded-lg text-sm transition">Analytics</button>
                     </div>
                 </div>
 
@@ -244,13 +259,33 @@
                 <div id="strategy-view" class="hidden relative h-96">
                     <canvas id="pnlByStrategyChart"></canvas>
                 </div>
+
+                <!-- Analytics View -->
+                <div id="analytics-view" class="hidden grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="bg-gray-900/50 p-4 rounded-lg">
+                        <h4 class="text-md font-semibold text-white mb-3">P&L by Ticker</h4>
+                        <div class="relative h-64"><canvas id="pnlByTickerChart"></canvas></div>
+                    </div>
+                    <div class="bg-gray-900/50 p-4 rounded-lg">
+                        <h4 class="text-md font-semibold text-white mb-3">P&L by Tag</h4>
+                        <div class="relative h-64"><canvas id="pnlByTagChart"></canvas></div>
+                    </div>
+                    <div class="bg-gray-900/50 p-4 rounded-lg">
+                        <h4 class="text-md font-semibold text-white mb-3">P&L by Day of Week</h4>
+                        <div class="relative h-64"><canvas id="pnlByDayChart"></canvas></div>
+                    </div>
+                    <div class="bg-gray-900/50 p-4 rounded-lg">
+                        <h4 class="text-md font-semibold text-white mb-3">P&L Distribution</h4>
+                        <div class="relative h-64"><canvas id="pnlDistributionChart"></canvas></div>
+                    </div>
+                </div>
             </div>
             
             <!-- Recent Trades Table -->
             <div class="bg-gray-800 p-5 rounded-xl shadow-lg col-span-1 md:col-span-2 lg:col-span-4">
                 <div class="flex flex-wrap justify-between items-center mb-4 gap-y-4">
                     <h3 class="text-lg font-semibold text-white">Activity Log</h3>
-                    <div class="flex-grow flex flex-wrap items-center gap-4">
+                    <div class="ml-auto flex items-center gap-4 flex-wrap">
                         <div id="trade-filters" class="flex items-center gap-2 flex-wrap">
                             <button data-filter="all" class="filter-btn bg-indigo-600 text-white py-1 px-3 rounded-lg text-sm transition">All</button>
                             <button data-filter="trades" class="filter-btn bg-gray-700 hover:bg-gray-600 text-gray-300 py-1 px-3 rounded-lg text-sm transition">Trades</button>
@@ -259,17 +294,17 @@
                             <button data-filter="winners" class="filter-btn bg-gray-700 hover:bg-gray-600 text-gray-300 py-1 px-3 rounded-lg text-sm transition">Winners</button>
                             <button data-filter="losers" class="filter-btn bg-gray-700 hover:bg-gray-600 text-gray-300 py-1 px-3 rounded-lg text-sm transition">Losers</button>
                         </div>
-                         <div class="relative w-full sm:w-auto sm:flex-grow max-w-xs ml-auto">
+                         <div class="relative w-full sm:w-auto">
                             <input type="text" id="logSearch" class="w-full bg-gray-700 border border-gray-600 rounded-lg pl-10 pr-4 py-2 text-white text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="Search Ticker or Tag...">
                             <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" /></svg>
                         </div>
+                         <button id="exportCsvBtn" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                              <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                            </svg>
+                            Export
+                        </button>
                     </div>
-                     <button id="exportCsvBtn" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition flex items-center ml-auto md:ml-4">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                          <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                        </svg>
-                        Export
-                    </button>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left">
@@ -563,6 +598,17 @@
                     </div>
                 </div>
 
+                <!-- Starting Balance -->
+                <div class="mb-8">
+                    <h3 class="text-lg font-semibold text-indigo-400 mb-4 border-b border-gray-700 pb-2">Starting Balance</h3>
+                    <p class="text-xs text-gray-500 mb-3">Set the initial deposit for the currently active account (<strong id="settings-active-account-name" class="text-white"></strong>).</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <input type="number" id="startingBalance" step="100" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="10000">
+                        <input type="date" id="startingBalanceDate" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                    </div>
+                    <button id="saveStartingBalance" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition w-full mt-2">Save Balance</button>
+                </div>
+
                 <!-- Account Management -->
                  <div>
                     <h3 class="text-lg font-semibold text-indigo-400 mb-4 border-b border-gray-700 pb-2">Manage Accounts</h3>
@@ -574,6 +620,13 @@
                         <button id="addAccountBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition whitespace-nowrap disabled:bg-indigo-800 disabled:cursor-not-allowed">Add Account</button>
                     </div>
                     <p id="account-limit-msg" class="text-xs text-gray-500 mt-2 text-right hidden">Maximum of 5 accounts.</p>
+                </div>
+
+                <!-- Sample Data -->
+                <div id="sample-data-wrapper" class="mt-8">
+                     <h3 class="text-lg font-semibold text-indigo-400 mb-4 border-b border-gray-700 pb-2">Sample Data</h3>
+                     <p class="text-sm text-gray-400 mb-3">Your current account is empty. You can load a sample set of trades to explore the dashboard's features.</p>
+                     <button id="loadSampleDataBtn" class="bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-4 rounded-lg transition w-full">Load Sample Data</button>
                 </div>
 
 
@@ -600,12 +653,16 @@
             let calendarView = 'month';
             let currentPage = 1;
             const itemsPerPage = 10;
-            let mainView = 'calendar'; // 'calendar' or 'strategy'
+            let mainView = 'calendar'; // 'calendar', 'strategy', or 'analytics'
             let dateMode = 'live'; // 'live' or 'dynamic'
 
             // --- CHART INSTANCES ---
             let pnlCurveChart;
             let pnlByStrategyChart;
+            let pnlByTickerChart;
+            let pnlByTagChart;
+            let pnlByDayChart;
+            let pnlDistributionChart;
 
             // --- DOM ELEMENTS ---
             const modal = document.getElementById('tradeModal');
@@ -626,7 +683,7 @@
             const cancelTransactionBtn = document.getElementById('cancelTransactionBtn');
             const transactionForm = document.getElementById('transactionForm');
 
-            // Account Balance Elements
+            // Account Balance Elements (now in settings)
             const startingBalanceInput = document.getElementById('startingBalance');
             const startingBalanceDateInput = document.getElementById('startingBalanceDate');
             const saveStartingBalanceBtn = document.getElementById('saveStartingBalance');
@@ -657,11 +714,15 @@
             const dateModeToggle = document.getElementById('date-mode-toggle');
             const dateModeDynamicLabel = document.getElementById('date-mode-dynamic-label');
             const dateModeLiveLabel = document.getElementById('date-mode-live-label');
+            const customDateFilterWrapper = document.getElementById('custom-date-filter-wrapper');
+            const customStartDateInput = document.getElementById('custom-start-date');
+            const customEndDateInput = document.getElementById('custom-end-date');
             
             // Main View Toggle Elements
             const mainViewToggle = document.getElementById('main-view-toggle');
             const calendarViewEl = document.getElementById('calendar-view');
             const strategyViewEl = document.getElementById('strategy-view');
+            const analyticsViewEl = document.getElementById('analytics-view');
             const mainViewTitle = document.getElementById('main-view-title');
             const calendarControlsWrapper = document.getElementById('calendar-controls-wrapper');
 
@@ -689,6 +750,8 @@
             const accountListManagerEl = document.getElementById('accounts-list-manager');
             const currencySettingInput = document.getElementById('setting-currency');
             const commissionSettingInput = document.getElementById('setting-commission');
+            const sampleDataWrapper = document.getElementById('sample-data-wrapper');
+            const loadSampleDataBtn = document.getElementById('loadSampleDataBtn');
 
 
             // --- DATA PERSISTENCE & HELPERS ---
@@ -739,6 +802,10 @@
             
             function formatCurrency(value) {
                 if (typeof value !== 'number') return `${getCurrency()}0.00`;
+                // Handle -0 bug
+                if (Object.is(value, -0)) {
+                    value = 0;
+                }
                 return value.toLocaleString('en-US', { style: 'currency', currency: 'USD', currencyDisplay: 'narrowSymbol' }).replace('$', getCurrency());
             }
 
@@ -784,6 +851,26 @@
                 // Populate general settings
                 currencySettingInput.value = appData.settings.currency || '$';
                 commissionSettingInput.value = appData.settings.defaultCommission || 0;
+
+                // Populate active account name for starting balance section
+                const activeAccount = getActiveAccount();
+                if (activeAccount) {
+                    document.getElementById('settings-active-account-name').textContent = activeAccount.name;
+                }
+
+                // Populate starting balance fields
+                const allTransactions = getActiveTransactions();
+                const initialDeposit = allTransactions.find(t => t.isInitial);
+                if (initialDeposit) {
+                    startingBalanceInput.value = initialDeposit.amount;
+                    startingBalanceDateInput.value = initialDeposit.date;
+                } else {
+                    startingBalanceInput.value = '';
+                    startingBalanceDateInput.value = '';
+                }
+
+                // Show/Hide Sample Data Button
+                sampleDataWrapper.classList.toggle('hidden', allTransactions.length > 0);
 
                 // Populate account manager
                 accountListManagerEl.innerHTML = '';
@@ -955,14 +1042,19 @@
 
             // Settings Event Delegation
             settingsModal.addEventListener('change', (e) => {
+                let settingsChanged = false;
                  if (e.target.id === 'setting-currency') {
                     appData.settings.currency = e.target.value || '$';
+                    settingsChanged = true;
                  }
                  if (e.target.id === 'setting-commission') {
                     appData.settings.defaultCommission = parseFloat(e.target.value) || 0;
+                    settingsChanged = true;
                  }
-                 saveState();
-                 updateDashboard(); // Re-render to apply currency changes
+                 if(settingsChanged) {
+                    saveState();
+                    updateDashboard(); // Re-render to apply currency/commission changes
+                 }
             });
 
             accountListManagerEl.addEventListener('change', (e) => {
@@ -973,6 +1065,7 @@
                         account.name = e.target.value;
                         saveState();
                         renderAccountSwitcher(); // Update tabs immediately
+                        renderSettingsModal(); // Update active account name in settings
                     }
                 }
             });
@@ -1007,6 +1100,14 @@
                 }
             });
 
+            loadSampleDataBtn.addEventListener('click', () => {
+                appData.transactions[appData.activeAccountId] = generateDummyData();
+                saveState();
+                updateDashboard();
+                renderSettingsModal(); // Re-render modal to hide the button
+                flashButton(loadSampleDataBtn, 'Data Loaded!', 'bg-green-500');
+            });
+
 
             timestampCheckbox.addEventListener('change', () => {
                 timeInputsContainer.classList.toggle('hidden', !timestampCheckbox.checked);
@@ -1032,6 +1133,7 @@
                     if (!separateCommissionsCheckbox.checked) {
                        separateCommissionsCheckbox.click();
                     }
+                    document.getElementById('opening_commission').value = appData.settings.defaultCommission || 0;
                     closingCommInput.value = 0;
                     closingCommInput.disabled = true;
                     closingCommInput.classList.add('bg-gray-600');
@@ -1105,16 +1207,18 @@
                 return pnl;
             }
 
-            function calculatePnl(trade) {
+            function getTradeCommissions(trade) {
                 const { commissions, opening_commission, closing_commission, quantity, isExpired } = trade;
-                const rawPnl = calculateRawPnl(trade);
-                let totalCommissions = 0;
-
-                if(opening_commission !== undefined && closing_commission !== undefined) {
-                    totalCommissions = (opening_commission + closing_commission) * quantity;
+                if (opening_commission !== undefined && closing_commission !== undefined) {
+                    return (opening_commission + closing_commission) * quantity;
                 } else {
-                     totalCommissions = isExpired ? (commissions * quantity) : (commissions * quantity * 2); 
+                    return isExpired ? (commissions * quantity) : (commissions * quantity * 2);
                 }
+            }
+
+            function calculatePnl(trade) {
+                const rawPnl = calculateRawPnl(trade);
+                const totalCommissions = getTradeCommissions(trade);
                 return rawPnl - totalCommissions;
             }
             
@@ -1138,11 +1242,21 @@
 
             tradeForm.addEventListener('submit', (e) => {
                 e.preventDefault();
+                const saveBtn = document.getElementById('saveBtn');
+                const openDate = document.getElementById('open_date').value;
+                const closeDate = document.getElementById('close_date').value;
+                
+                const openDay = dayjs(openDate).day();
+                const closeDay = dayjs(closeDate).day();
+
+                if (openDay === 0 || openDay === 6 || closeDay === 0 || closeDay === 6) {
+                    flashButton(saveBtn, 'Weekend dates are not allowed!', 'bg-red-500', 3000);
+                    return;
+                }
+
                 const allTransactions = getActiveTransactions();
                 const tradeId = document.getElementById('trade_id').value;
-                const saveBtn = document.getElementById('saveBtn');
                 
-                const openDate = document.getElementById('open_date').value;
                 const initialDeposit = allTransactions.find(t => t.isInitial);
 
                 // Date validation
@@ -1151,7 +1265,6 @@
                     return;
                 }
 
-                const closeDate = document.getElementById('close_date').value;
                 const openTime = document.getElementById('open_time').value;
                 const closeTime = document.getElementById('close_time').value;
                 const includeTimestamps = timestampCheckbox.checked;
@@ -1449,7 +1562,16 @@
 
             equityCurveFilterSelect.addEventListener('change', (e) => {
                 equityTimeFilter = e.target.value;
+                customDateFilterWrapper.classList.toggle('hidden', equityTimeFilter !== 'custom');
                 updateDashboard();
+            });
+
+            [customStartDateInput, customEndDateInput].forEach(input => {
+                input.addEventListener('change', () => {
+                    if (equityTimeFilter === 'custom') {
+                        updateDashboard();
+                    }
+                });
             });
             
             logSearchInput.addEventListener('input', (e) => {
@@ -1517,16 +1639,7 @@
                 
                 const allTransactions = getActiveTransactions();
                 const trades = allTransactions.filter(t => t.transaction_type === 'trade');
-                
-                // Update starting balance fields
-                const initialDeposit = allTransactions.find(t => t.isInitial);
-                if (initialDeposit) {
-                    startingBalanceInput.value = initialDeposit.amount;
-                    startingBalanceDateInput.value = initialDeposit.date;
-                } else {
-                    startingBalanceInput.value = '';
-                    startingBalanceDateInput.value = '';
-                }
+                const validTrades = trades.filter(t => ![0, 6].includes(dayjs(t.close).day()));
                 
                 let now;
                 if (dateMode === 'live') {
@@ -1535,7 +1648,7 @@
                     now = allTransactions.length > 0 ? dayjs(Math.max(...allTransactions.map(t => dayjs(t.transaction_type === 'trade' ? t.close : t.date)))) : dayjs();
                 }
                 
-                let currentPeriodTrades = trades;
+                let currentPeriodTrades = validTrades;
                 
                 // Determine date ranges for current and previous periods
                 let currentStartDate, currentEndDate;
@@ -1545,41 +1658,29 @@
                         currentStartDate = now.clone().startOf('day');
                         currentEndDate = now.clone().endOf('day');
                         break;
-                    case 'yesterday':
-                        currentStartDate = now.clone().subtract(1, 'day').startOf('day');
-                        currentEndDate = now.clone().subtract(1, 'day').endOf('day');
-                        break;
                     case 'this-week':
                         currentStartDate = now.clone().startOf('week');
                         currentEndDate = now.clone().endOf('week');
                         break;
-                    case 'last-week':
-                        currentStartDate = now.clone().subtract(1, 'week').startOf('week');
-                        currentEndDate = now.clone().subtract(1, 'week').endOf('week');
-                        break;
-                    case 'this-month':
+                    case 'mtd':
                         currentStartDate = now.clone().startOf('month');
                         currentEndDate = now.clone().endOf('month');
-                        break;
-                    case 'last-month':
-                        currentStartDate = now.clone().subtract(1, 'month').startOf('month');
-                        currentEndDate = now.clone().subtract(1, 'month').endOf('month');
                         break;
                     case 'qtd':
                         currentStartDate = now.clone().startOf('quarter');
                         currentEndDate = now.clone().endOf('quarter');
                         break;
-                    case 'last-quarter':
-                        currentStartDate = now.clone().subtract(1, 'quarter').startOf('quarter');
-                        currentEndDate = now.clone().subtract(1, 'quarter').endOf('quarter');
-                        break;
                     case 'ytd':
                         currentStartDate = now.clone().startOf('year');
                         currentEndDate = now.clone().endOf('year');
                         break;
-                    case 'last-year':
-                        currentStartDate = now.clone().subtract(1, 'year').startOf('year');
-                        currentEndDate = now.clone().subtract(1, 'year').endOf('year');
+                    case 'custom':
+                        const start = dayjs(customStartDateInput.value);
+                        const end = dayjs(customEndDateInput.value);
+                        if (start.isValid() && end.isValid() && start.isBefore(end)) {
+                            currentStartDate = start.startOf('day');
+                            currentEndDate = end.endOf('day');
+                        }
                         break;
                     case 'all':
                     default:
@@ -1587,8 +1688,8 @@
                         break;
                 }
                 
-                if (equityTimeFilter !== 'all') {
-                    currentPeriodTrades = trades.filter(t => {
+                if (equityTimeFilter !== 'all' && currentStartDate && currentEndDate) {
+                    currentPeriodTrades = validTrades.filter(t => {
                         const closeDate = dayjs(t.close);
                         return !closeDate.isBefore(currentStartDate, 'day') && !closeDate.isAfter(currentEndDate, 'day');
                     });
@@ -1625,13 +1726,15 @@
                 document.getElementById('total-deposits').textContent = formatCurrency(totalDeposits);
                 document.getElementById('total-withdrawals').textContent = formatCurrency(totalWithdrawals);
 
-                const totalPnl = trades.reduce((acc, trade) => acc + trade.pnl, 0);
+                const totalPnl = validTrades.reduce((acc, trade) => acc + trade.pnl, 0);
                 totalAccountValueEl.textContent = formatCurrency(totalDeposits - totalWithdrawals + totalPnl);
                 
                 // --- Performance Stats Card (Dynamic) ---
                 document.getElementById('performance-stats-title').textContent = `Performance Stats (${equityCurveFilterSelect.options[equityCurveFilterSelect.selectedIndex].text})`;
-                const statsWins = currentPeriodTrades.filter(t => t.pnl > 0);
-                const statsLosses = currentPeriodTrades.filter(t => t.pnl <= 0);
+                const sortedPeriodTradesForStats = [...currentPeriodTrades].sort((a,b) => new Date(a.close) - new Date(b.close));
+                
+                const statsWins = sortedPeriodTradesForStats.filter(t => t.pnl > 0);
+                const statsLosses = sortedPeriodTradesForStats.filter(t => t.pnl <= 0);
                 const statsAvgWin = statsWins.length > 0 ? statsWins.reduce((sum, t) => sum + t.pnl, 0) / statsWins.length : 0;
                 const statsAvgLoss = statsLosses.length > 0 ? statsLosses.reduce((sum, t) => sum + t.pnl, 0) / statsLosses.length : 0;
                 const statsLargestWin = statsWins.length > 0 ? Math.max(...statsWins.map(t => t.pnl)) : 0;
@@ -1639,14 +1742,29 @@
                 const grossProfit = statsWins.reduce((acc, t) => acc + t.pnl, 0);
                 const grossLoss = Math.abs(statsLosses.reduce((acc, t) => acc + t.pnl, 0));
                 const profitFactor = grossLoss > 0 ? grossProfit / grossLoss : Infinity;
-                const expectancy = currentPeriodTrades.length > 0 ? currentKpis.totalPnl / currentPeriodTrades.length : 0;
+                const expectancy = sortedPeriodTradesForStats.length > 0 ? currentKpis.totalPnl / sortedPeriodTradesForStats.length : 0;
+                const avgHold = sortedPeriodTradesForStats.length > 0 ? sortedPeriodTradesForStats.reduce((acc, t) => acc + dayjs(t.close).diff(dayjs(t.open), 'day'), 0) / sortedPeriodTradesForStats.length : 0;
+                const totalCommissions = sortedPeriodTradesForStats.reduce((acc, t) => acc + getTradeCommissions(t), 0);
+                
+                // Streaks
+                let winStreak = 0, lossStreak = 0, maxWinStreak = 0, maxLossStreak = 0;
+                sortedPeriodTradesForStats.forEach(trade => {
+                    if (trade.pnl > 0) {
+                        winStreak++;
+                        lossStreak = 0;
+                        if (winStreak > maxWinStreak) maxWinStreak = winStreak;
+                    } else {
+                        lossStreak++;
+                        winStreak = 0;
+                        if (lossStreak > maxLossStreak) maxLossStreak = lossStreak;
+                    }
+                });
 
                 // Max Drawdown Calculation
-                const sortedPeriodTrades = [...currentPeriodTrades].sort((a,b) => new Date(a.close) - new Date(b.close));
                 let peakPnl = 0;
                 let maxDrawdown = 0;
                 let cumulativePnl = 0;
-                sortedPeriodTrades.forEach(trade => {
+                sortedPeriodTradesForStats.forEach(trade => {
                     cumulativePnl += trade.pnl;
                     if (cumulativePnl > peakPnl) {
                         peakPnl = cumulativePnl;
@@ -1664,16 +1782,20 @@
                 document.getElementById('stats-profit-factor').textContent = profitFactor === Infinity ? '∞' : profitFactor.toFixed(2);
                 document.getElementById('stats-expectancy').textContent = formatCurrency(expectancy);
                 document.getElementById('stats-max-drawdown').textContent = `-${formatCurrency(maxDrawdown)}`;
+                document.getElementById('stats-avg-hold').textContent = `${avgHold.toFixed(1)} days`;
+                document.getElementById('stats-win-streak').textContent = maxWinStreak;
+                document.getElementById('stats-loss-streak').textContent = maxLossStreak;
+                document.getElementById('stats-total-comm').textContent = formatCurrency(totalCommissions);
 
 
                 // --- P&L Curve Logic ---
-                const sortedTrades = [...trades].sort((a,b) => new Date(a.close) - new Date(b.close));
+                const sortedTrades = [...validTrades].sort((a,b) => new Date(a.close) - new Date(b.close));
                 let chartStartDate = null;
                 let chartEndDate = now.endOf('day');
                 
                 const accountStartDate = allTransactions.find(t => t.isInitial)?.date;
 
-                if (equityTimeFilter !== 'all') {
+                if (equityTimeFilter !== 'all' && currentStartDate && currentEndDate) {
                     chartStartDate = currentStartDate;
                     chartEndDate = currentEndDate;
                 } else if (accountStartDate) {
@@ -1709,11 +1831,66 @@
 
                 if (pnlCurveChart) pnlCurveChart.destroy();
                 pnlCurveChart = new Chart(document.getElementById('pnlCurveChart'), {
-                    type: 'line', data: {
+                    type: 'line',
+                    data: {
                         labels: [startingLabel, ...pnlLabels],
-                        datasets: [{ label: 'Cumulative P&L', data: [periodStartingPnl, ...pnlData], borderColor: '#818cf8', backgroundColor: 'rgba(129, 140, 248, 0.2)', fill: true, tension: 0.3 }]
+                        datasets: [{
+                            label: 'Cumulative P&L',
+                            data: [periodStartingPnl, ...pnlData],
+                            fill: {
+                                target: 'origin',
+                                above: 'rgba(74, 222, 128, 0.2)',
+                                below: 'rgba(248, 113, 113, 0.2)'
+                            },
+                            tension: 0.3,
+                            segment: {
+                                borderColor: ctx => {
+                                    if (!ctx.p0 || !ctx.p1) return '#a78bfa'; // Default for start/end
+                                    if (ctx.p0.parsed.y >= 0 && ctx.p1.parsed.y >= 0) return 'rgba(74, 222, 128, 1)';
+                                    if (ctx.p0.parsed.y < 0 && ctx.p1.parsed.y < 0) return 'rgba(248, 113, 113, 1)';
+                                    return '#a78bfa';
+                                }
+                            },
+                            pointBackgroundColor: ctx => ctx.raw >= 0 ? 'rgba(74, 222, 128, 1)' : 'rgba(248, 113, 113, 1)',
+                            pointBorderColor: ctx => ctx.raw >= 0 ? 'rgba(74, 222, 128, 1)' : 'rgba(248, 113, 113, 1)',
+                            pointHoverBackgroundColor: '#fff',
+                            pointHoverBorderColor: ctx => ctx.raw >= 0 ? 'rgba(74, 222, 128, 1)' : 'rgba(248, 113, 113, 1)'
+                        }]
                     },
-                    options: { maintainAspectRatio: false, responsive: true, scales: { y: { ticks: { color: '#9ca3af' } }, x: { ticks: { color: '#9ca3af' } } }, plugins: { legend: { display: false } } }
+                    options: {
+                        maintainAspectRatio: false,
+                        responsive: true,
+                        scales: {
+                            y: {
+                                ticks: {
+                                    color: '#9ca3af',
+                                    callback: function(value) { return formatCurrency(value); }
+                                },
+                                grid: { color: 'rgba(75, 85, 99, 0.5)' },
+                                border: { display: false }
+                            },
+                            x: {
+                                ticks: { color: '#9ca3af' },
+                                grid: { display: false },
+                                border: { display: false }
+                            }
+                        },
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        let label = context.dataset.label || '';
+                                        if (label) { label += ': '; }
+                                        if (context.parsed.y !== null) {
+                                            label += formatCurrency(context.parsed.y);
+                                        }
+                                        return label;
+                                    }
+                                }
+                            }
+                        }
+                    }
                 });
 
 
@@ -1732,6 +1909,9 @@
                     options: { maintainAspectRatio: false, responsive: true, scales: { y: { ticks: { color: '#9ca3af' } }, x: { ticks: { color: '#9ca3af' } } }, plugins: { legend: { display: false } } }
                 });
                 
+                // --- Analytics Charts ---
+                updateAnalyticsCharts(currentPeriodTrades);
+
                 // --- Main View Toggle Logic ---
                 document.querySelectorAll('.main-view-btn').forEach(btn => {
                     if (btn.dataset.view === mainView) {
@@ -1743,16 +1923,21 @@
                     }
                 });
 
+                calendarViewEl.classList.add('hidden');
+                strategyViewEl.classList.add('hidden');
+                analyticsViewEl.classList.add('hidden');
+                calendarControlsWrapper.classList.add('hidden');
+
                 if (mainView === 'calendar') {
                     calendarViewEl.classList.remove('hidden');
-                    strategyViewEl.classList.add('hidden');
                     mainViewTitle.textContent = 'Trading Calendar';
                     calendarControlsWrapper.classList.remove('hidden');
-                } else {
-                    calendarViewEl.classList.add('hidden');
+                } else if (mainView === 'strategy') {
                     strategyViewEl.classList.remove('hidden');
                     mainViewTitle.textContent = `P&L by Strategy (${equityCurveFilterSelect.options[equityCurveFilterSelect.selectedIndex].text})`;
-                    calendarControlsWrapper.classList.add('hidden');
+                } else if (mainView === 'analytics') {
+                    analyticsViewEl.classList.remove('hidden');
+                    mainViewTitle.textContent = `Advanced Analytics (${equityCurveFilterSelect.options[equityCurveFilterSelect.selectedIndex].text})`;
                 }
 
                 // Calendar Logic
@@ -1889,6 +2074,125 @@
                 }
             }
             
+            function updateAnalyticsCharts(trades) {
+                const analyticsChartOptions = {
+                    maintainAspectRatio: false, 
+                    responsive: true,
+                    barThickness: 15,
+                    scales: { 
+                        y: { 
+                            ticks: { color: '#9ca3af' }, 
+                            grid: { color: 'rgba(75, 85, 99, 0.5)', zeroLineColor: '#6b7280' },
+                            border: { display: false }
+                        }, 
+                        x: { 
+                            ticks: { color: '#9ca3af' },
+                            grid: { display: false },
+                            border: { display: false }
+                        } 
+                    }, 
+                    plugins: { legend: { display: false } }
+                };
+
+                 const horizontalAnalyticsChartOptions = {
+                    ...analyticsChartOptions,
+                    indexAxis: 'y',
+                    scales: { 
+                        x: { 
+                            ticks: { color: '#9ca3af' }, 
+                            grid: { color: 'rgba(75, 85, 99, 0.5)', zeroLineColor: '#6b7280' },
+                            border: { display: false }
+                        }, 
+                        y: { 
+                            ticks: { color: '#9ca3af' },
+                            grid: { display: false },
+                            border: { display: false }
+                        } 
+                    }, 
+                };
+
+                // P&L by Ticker
+                const pnlByTicker = trades.reduce((acc, trade) => {
+                    if (!acc[trade.ticker]) acc[trade.ticker] = 0;
+                    acc[trade.ticker] += trade.pnl;
+                    return acc;
+                }, {});
+                if (pnlByTickerChart) pnlByTickerChart.destroy();
+                pnlByTickerChart = new Chart(document.getElementById('pnlByTickerChart'), {
+                    type: 'bar', data: {
+                        labels: Object.keys(pnlByTicker),
+                        datasets: [{ label: 'Total P&L', data: Object.values(pnlByTicker), backgroundColor: Object.values(pnlByTicker).map(pnl => pnl >= 0 ? 'rgba(74, 222, 128, 0.7)' : 'rgba(248, 113, 113, 0.7)') }]
+                    },
+                    options: horizontalAnalyticsChartOptions
+                });
+
+                // P&L by Tag
+                const pnlByTag = trades.reduce((acc, trade) => {
+                    const tags = trade.tags ? trade.tags.split(',').map(t => t.trim()) : [];
+                    tags.forEach(tag => {
+                        if(tag) {
+                           if (!acc[tag]) acc[tag] = 0;
+                           acc[tag] += trade.pnl;
+                        }
+                    });
+                    return acc;
+                }, {});
+                if (pnlByTagChart) pnlByTagChart.destroy();
+                pnlByTagChart = new Chart(document.getElementById('pnlByTagChart'), {
+                    type: 'bar', data: {
+                        labels: Object.keys(pnlByTag),
+                        datasets: [{ label: 'Total P&L', data: Object.values(pnlByTag), backgroundColor: Object.values(pnlByTag).map(pnl => pnl >= 0 ? 'rgba(96, 165, 250, 0.7)' : 'rgba(251, 146, 60, 0.7)') }]
+                    },
+                    options: horizontalAnalyticsChartOptions
+                });
+
+                // P&L by Day of Week
+                const pnlByDay = { 'Mon': 0, 'Tue': 0, 'Wed': 0, 'Thu': 0, 'Fri': 0 };
+                trades.forEach(trade => {
+                    const day = dayjs(trade.close).day(); // 0 for Sunday, 1 for Monday, etc.
+                    if (day > 0 && day < 6) { // Only count weekdays
+                        const dayName = Object.keys(pnlByDay)[day - 1];
+                        pnlByDay[dayName] += trade.pnl;
+                    }
+                });
+                if (pnlByDayChart) pnlByDayChart.destroy();
+                pnlByDayChart = new Chart(document.getElementById('pnlByDayChart'), {
+                    type: 'bar', data: {
+                        labels: Object.keys(pnlByDay),
+                        datasets: [{ label: 'Total P&L', data: Object.values(pnlByDay), backgroundColor: Object.values(pnlByDay).map(pnl => pnl >= 0 ? 'rgba(52, 211, 153, 0.7)' : 'rgba(251, 113, 133, 0.7)') }]
+                    },
+                     options: analyticsChartOptions
+                });
+                
+                // P&L Distribution
+                const pnlValues = trades.map(t => t.pnl);
+                const maxPnl = Math.max(0.01, ...pnlValues.map(Math.abs));
+                const binSize = Math.max(10, Math.ceil(maxPnl / 10 / 100) * 100); // Round to nearest 100, min bin size 10
+                const bins = {};
+                pnlValues.forEach(pnl => {
+                    const bin = Math.floor(pnl / binSize) * binSize;
+                    if(!bins[bin]) bins[bin] = 0;
+                    bins[bin]++;
+                });
+                const sortedBins = Object.keys(bins).sort((a,b) => a-b);
+                const binLabels = sortedBins.map(b => `${formatCurrency(parseInt(b))} to ${formatCurrency(parseInt(b) + binSize)}`);
+                const binData = sortedBins.map(b => bins[b]);
+
+                if (pnlDistributionChart) pnlDistributionChart.destroy();
+                pnlDistributionChart = new Chart(document.getElementById('pnlDistributionChart'), {
+                    type: 'bar',
+                    data: {
+                        labels: binLabels,
+                        datasets: [{
+                            label: '# of Trades',
+                            data: binData,
+                            backgroundColor: sortedBins.map(b => parseInt(b) + binSize/2 >= 0 ? 'rgba(34, 197, 94, 0.7)' : 'rgba(239, 68, 68, 0.7)')
+                        }]
+                    },
+                    options: { maintainAspectRatio: false, responsive: true, scales: { y: { ticks: { color: '#9ca3af', stepSize: 1 }, title: { display: true, text: 'Number of Trades', color: '#9ca3af' } }, x: { ticks: { color: '#9ca3af' } } }, plugins: { legend: { display: false } } }
+                });
+            }
+
              // --- CALENDAR FUNCTIONS ---
             function renderCalendar() {
                 const allTransactions = getActiveTransactions();
@@ -2078,9 +2382,67 @@
                 document.body.removeChild(link);
             }
 
+            function generateDummyData() {
+                const startDate = dayjs('2025-07-01');
+                const endDate = dayjs('2025-09-30');
+                const data = [];
+                const tickers = ['SPY', 'QQQ', 'AAPL', 'TSLA', 'NVDA', 'AMD', 'GOOG'];
+                const strategies = Object.keys(strategyDetails);
+                const tags = ['earnings', 'swing', '0DTE', 'theta', 'lotto', 'momentum'];
+
+                const getRandomWeekday = (start, end) => {
+                    let date;
+                    do {
+                        const randomDay = Math.random() * end.diff(start, 'day');
+                        date = start.add(randomDay, 'day');
+                    } while (date.day() === 0 || date.day() === 6);
+                    return date;
+                };
+
+                data.push({ id: 0, transaction_type: 'deposit', amount: 25000, date: '2025-07-01', notes: 'Initial Deposit', isInitial: true });
+
+                for (let i = 1; i <= 60; i++) {
+                    const openDate = getRandomWeekday(startDate, endDate.subtract(1, 'week'));
+                    const closeDate = getRandomWeekday(openDate.add(1, 'day'), openDate.add(2, 'weeks'));
+                    const entryPrice = parseFloat((Math.random() * 5 + 0.5).toFixed(2));
+                    let exitPrice;
+                    const isWinner = Math.random() > 0.45; // 55% win rate
+                    
+                    if (isWinner) {
+                        exitPrice = parseFloat((entryPrice * (1 + (Math.random() * 1.5 + 0.2))).toFixed(2));
+                    } else {
+                        exitPrice = parseFloat((entryPrice * (1 - (Math.random() * 0.8 + 0.1))).toFixed(2));
+                    }
+                    
+                    const trade = {
+                        id: i,
+                        transaction_type: 'trade',
+                        ticker: tickers[Math.floor(Math.random() * tickers.length)],
+                        type: strategies[Math.floor(Math.random() * strategies.length)],
+                        open: openDate.format('YYYY-MM-DD'),
+                        close: closeDate.format('YYYY-MM-DD'),
+                        expiration: closeDate.add(Math.floor(Math.random() * 20) + 5, 'day').format('YYYY-MM-DD'),
+                        strikes: [100 + Math.floor(Math.random() * 20)],
+                        quantity: Math.floor(Math.random() * 5) + 1,
+                        entry_price: entryPrice,
+                        exit_price: exitPrice,
+                        commissions: 0.65,
+                        max_risk: (entryPrice * 100) * (Math.floor(Math.random() * 5) + 1),
+                        tags: tags[Math.floor(Math.random() * tags.length)],
+                        notes: 'Sample trade data.',
+                        isExpired: Math.random() > 0.9
+                    };
+                    trade.pnl = calculatePnl(trade); // Recalculate PNL with commissions
+                    data.push(trade);
+                }
+                return data;
+            }
+
             // Initial dashboard load
             initialize();
         });
     </script>
 </body>
 </html>
+
+
