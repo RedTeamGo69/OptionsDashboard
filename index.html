@@ -30,6 +30,20 @@
         .calendar-day {
             min-height: 6rem;
         }
+         .toggle-bg:after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            background-color: white;
+            border-radius: 9999px;
+            width: 1.25rem;
+            height: 1.25rem;
+            transition: transform 0.2s ease-in-out;
+        }
+        input:checked + .toggle-bg:after {
+            transform: translateX(100%);
+        }
     </style>
 </head>
 <body class="bg-gray-900 text-gray-200 font-sans antialiased">
@@ -124,19 +138,29 @@
             <div class="bg-gray-800 p-5 rounded-xl shadow-lg col-span-1 md:col-span-4 lg:col-span-3">
                 <div class="flex flex-wrap justify-between items-center mb-4 gap-4">
                     <h3 class="text-lg font-semibold text-white">P&L Curve</h3>
-                     <select id="equity-curve-filter-select" class="bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-                        <option value="all">All Time</option>
-                        <option value="today">Today</option>
-                        <option value="yesterday">Yesterday</option>
-                        <option value="this-week">This Week</option>
-                        <option value="last-week">Last Week</option>
-                        <option value="this-month">This Month (MTD)</option>
-                        <option value="last-month">Last Month</option>
-                        <option value="qtd">This Quarter (QTD)</option>
-                        <option value="last-quarter">Last Quarter</option>
-                        <option value="ytd">Year to Date (YTD)</option>
-                        <option value="last-year">Last Year</option>
-                    </select>
+                     <div class="flex items-center gap-4">
+                        <div class="flex items-center gap-2 text-sm">
+                            <span id="date-mode-dynamic-label" class="text-gray-400">Dynamic</span>
+                            <label for="date-mode-toggle" class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="date-mode-toggle" class="sr-only">
+                                <div class="w-11 h-6 bg-gray-600 rounded-full toggle-bg"></div>
+                            </label>
+                            <span id="date-mode-live-label" class="text-indigo-400 font-semibold">Live</span>
+                        </div>
+                         <select id="equity-curve-filter-select" class="bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                            <option value="all">All Time</option>
+                            <option value="today">Today</option>
+                            <option value="yesterday">Yesterday</option>
+                            <option value="this-week">This Week</option>
+                            <option value="last-week">Last Week</option>
+                            <option value="this-month">This Month (MTD)</option>
+                            <option value="last-month">Last Month</option>
+                            <option value="qtd">This Quarter (QTD)</option>
+                            <option value="last-quarter">Last Quarter</option>
+                            <option value="ytd">Year to Date (YTD)</option>
+                            <option value="last-year">Last Year</option>
+                        </select>
+                    </div>
                 </div>
                 <div class="relative h-80 sm:h-96">
                     <canvas id="pnlCurveChart"></canvas>
@@ -523,6 +547,7 @@
             let currentPage = 1;
             const itemsPerPage = 10;
             let mainView = 'calendar'; // 'calendar' or 'strategy'
+            let dateMode = 'live'; // 'live' or 'dynamic'
 
             // --- CHART INSTANCES ---
             let pnlCurveChart;
@@ -573,6 +598,9 @@
             const separateCommissionsCheckbox = document.getElementById('separate_commissions');
             const singleCommissionContainer = document.getElementById('single_commission_container');
             const separateCommissionsContainer = document.getElementById('separate_commissions_container');
+            const dateModeToggle = document.getElementById('date-mode-toggle');
+            const dateModeDynamicLabel = document.getElementById('date-mode-dynamic-label');
+            const dateModeLiveLabel = document.getElementById('date-mode-live-label');
             
             // Main View Toggle Elements
             const mainViewToggle = document.getElementById('main-view-toggle');
@@ -1236,59 +1264,99 @@
                 mainView = btn.dataset.view;
                 updateDashboard();
             });
+            
+            dateModeToggle.addEventListener('change', () => {
+                dateMode = dateModeToggle.checked ? 'live' : 'dynamic';
+                if(dateMode === 'live') {
+                    dateModeLiveLabel.classList.add('text-indigo-400', 'font-semibold');
+                    dateModeDynamicLabel.classList.remove('text-indigo-400', 'font-semibold');
+                } else {
+                    dateModeDynamicLabel.classList.add('text-indigo-400', 'font-semibold');
+                    dateModeLiveLabel.classList.remove('text-indigo-400', 'font-semibold');
+                }
+                updateDashboard();
+            });
 
 
             // --- DASHBOARD UPDATE LOGIC ---
             let filteredActivityForExport = []; // Variable to hold filtered data for export
             function updateDashboard() {
                 const trades = allTransactions.filter(t => t.transaction_type === 'trade');
-                const latestDate = allTransactions.length > 0 ? dayjs(Math.max(...allTransactions.map(t => dayjs(t.transaction_type === 'trade' ? t.close : t.date)))) : dayjs();
-                const now = latestDate;
-                let currentPeriodTrades = trades;
                 
+                let now;
+                if (dateMode === 'live') {
+                    now = dayjs();
+                } else {
+                    now = allTransactions.length > 0 ? dayjs(Math.max(...allTransactions.map(t => dayjs(t.transaction_type === 'trade' ? t.close : t.date)))) : dayjs();
+                }
+                
+                let currentPeriodTrades = trades;
+                let previousPeriodTrades = [];
+
                 // Determine date ranges for current and previous periods
                 let currentStartDate, currentEndDate;
+                let prevStartDate, prevEndDate;
                 
                 switch (equityTimeFilter) {
                     case 'today':
                         currentStartDate = now.clone().startOf('day');
                         currentEndDate = now.clone().endOf('day');
+                        prevStartDate = now.clone().subtract(1, 'day').startOf('day');
+                        prevEndDate = now.clone().subtract(1, 'day').endOf('day');
                         break;
                     case 'yesterday':
                         currentStartDate = now.clone().subtract(1, 'day').startOf('day');
                         currentEndDate = now.clone().subtract(1, 'day').endOf('day');
+                        prevStartDate = now.clone().subtract(2, 'day').startOf('day');
+                        prevEndDate = now.clone().subtract(2, 'day').endOf('day');
                         break;
                     case 'this-week':
                         currentStartDate = now.clone().startOf('week');
                         currentEndDate = now.clone().endOf('week');
+                        prevStartDate = now.clone().subtract(1, 'week').startOf('week');
+                        prevEndDate = now.clone().subtract(1, 'week').endOf('week');
                         break;
                     case 'last-week':
                         currentStartDate = now.clone().subtract(1, 'week').startOf('week');
                         currentEndDate = now.clone().subtract(1, 'week').endOf('week');
+                        prevStartDate = now.clone().subtract(2, 'week').startOf('week');
+                        prevEndDate = now.clone().subtract(2, 'week').endOf('week');
                         break;
                     case 'this-month':
                         currentStartDate = now.clone().startOf('month');
                         currentEndDate = now.clone().endOf('month');
+                        prevStartDate = now.clone().subtract(1, 'month').startOf('month');
+                        prevEndDate = now.clone().subtract(1, 'month').endOf('month');
                         break;
                     case 'last-month':
                         currentStartDate = now.clone().subtract(1, 'month').startOf('month');
                         currentEndDate = now.clone().subtract(1, 'month').endOf('month');
+                        prevStartDate = now.clone().subtract(2, 'month').startOf('month');
+                        prevEndDate = now.clone().subtract(2, 'month').endOf('month');
                         break;
                     case 'qtd':
                         currentStartDate = now.clone().startOf('quarter');
                         currentEndDate = now.clone().endOf('quarter');
+                        prevStartDate = now.clone().subtract(1, 'quarter').startOf('quarter');
+                        prevEndDate = now.clone().subtract(1, 'quarter').endOf('quarter');
                         break;
                     case 'last-quarter':
                         currentStartDate = now.clone().subtract(1, 'quarter').startOf('quarter');
                         currentEndDate = now.clone().subtract(1, 'quarter').endOf('quarter');
+                        prevStartDate = now.clone().subtract(2, 'quarter').startOf('quarter');
+                        prevEndDate = now.clone().subtract(2, 'quarter').endOf('quarter');
                         break;
                     case 'ytd':
                         currentStartDate = now.clone().startOf('year');
                         currentEndDate = now.clone().endOf('year');
+                        prevStartDate = now.clone().subtract(1, 'year').startOf('year');
+                        prevEndDate = now.clone().subtract(1, 'year').endOf('year');
                         break;
                     case 'last-year':
                         currentStartDate = now.clone().subtract(1, 'year').startOf('year');
                         currentEndDate = now.clone().subtract(1, 'year').endOf('year');
+                        prevStartDate = now.clone().subtract(2, 'year').startOf('year');
+                        prevEndDate = now.clone().subtract(2, 'year').endOf('year');
                         break;
                     case 'all':
                     default:
@@ -1300,6 +1368,10 @@
                     currentPeriodTrades = trades.filter(t => {
                         const closeDate = dayjs(t.close);
                         return !closeDate.isBefore(currentStartDate, 'day') && !closeDate.isAfter(currentEndDate, 'day');
+                    });
+                     previousPeriodTrades = trades.filter(t => {
+                        const closeDate = dayjs(t.close);
+                        return !closeDate.isBefore(prevStartDate, 'day') && !closeDate.isAfter(prevEndDate, 'day');
                     });
                 }
                 
