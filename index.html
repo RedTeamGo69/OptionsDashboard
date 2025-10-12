@@ -1681,6 +1681,10 @@
 
                             content += `
                                 <div class="p-4">
+                                     <div class="flex flex-col text-sm mb-4">
+                                        <span class="text-xs text-gray-500">Open / Close Dates</span>
+                                        <span class="font-semibold text-gray-300">${dayjs(item.open).format('YYYY-MM-DD')} to ${dayjs(item.close).format('YYYY-MM-DD')}</span>
+                                    </div>
                                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                         <!-- Leg 1 -->
                                         <div>
@@ -1721,18 +1725,23 @@
                             const rocValue = item.max_risk > 0 ? ((calculateRawPnl(item) / item.max_risk) * 100).toFixed(2) + '%' : 'N/A';
                             const rocColor = rocValue === 'N/A' ? 'text-gray-300' : parseFloat(rocValue) >= 0 ? 'text-green-400' : 'text-red-400';
                             content += `
-                                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-x-6 gap-y-4 p-4 text-gray-400 text-sm">
+                            <div class="p-4">
+                                <div class="grid grid-cols-2 sm:grid-cols-4 gap-x-6 gap-y-4 text-gray-400 text-sm">
+                                     <div class="flex flex-col sm:col-span-2">
+                                        <span class="text-xs text-gray-500">Open / Close Dates</span>
+                                        <span class="font-semibold text-gray-300">${dayjs(item.open).format('YYYY-MM-DD')} to ${dayjs(item.close).format('YYYY-MM-DD')}</span>
+                                    </div>
                                     <div class="flex flex-col">
                                         <span class="text-xs text-gray-500">Strikes</span>
                                         <span class="font-semibold text-gray-300">${item.strikes.join(' / ')}</span>
                                     </div>
                                     <div class="flex flex-col">
-                                        <span class="text-xs text-gray-500">Entry / Exit</span>
-                                        <span class="font-semibold text-gray-300">${formatCurrency(item.entry_price)} / ${formatCurrency(item.exit_price)}</span>
-                                    </div>
-                                    <div class="flex flex-col">
                                         <span class="text-xs text-gray-500">Quantity</span>
                                         <span class="font-semibold text-gray-300">${item.quantity}</span>
+                                    </div>
+                                    <div class="flex flex-col">
+                                        <span class="text-xs text-gray-500">Entry / Exit</span>
+                                        <span class="font-semibold text-gray-300">${formatCurrency(item.entry_price)} / ${formatCurrency(item.exit_price)}</span>
                                     </div>
                                     <div class="flex flex-col">
                                         <span class="text-xs text-gray-500">Commissions</span>
@@ -1747,6 +1756,7 @@
                                         <span class="font-semibold ${rocColor}">${rocValue}</span>
                                     </div>
                                 </div>
+                            </div>
                             `;
                             
                             // Calendar Spread Details
@@ -2897,4 +2907,5 @@
     </script>
 </body>
 </html>
+
 
