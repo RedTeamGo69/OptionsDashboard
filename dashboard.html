@@ -1,0 +1,1705 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Options Odyssey - Trading Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dayjs@1/dayjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.4/plugin/quarterOfYear.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.4/plugin/weekOfYear.js"></script>
+    <style>
+        /* Custom scrollbar for better dark mode aesthetics */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1f2937;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #4b5563;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #6b7280;
+        }
+        .modal-content {
+            max-height: 90vh;
+        }
+        .calendar-day {
+            min-height: 6rem;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-200 font-sans antialiased">
+    <div id="app" class="p-4 sm:p-6 lg:p-8">
+        <!-- Header -->
+        <header class="flex flex-wrap justify-between items-center mb-6 gap-4">
+            <h1 class="text-2xl sm:text-3xl font-bold text-white flex items-center gap-3">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M4 12C4 7.58172 7.58172 4 12 4C16.4183 4 20 7.58172 20 12C20 16.4183 16.4183 20 12 20" stroke="#818cf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M12 14C13.1046 14 14 13.1046 14 12C14 10.8954 13.1046 10 12 10C10.8954 10 10 10.8954 10 12C10 13.1046 10.8954 14 12 14Z" stroke="#a78bfa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M12 4V2" stroke="#818cf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M20 12L22 12" stroke="#818cf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M12 20V22" stroke="#818cf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span>Options Odyssey</span>
+            </h1>
+            <div class="flex items-center gap-2 flex-wrap">
+                <button id="importTradesBtn" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                    Import
+                </button>
+                 <button id="addTransactionBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                    Transaction
+                </button>
+                <button id="addTradeBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-transform transform hover:scale-105 flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    New Trade
+                </button>
+                 <button id="resetDataBtn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                    Reset
+                </button>
+            </div>
+        </header>
+
+        <!-- Account Value & Settings -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+            <div class="lg:col-span-2 bg-gray-800 p-5 rounded-xl shadow-lg flex justify-between items-center">
+                <div>
+                    <h3 class="text-sm font-medium text-gray-400">Total Account Value</h3>
+                    <p id="total-account-value" class="text-4xl font-bold text-white mt-1">$0.00</p>
+                </div>
+                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-indigo-500"><path d="M20 6 9 17l-5-5"></path></svg>
+            </div>
+            <div class="bg-gray-800 p-5 rounded-xl shadow-lg">
+                <label class="block text-sm font-medium text-gray-400 mb-2">Starting Balance</label>
+                <div class="grid grid-cols-2 gap-2">
+                    <input type="number" id="startingBalance" step="100" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="10000">
+                    <input type="date" id="startingBalanceDate" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                </div>
+                 <button id="saveStartingBalance" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition w-full mt-2">Save</button>
+            </div>
+        </div>
+
+        <!-- Main Dashboard Grid -->
+        <main class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <!-- KPIs -->
+            <div class="bg-gray-800 p-5 rounded-xl shadow-lg col-span-1 flex flex-col justify-center">
+                <div>
+                    <h3 class="text-sm font-medium text-gray-400">Total P&L</h3>
+                    <p id="kpi-total-pnl" class="text-3xl font-bold text-green-400 mt-1">$0.00</p>
+                </div>
+            </div>
+            <div class="bg-gray-800 p-5 rounded-xl shadow-lg col-span-1 flex flex-col justify-center">
+                <div>
+                    <h3 class="text-sm font-medium text-gray-400">Win Rate</h3>
+                    <p id="kpi-win-rate" class="text-3xl font-bold text-white mt-1">0%</p>
+                </div>
+            </div>
+            <div class="bg-gray-800 p-5 rounded-xl shadow-lg col-span-1 flex flex-col justify-center">
+                <div>
+                    <h3 class="text-sm font-medium text-gray-400">Average ROC %</h3>
+                    <p id="kpi-avg-roc" class="text-3xl font-bold text-white mt-1">0.0%</p>
+                </div>
+            </div>
+            <div class="bg-gray-800 p-5 rounded-xl shadow-lg col-span-1 flex flex-col justify-center">
+                <div>
+                    <h3 class="text-sm font-medium text-gray-400">Trades</h3>
+                    <p id="kpi-total-trades" class="text-3xl font-bold text-white mt-1">0</p>
+                </div>
+            </div>
+
+            <!-- Visualizations -->
+            <div class="bg-gray-800 p-5 rounded-xl shadow-lg md:col-span-2 lg:col-span-3">
+                <div class="flex flex-wrap justify-between items-center mb-4 gap-4">
+                    <h3 class="text-lg font-semibold text-white">P&L Curve</h3>
+                     <select id="equity-curve-filter-select" class="bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                        <option value="all">All Time</option>
+                        <option value="today">Today</option>
+                        <option value="yesterday">Yesterday</option>
+                        <option value="this-week">This Week</option>
+                        <option value="last-week">Last Week</option>
+                        <option value="this-month">This Month (MTD)</option>
+                        <option value="last-month">Last Month</option>
+                        <option value="qtd">This Quarter (QTD)</option>
+                        <option value="last-quarter">Last Quarter</option>
+                        <option value="ytd">Year to Date (YTD)</option>
+                        <option value="last-year">Last Year</option>
+                    </select>
+                </div>
+                <div class="relative h-80 sm:h-96">
+                    <canvas id="pnlCurveChart"></canvas>
+                </div>
+            </div>
+            <div class="bg-gray-800 p-5 rounded-xl shadow-lg md:col-span-2 lg:col-span-1">
+                <h3 id="performance-stats-title" class="text-lg font-semibold text-white mb-4">Performance Stats (All Time)</h3>
+                <div id="performance-stats" class="space-y-3 pt-2 text-sm">
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-400">Avg Win / Avg Loss</span>
+                        <div>
+                            <span id="stats-avg-win" class="font-semibold text-green-400">$0.00</span>
+                            <span class="text-gray-500"> / </span>
+                            <span id="stats-avg-loss" class="font-semibold text-red-400">$0.00</span>
+                        </div>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-400">Largest Win / Loss</span>
+                         <div>
+                            <span id="stats-largest-win" class="font-semibold text-green-400">$0.00</span>
+                            <span class="text-gray-500"> / </span>
+                            <span id="stats-largest-loss" class="font-semibold text-red-400">$0.00</span>
+                        </div>
+                    </div>
+                     <div class="flex justify-between items-center">
+                        <span class="text-gray-400">Profit Factor</span>
+                        <span id="stats-profit-factor" class="font-semibold text-white">0.00</span>
+                    </div>
+                     <div class="flex justify-between items-center">
+                        <span class="text-gray-400">Expectancy</span>
+                        <span id="stats-expectancy" class="font-semibold text-white">$0.00</span>
+                    </div>
+                     <div class="flex justify-between items-center">
+                        <span class="text-gray-400">Max Drawdown</span>
+                        <span id="stats-max-drawdown" class="font-semibold text-white">$0.00</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Toggleable Main View: Calendar / Strategy -->
+            <div class="bg-gray-800 p-5 rounded-xl shadow-lg md:col-span-2 lg:col-span-4">
+                 <div class="flex flex-wrap justify-between items-center mb-4 gap-4">
+                     <div class="flex items-center gap-4">
+                        <h3 id="main-view-title" class="text-lg font-semibold text-white">Trading Calendar</h3>
+                        <div id="calendar-controls-wrapper">
+                            <button id="prev-period" class="bg-gray-700 p-2 rounded-lg hover:bg-gray-600 transition">
+                                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+                            </button>
+                             <span id="calendar-period-label" class="font-semibold text-lg mx-4">October 2025</span>
+                            <button id="next-period" class="bg-gray-700 p-2 rounded-lg hover:bg-gray-600 transition">
+                               <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2" id="main-view-toggle">
+                       <button data-view="calendar" class="main-view-btn bg-indigo-600 text-white py-1 px-3 rounded-lg text-sm transition">Calendar</button>
+                       <button data-view="strategy" class="main-view-btn bg-gray-700 hover:bg-gray-600 text-gray-300 py-1 px-3 rounded-lg text-sm transition">Strategy</button>
+                    </div>
+                </div>
+
+                <!-- Calendar View -->
+                <div id="calendar-view">
+                     <div class="flex items-center gap-2 mb-4" id="calendar-view-toggle-buttons">
+                       <button data-view="month" class="calendar-view-btn bg-indigo-600 text-white py-1 px-3 rounded-lg text-sm transition">Month</button>
+                       <button data-view="week" class="calendar-view-btn bg-gray-700 hover:bg-gray-600 text-gray-300 py-1 px-3 rounded-lg text-sm transition">Week</button>
+                    </div>
+                    <div id="calendar-grid" class="grid grid-cols-7 gap-1 text-center"></div>
+                    <div id="calendar-summary" class="text-right mt-2 text-sm text-gray-400"></div>
+                </div>
+
+                <!-- Strategy View -->
+                <div id="strategy-view" class="hidden relative h-96">
+                    <canvas id="pnlByStrategyChart"></canvas>
+                </div>
+            </div>
+            
+            <!-- Recent Trades Table -->
+            <div class="bg-gray-800 p-5 rounded-xl shadow-lg col-span-1 md:col-span-2 lg:col-span-4">
+                <div class="flex flex-wrap justify-between items-center mb-4 gap-4">
+                    <h3 class="text-lg font-semibold text-white">Activity Log</h3>
+                    <div class="flex-grow flex items-center gap-4">
+                        <div id="trade-filters" class="flex items-center gap-2 flex-wrap">
+                            <button data-filter="all" class="filter-btn bg-indigo-600 text-white py-1 px-3 rounded-lg text-sm transition">All</button>
+                            <button data-filter="trades" class="filter-btn bg-gray-700 hover:bg-gray-600 text-gray-300 py-1 px-3 rounded-lg text-sm transition">Trades</button>
+                            <button data-filter="deposits" class="filter-btn bg-gray-700 hover:bg-gray-600 text-gray-300 py-1 px-3 rounded-lg text-sm transition">Deposits</button>
+                            <button data-filter="withdrawals" class="filter-btn bg-gray-700 hover:bg-gray-600 text-gray-300 py-1 px-3 rounded-lg text-sm transition">Withdrawals</button>
+                            <button data-filter="winners" class="filter-btn bg-gray-700 hover:bg-gray-600 text-gray-300 py-1 px-3 rounded-lg text-sm transition">Winners</button>
+                            <button data-filter="losers" class="filter-btn bg-gray-700 hover:bg-gray-600 text-gray-300 py-1 px-3 rounded-lg text-sm transition">Losers</button>
+                        </div>
+                         <div class="relative flex-grow max-w-xs ml-4">
+                            <input type="text" id="logSearch" class="w-full bg-gray-700 border border-gray-600 rounded-lg pl-10 pr-4 py-2 text-white text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="Search Ticker or Tag...">
+                            <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" /></svg>
+                        </div>
+                    </div>
+                     <button id="exportCsvBtn" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor"><path d="M10 12a2 2 0 100-4 2 2 0 000 4z" /><path fill-rule="evenodd" d="M.458 10C3.732 4.943 9.522 3 10 3s6.268 1.943 9.542 7c-3.274 5.057-9.064 7-9.542 7S3.732 15.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd" /></svg>
+                        Export
+                    </button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead>
+                            <tr class="border-b border-gray-700 text-sm">
+                                <th class="p-3 font-semibold">Date</th>
+                                <th class="p-3 font-semibold">Type</th>
+                                <th class="p-3 font-semibold">Description</th>
+                                <th class="p-3 font-semibold text-right">Duration</th>
+                                <th class="p-3 font-semibold text-right">Amount</th>
+                                <th class="p-3 font-semibold text-right">ROC %</th>
+                                <th class="p-3 font-semibold text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recent-trades-body">
+                           <!-- Rows will be injected here -->
+                        </tbody>
+                        <tfoot>
+                           <tr id="activity-log-footer" class="border-t-2 border-gray-600 font-bold"></tr>
+                        </tfoot>
+                    </table>
+                </div>
+                <div id="pagination-controls" class="flex justify-between items-center mt-4 text-sm"></div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Transaction Modal -->
+    <div id="transactionModal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-gray-800 rounded-xl shadow-2xl w-full max-w-md modal-content overflow-y-auto">
+            <form id="transactionForm" class="p-6 sm:p-8">
+                <h2 class="text-2xl font-bold text-white mb-6">Log Transaction</h2>
+                <div class="mb-4">
+                    <label for="transaction_type" class="block text-sm font-medium text-gray-300 mb-1">Transaction Type</label>
+                    <select id="transaction_type" required class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                        <option value="deposit">Deposit</option>
+                        <option value="withdrawal">Withdrawal</option>
+                    </select>
+                </div>
+                <div class="mb-4">
+                    <label for="transaction_amount" class="block text-sm font-medium text-gray-300 mb-1">Amount</label>
+                    <input type="number" step="0.01" id="transaction_amount" required class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="1000.00">
+                </div>
+                <div class="mb-4">
+                    <label for="transaction_date" class="block text-sm font-medium text-gray-300 mb-1">Date</label>
+                    <input type="date" id="transaction_date" required class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                </div>
+                <div class="mb-6">
+                    <label for="transaction_notes" class="block text-sm font-medium text-gray-300 mb-1">Notes</label>
+                    <textarea id="transaction_notes" rows="3" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="e.g., Contribution to account"></textarea>
+                </div>
+                <div class="flex justify-end gap-4">
+                    <button type="button" id="cancelTransactionBtn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-6 rounded-lg transition">Cancel</button>
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg transition">Save Transaction</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <!-- Trade Entry Modal -->
+    <div id="tradeModal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-gray-800 rounded-xl shadow-2xl w-full max-w-lg modal-content overflow-y-auto">
+            <form id="tradeForm" class="p-6 sm:p-8">
+                <h2 id="modal-title" class="text-2xl font-bold text-white mb-6">Log New Trade</h2>
+                <input type="hidden" id="trade_id">
+
+                <!-- Trade Identity -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label for="underlying_ticker" class="block text-sm font-medium text-gray-300 mb-1">Underlying Ticker</label>
+                        <input type="text" id="underlying_ticker" required class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="e.g., AAPL">
+                    </div>
+                    <div>
+                        <label for="trade_type" class="block text-sm font-medium text-gray-300 mb-1">Trade Type</label>
+                        <select id="trade_type" required class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                            <option>Long Call</option>
+                            <option>Long Put</option>
+                            <option>Short Call</option>
+                            <option>Short Put</option>
+                            <option>Long Call Spread</option>
+                            <option>Long Put Spread</option>
+                            <option>Short Call Spread</option>
+                            <option>Short Put Spread</option>
+                            <option>Long Straddle</option>
+                            <option>Short Straddle</option>
+                            <option>Long Strangle</option>
+                            <option>Short Strangle</option>
+                            <option>Long Butterfly</option>
+                            <option>Short Butterfly</option>
+                            <option>Short Iron Condor</option>
+                            <option>Short Iron Butterfly</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Trade Execution -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label for="open_date" class="block text-sm font-medium text-gray-300 mb-1">Open Date</label>
+                        <input type="date" id="open_date" required class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label for="close_date" class="block text-sm font-medium text-gray-300 mb-1">Close Date</label>
+                        <input type="date" id="close_date" required class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <label class="flex items-center text-sm font-medium text-gray-300">
+                        <input type="checkbox" id="include_timestamps" class="h-4 w-4 bg-gray-700 border-gray-600 text-indigo-600 focus:ring-indigo-500 rounded">
+                        <span class="ml-2">Include Timestamps</span>
+                    </label>
+                </div>
+                <div id="time-inputs-container" class="hidden grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label for="open_time" class="block text-sm font-medium text-gray-300 mb-1">Open Time</label>
+                        <input type="time" id="open_time" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label for="close_time" class="block text-sm font-medium text-gray-300 mb-1">Close Time</label>
+                        <input type="time" id="close_time" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                    </div>
+                </div>
+
+                <!-- Contract Details -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Expiration Date</label>
+                    <input type="date" id="expiration_date" required class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                </div>
+                <div id="strike-price-container" class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
+                    <!-- Strike price fields will be injected here -->
+                </div>
+                
+                <!-- Financials -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+                    <div>
+                        <label for="quantity" class="block text-sm font-medium text-gray-300 mb-1">Quantity</label>
+                        <input type="number" id="quantity" required min="1" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="5">
+                    </div>
+                    <div>
+                        <label for="entry_price" class="block text-sm font-medium text-gray-300 mb-1">Entry Price</label>
+                         <input type="number" step="0.01" id="entry_price" required class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="1.25">
+                    </div>
+                     <div>
+                        <label for="exit_price" class="block text-sm font-medium text-gray-300 mb-1">Exit Price</label>
+                         <input type="number" step="0.01" id="exit_price" required class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="0.65">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label for="commissions" class="block text-sm font-medium text-gray-300 mb-1">Commissions (Per Side)</label>
+                        <input type="number" step="0.01" id="commissions" value="0" required class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="0.65">
+                    </div>
+                    <div>
+                        <label for="max_risk" class="block text-sm font-medium text-gray-300 mb-1">Max Risk / Collateral</label>
+                        <div class="flex">
+                            <input type="number" step="1" id="max_risk" value="0" required class="w-full bg-gray-700 border border-gray-600 rounded-l-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="500">
+                             <button type="button" id="autoCalcRiskBtn" class="bg-gray-600 hover:bg-gray-500 text-white font-semibold py-2 px-4 rounded-r-lg transition hidden">Auto</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Notes & Tags -->
+                <div class="mb-4">
+                    <label for="notes" class="block text-sm font-medium text-gray-300 mb-1">Notes</label>
+                    <textarea id="notes" rows="3" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="Trade thesis, management, etc."></textarea>
+                </div>
+                 <div class="mb-6">
+                    <label for="tags" class="block text-sm font-medium text-gray-300 mb-1">Tags</label>
+                    <input type="text" id="tags" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="earnings, iv crush, spy (comma-separated)">
+                </div>
+                
+                <!-- Footer -->
+                <div class="flex justify-end gap-4">
+                    <button type="button" id="cancelBtn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-6 rounded-lg transition">Cancel</button>
+                    <button type="submit" id="saveBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-lg transition">Save Trade</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Import Trades Modal -->
+    <div id="importModal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-gray-800 rounded-xl shadow-2xl w-full max-w-2xl modal-content overflow-y-auto">
+            <div class="p-6 sm:p-8">
+                <h2 class="text-2xl font-bold text-white mb-4">Import Trades from CSV</h2>
+                
+                <div class="bg-gray-900/50 p-4 rounded-lg mb-6">
+                    <h3 class="font-semibold text-white mb-2">Instructions</h3>
+                    <ol class="list-decimal list-inside text-gray-400 text-sm space-y-2">
+                        <li>Download the CSV template. This ensures you have the correct columns.</li>
+                        <li>Fill in your trade data. See the required columns and formats below.</li>
+                        <li>Save your file as a CSV.</li>
+                        <li>Click "Choose File" and select your saved CSV file.</li>
+                        <li>Click "Import" to add the trades to your dashboard.</li>
+                    </ol>
+                </div>
+
+                <div class="bg-gray-900/50 p-4 rounded-lg mb-6">
+                     <h3 class="font-semibold text-white mb-2">Required Columns & Format</h3>
+                     <ul class="text-gray-400 text-xs space-y-1">
+                        <li><strong class="text-gray-300">Ticker:</strong> Stock symbol (e.g., AAPL)</li>
+                        <li><strong class="text-gray-300">TradeType:</strong> See dropdown for available types.</li>
+                        <li><strong class="text-gray-300">OpenDate / CloseDate / ExpirationDate:</strong> YYYY-MM-DD format</li>
+                        <li><strong class="text-gray-300">OpenTime / CloseTime (Optional):</strong> HH:MM format (24-hour)</li>
+                        <li><strong class="text-gray-300">Strikes:</strong> Single value, or multiple values separated by a comma (e.g., "450,455,470,475" for an Iron Condor)</li>
+                        <li><strong class="text-gray-300">Quantity / EntryPrice / ExitPrice / CommissionsPerContract / MaxRisk:</strong> Numerical values</li>
+                        <li><strong class="text-gray-300">Notes / Tags (Optional):</strong> Your text notes for the trade. For tags, use a comma-separated list.</li>
+                     </ul>
+                </div>
+                
+                <div class="flex items-center gap-4 mb-4">
+                    <input type="file" id="csvFileInput" accept=".csv" class="hidden">
+                    <label for="csvFileInput" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg cursor-pointer transition">Choose File</label>
+                    <span id="fileName" class="text-gray-400 text-sm">No file selected</span>
+                </div>
+                <div id="importStatus" class="text-sm mb-4"></div>
+
+                <div class="flex justify-between items-center">
+                    <button type="button" id="downloadTemplateBtn" class="text-indigo-400 hover:text-indigo-300 text-sm font-semibold">Download Template</button>
+                    <div class="flex gap-4">
+                         <button type="button" id="cancelImportBtn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-6 rounded-lg transition">Cancel</button>
+                         <button type="button" id="processImportBtn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-lg transition">Import</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Reset Data Modal -->
+    <div id="resetModal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-gray-800 rounded-xl shadow-2xl w-full max-w-md modal-content">
+            <div class="p-6 sm:p-8">
+                <h2 class="text-2xl font-bold text-red-400 mb-4">Reset All Data</h2>
+                <p class="text-gray-400 mb-6">This is a permanent action and cannot be undone. All trades, transactions, and your starting balance will be erased. To confirm, please type "RESET" in the box below.</p>
+                <input type="text" id="resetConfirmInput" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white mb-6 focus:ring-2 focus:ring-red-500 focus:outline-none" placeholder="Type RESET to confirm">
+                <div class="flex justify-end gap-4">
+                    <button type="button" id="cancelResetBtn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-6 rounded-lg transition">Cancel</button>
+                    <button type="button" id="confirmResetBtn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded-lg transition opacity-50 cursor-not-allowed" disabled>Confirm Reset</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        dayjs.extend(window.dayjs_plugin_quarterOfYear);
+        dayjs.extend(window.dayjs_plugin_weekOfYear);
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- MOCK DATA & STATE ---
+            let allTransactions = [];
+            let tradeTableFilter = 'all';
+            let equityTimeFilter = 'all';
+            let logSearchFilter = '';
+            let calendarDate = dayjs();
+            let calendarView = 'month';
+            let currentPage = 1;
+            const itemsPerPage = 10;
+            let mainView = 'calendar'; // 'calendar' or 'strategy'
+
+            // --- CHART INSTANCES ---
+            let pnlCurveChart;
+            let pnlByStrategyChart;
+
+            // --- DOM ELEMENTS ---
+            const modal = document.getElementById('tradeModal');
+            const addTradeBtn = document.getElementById('addTradeBtn');
+            const cancelBtn = document.getElementById('cancelBtn');
+            const tradeForm = document.getElementById('tradeForm');
+            const tradeTypeSelect = document.getElementById('trade_type');
+            const strikeContainer = document.getElementById('strike-price-container');
+            const tradesBody = document.getElementById('recent-trades-body');
+            const tradeFilters = document.getElementById('trade-filters');
+            const timestampCheckbox = document.getElementById('include_timestamps');
+            const timeInputsContainer = document.getElementById('time-inputs-container');
+            const equityCurveFilterSelect = document.getElementById('equity-curve-filter-select');
+            
+            // Transaction Modal Elements
+            const transactionModal = document.getElementById('transactionModal');
+            const addTransactionBtn = document.getElementById('addTransactionBtn');
+            const cancelTransactionBtn = document.getElementById('cancelTransactionBtn');
+            const transactionForm = document.getElementById('transactionForm');
+
+            // Account Balance Elements
+            const startingBalanceInput = document.getElementById('startingBalance');
+            const startingBalanceDateInput = document.getElementById('startingBalanceDate');
+            const saveStartingBalanceBtn = document.getElementById('saveStartingBalance');
+            const totalAccountValueEl = document.getElementById('total-account-value');
+
+            // Import Modal Elements
+            const importModal = document.getElementById('importModal');
+            const importTradesBtn = document.getElementById('importTradesBtn');
+            const cancelImportBtn = document.getElementById('cancelImportBtn');
+            const downloadTemplateBtn = document.getElementById('downloadTemplateBtn');
+            const csvFileInput = document.getElementById('csvFileInput');
+            const fileNameSpan = document.getElementById('fileName');
+            const processImportBtn = document.getElementById('processImportBtn');
+            const importStatus = document.getElementById('importStatus');
+            
+            // New Elements
+            const logSearchInput = document.getElementById('logSearch');
+            const exportCsvBtn = document.getElementById('exportCsvBtn');
+            const autoCalcRiskBtn = document.getElementById('autoCalcRiskBtn');
+            const activityLogFooter = document.getElementById('activity-log-footer');
+            const paginationControls = document.getElementById('pagination-controls');
+            
+            // Main View Toggle Elements
+            const mainViewToggle = document.getElementById('main-view-toggle');
+            const calendarViewEl = document.getElementById('calendar-view');
+            const strategyViewEl = document.getElementById('strategy-view');
+            const mainViewTitle = document.getElementById('main-view-title');
+            const calendarControlsWrapper = document.getElementById('calendar-controls-wrapper');
+
+            // Calendar Elements
+            const calendarGrid = document.getElementById('calendar-grid');
+            const calendarPeriodLabel = document.getElementById('calendar-period-label');
+            const prevPeriodBtn = document.getElementById('prev-period');
+            const nextPeriodBtn = document.getElementById('next-period');
+            const calendarMonthWeekToggle = document.getElementById('calendar-view-toggle-buttons');
+            const calendarSummary = document.getElementById('calendar-summary');
+            
+            // Reset Modal Elements
+            const resetDataBtn = document.getElementById('resetDataBtn');
+            const resetModal = document.getElementById('resetModal');
+            const cancelResetBtn = document.getElementById('cancelResetBtn');
+            const confirmResetBtn = document.getElementById('confirmResetBtn');
+            const resetConfirmInput = document.getElementById('resetConfirmInput');
+
+
+            // --- DATA PERSISTENCE ---
+            function saveState() {
+                localStorage.setItem('optionsTrackerAllTransactions', JSON.stringify(allTransactions));
+            }
+
+            function loadState() {
+                const savedTransactions = localStorage.getItem('optionsTrackerAllTransactions');
+                if (savedTransactions) {
+                    allTransactions = JSON.parse(savedTransactions);
+                } else {
+                    // Load default mock data if nothing is saved
+                     allTransactions = [
+                        { id: 1, transaction_type: 'deposit', isInitial: true, amount: 25000, date: '2025-09-01', notes: 'Initial Deposit'},
+                        // Week 1: Sep 1 - Sep 5
+                        { id: 2, transaction_type: 'trade', ticker: 'SPY', type: 'Short Put Spread', open: '2025-09-02', close: '2025-09-02', expiration: '2025-09-02', strikes: [450, 448], quantity: 10, entry_price: 0.40, exit_price: 0.10, commissions: 0.65, pnl: 287, max_risk: 1600, tags: 'spy,0dte', notes: 'Morning dip buy.'},
+                        { id: 3, transaction_type: 'trade', ticker: 'SPY', type: 'Short Call Spread', open: '2025-09-02', close: '2025-09-02', expiration: '2025-09-02', strikes: [455, 457], quantity: 10, entry_price: 0.50, exit_price: 0.75, commissions: 0.65, pnl: -263, max_risk: 1500, tags: 'spy,0dte', notes: 'Trend day, stopped out.'},
+                        { id: 4, transaction_type: 'trade', ticker: 'QQQ', type: 'Long Call', open: '2025-09-03', close: '2025-09-03', expiration: '2025-09-05', strikes: [380], quantity: 5, entry_price: 1.20, exit_price: 1.80, commissions: 1.10, pnl: 298.9, max_risk: 600, tags: 'qqq,momentum', notes: 'Quick scalp on news.'},
+                        { id: 5, transaction_type: 'trade', ticker: 'SPY', type: 'Short Strangle', open: '2025-09-04', close: '2025-09-04', expiration: '2025-09-04', strikes: [445, 455], quantity: 3, entry_price: 1.50, exit_price: 0.50, commissions: 1.25, pnl: 296.25, max_risk: 0, tags: 'spy,0dte,iv crush', notes: 'Lunchtime lull trade.'},
+                        { id: 6, transaction_type: 'trade', ticker: 'SPY', type: 'Long Put', open: '2025-09-05', close: '2025-09-05', expiration: '2025-09-05', strikes: [450], quantity: 10, entry_price: 0.80, exit_price: 1.40, commissions: 1.30, pnl: 598.7, max_risk: 800, tags: 'spy,0dte', notes: 'End of day flush.'},
+                        // Week 2: Sep 8 - Sep 12
+                        { id: 7, transaction_type: 'trade', ticker: 'TSLA', type: 'Short Call Spread', open: '2025-09-08', close: '2025-09-08', expiration: '2025-09-12', strikes: [280, 282.5], quantity: 5, entry_price: 0.90, exit_price: 0.30, commissions: 0.65, pnl: 293.5, max_risk: 800, tags: 'tsla', notes: ''},
+                        { id: 8, transaction_type: 'trade', ticker: 'SPY', type: 'Short Iron Condor', open: '2025-09-09', close: '2025-09-09', expiration: '2025-09-09', strikes: [440, 442, 452, 454], quantity: 8, entry_price: 0.60, exit_price: 0.10, commissions: 1.50, pnl: 398.5, max_risk: 1120, tags: 'spy,0dte,ic', notes: ''},
+                        { id: 9, transaction_type: 'trade', ticker: 'AMZN', type: 'Long Call', open: '2025-09-10', close: '2025-09-10', expiration: '2025-09-12', strikes: [140], quantity: 3, entry_price: 1.10, exit_price: 0.80, commissions: 1.00, pnl: -91, max_risk: 330, tags: 'amzn', notes: 'Failed breakout.'},
+                        { id: 10, transaction_type: 'trade', ticker: 'SPY', type: 'Short Put Spread', open: '2025-09-11', close: '2025-09-11', expiration: '2025-09-11', strikes: [447, 445], quantity: 15, entry_price: 0.35, exit_price: 0.05, commissions: 1.20, pnl: 448.8, max_risk: 2550, tags: 'spy,0dte', notes: ''},
+                        { id: 11, transaction_type: 'trade', ticker: 'SPY', type: 'Short Put Spread', open: '2025-09-12', close: '2025-09-12', expiration: '2025-09-12', strikes: [449, 447], quantity: 10, entry_price: 0.45, exit_price: 0.90, commissions: 0.65, pnl: -456.5, max_risk: 1550, tags: 'spy,0dte', notes: 'Caught the wrong side of a reversal.'},
+                        // Week 3: Sep 15 - Sep 19
+                        { id: 12, transaction_type: 'trade', ticker: 'NVDA', type: 'Long Put', open: '2025-09-15', close: '2025-09-15', expiration: '2025-09-19', strikes: [480], quantity: 2, entry_price: 3.10, exit_price: 5.20, commissions: 1.10, pnl: 418.9, max_risk: 620, tags: 'nvda,breakdown', notes: ''},
+                        { id: 13, transaction_type: 'trade', ticker: 'SPY', type: 'Short Call Spread', open: '2025-09-16', close: '2025-09-16', expiration: '2025-09-16', strikes: [451, 453], quantity: 10, entry_price: 0.50, exit_price: 0.10, commissions: 0.65, pnl: 393.5, max_risk: 1500, tags: 'spy,0dte', notes: ''},
+                        { id: 14, transaction_type: 'trade', ticker: 'SPY', type: 'Short Put Spread', open: '2025-09-16', close: '2025-09-16', expiration: '2025-09-16', strikes: [446, 444], quantity: 10, entry_price: 0.40, exit_price: 0.05, commissions: 0.65, pnl: 343.5, max_risk: 1600, tags: 'spy,0dte', notes: ''},
+                        { id: 15, transaction_type: 'deposit', date: '2025-09-17', amount: 2000, notes: 'Added funds', isInitial: false },
+                        { id: 16, transaction_type: 'trade', ticker: 'AAPL', type: 'Long Call', open: '2025-09-18', close: '2025-09-18', expiration: '2025-09-19', strikes: [175], quantity: 5, entry_price: 0.88, exit_price: 1.50, commissions: 1.10, pnl: 308.9, max_risk: 440, tags: 'aapl', notes: ''},
+                        { id: 17, transaction_type: 'trade', ticker: 'IWM', type: 'Short Put Spread', open: '2025-09-19', close: '2025-09-19', expiration: '2025-09-19', strikes: [185, 184], quantity: 10, entry_price: 0.30, exit_price: 0.05, commissions: 0.65, pnl: 243.5, max_risk: 700, tags: 'iwm,0dte', notes: ''},
+                         // Week 4: Sep 22 - Sep 26
+                        { id: 18, transaction_type: 'trade', ticker: 'SPY', type: 'Short Iron Condor', open: '2025-09-22', close: '2025-09-22', expiration: '2025-09-22', strikes: [435, 437, 447, 449], quantity: 10, entry_price: 0.45, exit_price: 0.15, commissions: 1.25, pnl: 298.75, max_risk: 1550, tags: 'spy,0dte,ic', notes: ''},
+                        { id: 19, transaction_type: 'trade', ticker: 'GOOG', type: 'Short Put', open: '2025-09-23', close: '2025-09-26', expiration: '2025-10-17', strikes: [132], quantity: 1, entry_price: 2.80, exit_price: 3.10, commissions: 0.65, pnl: -30.65, max_risk: 12920, tags: 'goog,wheel', notes: 'Assigned.'},
+                        { id: 20, transaction_type: 'trade', ticker: 'SPY', type: 'Short Call Spread', open: '2025-09-24', close: '2025-09-24', expiration: '2025-09-24', strikes: [445, 447], quantity: 20, entry_price: 0.60, exit_price: 0.20, commissions: 1.30, pnl: 798.7, max_risk: 2800, tags: 'spy,0dte,fed day', notes: 'Fed volatility play.'},
+                        { id: 21, transaction_type: 'trade', ticker: 'SPY', type: 'Short Put Spread', open: '2025-09-24', close: '2025-09-24', expiration: '2025-09-24', strikes: [438, 436], quantity: 20, entry_price: 0.50, exit_price: 0.10, commissions: 1.30, pnl: 798.7, max_risk: 3000, tags: 'spy,0dte,fed day', notes: 'Fed volatility play.'},
+                         // Week 5: Sep 29 - Oct 3
+                        { id: 22, transaction_type: 'withdrawal', date: '2025-09-30', amount: 1000, notes: 'Took profits', isInitial: false },
+                        { id: 23, transaction_type: 'trade', ticker: 'AMD', type: 'Long Put', open: '2025-10-01', close: '2025-10-01', expiration: '2025-10-03', strikes: [105], quantity: 5, entry_price: 1.50, exit_price: 1.20, commissions: 1.10, pnl: -151.1, max_risk: 750, tags: 'amd', notes: 'Reversal didn\'t hold.'},
+                        { id: 24, transaction_type: 'trade', ticker: 'SPY', type: 'Short Put Spread', open: '2025-10-02', close: '2025-10-02', expiration: '2025-10-02', strikes: [428, 426], quantity: 10, entry_price: 0.40, exit_price: 0.05, commissions: 0.65, pnl: 343.5, max_risk: 1600, tags: 'spy,0dte', notes: ''},
+                        { id: 25, transaction_type: 'trade', ticker: 'SPY', type: 'Short Call Spread', open: '2025-10-03', close: '2025-10-03', expiration: '2025-10-03', strikes: [435, 437], quantity: 15, entry_price: 0.55, exit_price: 0.10, commissions: 1.20, pnl: 673.8, max_risk: 2175, tags: 'spy,0dte,jobs report', notes: 'Jobs report fade.'},
+                        // Week 6: Oct 6 - Oct 10
+                        { id: 26, transaction_type: 'trade', ticker: 'META', type: 'Short Call Spread', open: '2025-10-06', close: '2025-10-08', expiration: '2025-10-17', strikes: [310, 315], quantity: 4, entry_price: 1.80, exit_price: 0.90, commissions: 1.05, pnl: 358.95, max_risk: 1280, tags: 'meta', notes: ''},
+                        { id: 27, transaction_type: 'trade', ticker: 'SPY', type: 'Short Put Spread', open: '2025-10-07', close: '2025-10-07', expiration: '2025-10-07', strikes: [430, 428], quantity: 20, entry_price: 0.30, exit_price: 0.05, commissions: 1.30, pnl: 498.7, max_risk: 3400, tags: 'spy,0dte', notes: ''},
+                        { id: 28, transaction_type: 'trade', ticker: 'SPY', type: 'Long Put', open: '2025-10-08', close: '2025-10-08', expiration: '2025-10-08', strikes: [430], quantity: 10, entry_price: 0.60, exit_price: 1.80, commissions: 1.30, pnl: 1198.7, max_risk: 600, tags: 'spy,0dte', notes: 'Caught the afternoon trend.'},
+                        { id: 29, transaction_type: 'trade', ticker: 'NFLX', type: 'Long Call', open: '2025-10-09', close: '2025-10-10', expiration: '2025-10-17', strikes: [400], quantity: 2, entry_price: 5.50, exit_price: 4.00, commissions: 1.10, pnl: -301.1, max_risk: 1100, tags: 'nflx,earnings run-up', notes: 'Fizzled out.'},
+                        { id: 30, transaction_type: 'trade', ticker: 'SPY', type: 'Short Iron Condor', open: '2025-10-10', close: '2025-10-10', expiration: '2025-10-10', strikes: [425, 427, 437, 439], quantity: 10, entry_price: 0.55, exit_price: 0.10, commissions: 1.25, pnl: 448.75, max_risk: 1450, tags: 'spy,0dte,ic', notes: 'CPI day range.'}
+                    ];
+                }
+                const initialDeposit = allTransactions.find(t => t.isInitial);
+                if (initialDeposit) {
+                    startingBalanceInput.value = initialDeposit.amount;
+                    startingBalanceDateInput.value = initialDeposit.date;
+                }
+            }
+
+
+            // --- INITIALIZATION ---
+            function initialize() {
+                loadState();
+                updateDashboard();
+            }
+            
+            function flashButton(button, text, colorClass, duration = 2000) {
+                 const originalText = button.textContent;
+                 button.textContent = text;
+                 button.classList.add(colorClass);
+                 setTimeout(() => {
+                     button.textContent = originalText;
+                     button.classList.remove(colorClass);
+                 }, duration);
+            }
+
+            // --- ACCOUNT BALANCE LOGIC ---
+            saveStartingBalanceBtn.addEventListener('click', () => {
+                const newBalance = parseFloat(startingBalanceInput.value);
+                const newDate = startingBalanceDateInput.value;
+
+                if (isNaN(newBalance) || !newDate) {
+                    flashButton(saveStartingBalanceBtn, 'Invalid!', 'bg-red-500');
+                    return;
+                }
+                
+                // Date Validation
+                const trades = allTransactions.filter(t => t.transaction_type === 'trade');
+                if (trades.length > 0) {
+                    const firstTradeDate = trades.map(t => dayjs(t.open)).sort((a,b) => a - b)[0];
+                    if (dayjs(newDate).isAfter(firstTradeDate)) {
+                        flashButton(saveStartingBalanceBtn, 'Date After First Trade!', 'bg-red-500', 3000);
+                        return;
+                    }
+                }
+                
+                let initialDeposit = allTransactions.find(t => t.isInitial);
+                if (initialDeposit) {
+                    initialDeposit.amount = newBalance;
+                    initialDeposit.date = newDate;
+                } else {
+                    const newId = allTransactions.length > 0 ? Math.max(...allTransactions.map(t => t.id)) + 1 : 0;
+                    allTransactions.push({
+                        id: newId,
+                        transaction_type: 'deposit',
+                        amount: newBalance,
+                        date: newDate,
+                        notes: 'Initial Deposit',
+                        isInitial: true
+                    });
+                }
+
+                saveState();
+                updateDashboard();
+                flashButton(saveStartingBalanceBtn, 'Saved!', 'bg-green-500');
+            });
+
+            // --- MODAL & FORM LOGIC ---
+            function resetAndHideModal(modalElement) {
+                modalElement.classList.add('hidden');
+                const form = modalElement.querySelector('form');
+                if (form) form.reset();
+
+                if (modalElement.id === 'tradeModal') {
+                    timestampCheckbox.checked = false;
+                    timeInputsContainer.classList.add('hidden');
+                    document.getElementById('trade_id').value = '';
+                    document.getElementById('modal-title').textContent = 'Log New Trade';
+                    document.getElementById('saveBtn').textContent = 'Save Trade';
+                    updateStrikeInputs();
+                } else if (modalElement.id === 'importModal') {
+                    fileNameSpan.textContent = 'No file selected';
+                    importStatus.textContent = '';
+                    csvFileInput.value = '';
+                } else if (modalElement.id === 'resetModal') {
+                    resetConfirmInput.value = '';
+                    confirmResetBtn.disabled = true;
+                    confirmResetBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                }
+            }
+            
+            // Trade Modal Listeners
+            addTradeBtn.addEventListener('click', () => modal.classList.remove('hidden'));
+            cancelBtn.addEventListener('click', () => resetAndHideModal(modal));
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) resetAndHideModal(modal);
+            });
+            
+            // Transaction Modal Listeners
+            addTransactionBtn.addEventListener('click', () => transactionModal.classList.remove('hidden'));
+            cancelTransactionBtn.addEventListener('click', () => resetAndHideModal(transactionModal));
+            transactionModal.addEventListener('click', (e) => {
+                if (e.target === transactionModal) resetAndHideModal(transactionModal);
+            });
+
+
+            // Import Modal Listeners
+            importTradesBtn.addEventListener('click', () => importModal.classList.remove('hidden'));
+            cancelImportBtn.addEventListener('click', () => resetAndHideModal(importModal));
+            importModal.addEventListener('click', (e) => {
+                if (e.target === importModal) resetAndHideModal(importModal);
+            });
+            
+            // Reset Modal Listeners
+            resetDataBtn.addEventListener('click', () => resetModal.classList.remove('hidden'));
+            cancelResetBtn.addEventListener('click', () => resetAndHideModal(resetModal));
+            resetModal.addEventListener('click', (e) => {
+                if (e.target === resetModal) resetAndHideModal(resetModal);
+            });
+            resetConfirmInput.addEventListener('input', (e) => {
+                if (e.target.value === 'RESET') {
+                    confirmResetBtn.disabled = false;
+                    confirmResetBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                } else {
+                    confirmResetBtn.disabled = true;
+                    confirmResetBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                }
+            });
+            confirmResetBtn.addEventListener('click', () => {
+                allTransactions = [];
+                localStorage.removeItem('optionsTrackerAllTransactions');
+                startingBalanceInput.value = '';
+                startingBalanceDateInput.value = '';
+                currentPage = 1;
+                logSearchFilter = '';
+                logSearchInput.value = '';
+                resetAndHideModal(resetModal);
+                updateDashboard();
+            });
+            
+            timestampCheckbox.addEventListener('change', () => {
+                timeInputsContainer.classList.toggle('hidden', !timestampCheckbox.checked);
+                if (!timestampCheckbox.checked) {
+                    document.getElementById('open_time').value = '';
+                    document.getElementById('close_time').value = '';
+                }
+            });
+
+            const strategyDetails = {
+                'Long Call': { strikes: ['Strike'], risk: 'debit' },
+                'Long Put': { strikes: ['Strike'], risk: 'debit' },
+                'Short Call': { strikes: ['Strike'], risk: 'undefined' },
+                'Short Put': { strikes: ['Strike'], risk: 'collateral' },
+                'Long Call Spread': { strikes: ['Long Strike', 'Short Strike'], risk: 'debit' },
+                'Long Put Spread': { strikes: ['Short Strike', 'Long Strike'], risk: 'debit' },
+                'Short Call Spread': { strikes: ['Short Strike', 'Long Strike'], risk: 'spread' },
+                'Short Put Spread': { strikes: ['Short Strike', 'Long Strike'], risk: 'spread' },
+                'Long Straddle': { strikes: ['Strike'], risk: 'debit' },
+                'Short Straddle': { strikes: ['Strike'], risk: 'undefined' },
+                'Long Strangle': { strikes: ['Put Strike', 'Call Strike'], risk: 'debit' },
+                'Short Strangle': { strikes: ['Put Strike', 'Call Strike'], risk: 'undefined' },
+                'Long Butterfly': { strikes: ['Low Strike', 'Mid Strike', 'High Strike'], risk: 'debit' },
+                'Short Butterfly': { strikes: ['Low Strike', 'Mid Strike', 'High Strike'], risk: 'credit' },
+                'Short Iron Condor': { strikes: ['Long Put', 'Short Put', 'Short Call', 'Long Call'], risk: 'spread' },
+                'Short Iron Butterfly': { strikes: ['Long Put', 'Short Strike', 'Long Call'], risk: 'spread' }
+            };
+
+            function updateStrikeInputs() {
+                const type = tradeTypeSelect.value;
+                const details = strategyDetails[type] || { strikes: ['Strike'], risk: 'undefined' };
+                const maxRiskInput = document.getElementById('max_risk');
+                strikeContainer.innerHTML = '';
+                details.strikes.forEach((label, i) => {
+                    strikeContainer.innerHTML += `
+                        <div>
+                            <label for="strike_price_${i}" class="block text-sm font-medium text-gray-300 mb-1">${label}</label>
+                            <input type="number" step="0.01" id="strike_price_${i}" required class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="150.00">
+                        </div>
+                    `;
+                });
+                const riskTypesWithAutoCalc = ['spread', 'debit', 'collateral'];
+                autoCalcRiskBtn.classList.toggle('hidden', !riskTypesWithAutoCalc.includes(details.risk));
+                
+                if (details.risk === 'undefined') {
+                    maxRiskInput.required = false;
+                    maxRiskInput.placeholder = 'Collateral (Optional)';
+                } else {
+                    maxRiskInput.required = true;
+                    maxRiskInput.placeholder = '500';
+                }
+            }
+
+            tradeTypeSelect.addEventListener('change', updateStrikeInputs);
+            updateStrikeInputs();
+
+            function calculatePnl(trade) {
+                const { entry_price, exit_price, quantity, commissions, type } = trade;
+                const multiplier = 100;
+                let pnl = 0;
+                const totalCommissions = commissions * quantity * 2; // In and Out
+
+                // Debit strategies (buy to open, sell to close)
+                const debitStrategies = ['Long Call', 'Long Put', 'Long Call Spread', 'Long Put Spread', 'Long Straddle', 'Long Strangle', 'Long Butterfly'];
+                if (debitStrategies.includes(type)) {
+                    pnl = (exit_price - entry_price) * quantity * multiplier;
+                } 
+                // Credit strategies (sell to open, buy to close)
+                else {
+                    pnl = (entry_price - exit_price) * quantity * multiplier;
+                }
+                return pnl - totalCommissions;
+            }
+            
+            transactionForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const transactionData = {
+                    id: allTransactions.length > 0 ? Math.max(...allTransactions.map(t => t.id)) + 1 : 0,
+                    transaction_type: document.getElementById('transaction_type').value,
+                    amount: parseFloat(document.getElementById('transaction_amount').value),
+                    date: document.getElementById('transaction_date').value,
+                    notes: document.getElementById('transaction_notes').value,
+                    isInitial: false
+                };
+                allTransactions.push(transactionData);
+                saveState();
+                updateDashboard();
+                resetAndHideModal(transactionModal);
+            });
+
+            tradeForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const tradeId = document.getElementById('trade_id').value;
+                const saveBtn = document.getElementById('saveBtn');
+                
+                const openDate = document.getElementById('open_date').value;
+                const initialDeposit = allTransactions.find(t => t.isInitial);
+
+                // Date validation
+                if (initialDeposit && dayjs(openDate).isBefore(dayjs(initialDeposit.date))) {
+                    flashButton(saveBtn, 'Trade Before Start Date!', 'bg-red-500', 3000);
+                    return;
+                }
+
+                const closeDate = document.getElementById('close_date').value;
+                const openTime = document.getElementById('open_time').value;
+                const closeTime = document.getElementById('close_time').value;
+                const includeTimestamps = timestampCheckbox.checked;
+
+                const tradeData = {
+                    transaction_type: 'trade',
+                    ticker: document.getElementById('underlying_ticker').value.toUpperCase(),
+                    type: document.getElementById('trade_type').value,
+                    open: includeTimestamps && openTime ? `${openDate}T${openTime}` : openDate,
+                    close: includeTimestamps && closeTime ? `${closeDate}T${closeTime}` : closeDate,
+                    expiration: document.getElementById('expiration_date').value,
+                    strikes: Array.from(strikeContainer.querySelectorAll('input')).map(input => parseFloat(input.value)),
+                    quantity: parseInt(document.getElementById('quantity').value),
+                    entry_price: parseFloat(document.getElementById('entry_price').value),
+                    exit_price: parseFloat(document.getElementById('exit_price').value),
+                    commissions: parseFloat(document.getElementById('commissions').value),
+                    max_risk: parseFloat(document.getElementById('max_risk').value) || 0,
+                    tags: document.getElementById('tags').value,
+                    notes: document.getElementById('notes').value,
+                };
+                
+                tradeData.pnl = calculatePnl(tradeData);
+
+                if (tradeId) {
+                    const index = allTransactions.findIndex(t => t.id == tradeId);
+                    if (index !== -1) {
+                        allTransactions[index] = { ...allTransactions[index], ...tradeData };
+                    }
+                } else {
+                    tradeData.id = allTransactions.length > 0 ? Math.max(...allTransactions.map(t => t.id)) + 1 : 0;
+                    allTransactions.push(tradeData);
+                }
+                saveState();
+                updateDashboard();
+                resetAndHideModal(modal);
+            });
+
+            function populateFormForEdit(tradeId) {
+                const item = allTransactions.find(t => t.id === tradeId);
+                if (!item || item.transaction_type !== 'trade') return; // For now, only edit trades
+
+                document.getElementById('modal-title').textContent = 'Edit Trade';
+                document.getElementById('saveBtn').textContent = 'Update Trade';
+                document.getElementById('trade_id').value = item.id;
+                document.getElementById('underlying_ticker').value = item.ticker;
+                document.getElementById('trade_type').value = item.type;
+                
+                const [openDate, openTime] = item.open.split('T');
+                const [closeDate, closeTime] = item.close.split('T');
+
+                document.getElementById('open_date').value = openDate;
+                document.getElementById('close_date').value = closeDate;
+
+                if (openTime || closeTime) {
+                    timestampCheckbox.checked = true;
+                    timeInputsContainer.classList.remove('hidden');
+                    document.getElementById('open_time').value = openTime || '';
+                    document.getElementById('close_time').value = closeTime || '';
+                } else {
+                    timestampCheckbox.checked = false;
+                    timeInputsContainer.classList.add('hidden');
+                    document.getElementById('open_time').value = '';
+                    document.getElementById('close_time').value = '';
+                }
+
+                document.getElementById('expiration_date').value = item.expiration;
+                document.getElementById('quantity').value = item.quantity;
+                document.getElementById('entry_price').value = item.entry_price;
+                document.getElementById('exit_price').value = item.exit_price;
+                document.getElementById('commissions').value = item.commissions;
+                document.getElementById('max_risk').value = item.max_risk;
+                document.getElementById('tags').value = item.tags;
+                document.getElementById('notes').value = item.notes;
+
+                updateStrikeInputs();
+                item.strikes.forEach((strike, index) => {
+                    const strikeInput = document.getElementById(`strike_price_${index}`);
+                    if (strikeInput) strikeInput.value = strike;
+                });
+
+                modal.classList.remove('hidden');
+            }
+            
+            // --- IMPORT LOGIC ---
+            downloadTemplateBtn.addEventListener('click', () => {
+                const headers = "Ticker,TradeType,OpenDate,CloseDate,OpenTime,CloseTime,ExpirationDate,Strikes,Quantity,EntryPrice,ExitPrice,CommissionsPerContract,MaxRisk,Tags,Notes";
+                const exampleRow = "SPY,Short Put Spread,2025-10-01,2025-10-10,09:45,15:30,2025-10-17,\"450,445\",10,1.20,0.40,0.65,400,\"spy,index\",\"Managed for profit\"";
+                const csvContent = "data:text/csv;charset=utf-8," + headers + "\n" + exampleRow;
+                const encodedUri = encodeURI(csvContent);
+                const link = document.createElement("a");
+                link.setAttribute("href", encodedUri);
+                link.setAttribute("download", "trades_template.csv");
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            });
+
+            csvFileInput.addEventListener('change', () => {
+                if (csvFileInput.files.length > 0) {
+                    fileNameSpan.textContent = csvFileInput.files[0].name;
+                    importStatus.textContent = '';
+                } else {
+                    fileNameSpan.textContent = 'No file selected';
+                }
+            });
+
+            processImportBtn.addEventListener('click', () => {
+                const file = csvFileInput.files[0];
+                if (!file) {
+                    importStatus.textContent = 'Please select a file first.';
+                    importStatus.className = 'text-sm mb-4 text-red-400';
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    try {
+                        const csv = event.target.result;
+                        const lines = csv.split(/[\r\n]+/).filter(line => line.trim() !== '');
+                        if (lines.length < 2) {
+                            throw new Error("CSV file is empty or has no data rows.");
+                        }
+
+                        const header = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+                        const requiredHeaders = ["Ticker","TradeType","OpenDate","CloseDate","ExpirationDate","Strikes","Quantity","EntryPrice","ExitPrice","CommissionsPerContract","MaxRisk"];
+                        const missingHeaders = requiredHeaders.filter(h => !header.includes(h));
+
+                        if (missingHeaders.length > 0) {
+                            throw new Error(`Missing required columns: ${missingHeaders.join(', ')}`);
+                        }
+
+                        const newTransactions = [];
+                        const startingId = allTransactions.length > 0 ? Math.max(...allTransactions.map(t => t.id)) + 1 : 0;
+
+                        for (let i = 1; i < lines.length; i++) {
+                             // More robust CSV line parsing that handles commas inside quotes
+                            const values = lines[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+                            const row = header.reduce((obj, col, index) => {
+                                obj[col] = (values[index] || '').trim().replace(/"/g, '');
+                                return obj;
+                            }, {});
+                            
+                            if (!row.Ticker || !row.TradeType || !row.OpenDate || !row.CloseDate) {
+                                throw new Error(`Missing required data on row ${i + 1}.`);
+                            }
+                            if (!dayjs(row.OpenDate).isValid() || !dayjs(row.CloseDate).isValid()) {
+                                throw new Error(`Invalid date format on row ${i + 1}. Please use YYYY-MM-DD.`);
+                            }
+                            
+                            const tradeData = {
+                                transaction_type: 'trade',
+                                ticker: row.Ticker.toUpperCase(),
+                                type: row.TradeType,
+                                open: row.OpenTime ? `${row.OpenDate}T${row.OpenTime}` : row.OpenDate,
+                                close: row.CloseTime ? `${row.CloseDate}T${row.CloseTime}` : row.CloseDate,
+                                expiration: row.ExpirationDate,
+                                strikes: (row.Strikes || '').split(',').map(s => parseFloat(s.trim())).filter(s => !isNaN(s)),
+                                quantity: parseInt(row.Quantity),
+                                entry_price: parseFloat(row.EntryPrice),
+                                exit_price: parseFloat(row.ExitPrice),
+                                commissions: parseFloat(row.CommissionsPerContract) || 0,
+                                max_risk: parseFloat(row.MaxRisk) || 0,
+                                tags: row.Tags || '',
+                                notes: row.Notes || '',
+                            };
+                            
+                             if (isNaN(tradeData.quantity) || isNaN(tradeData.entry_price) || isNaN(tradeData.exit_price)) {
+                                throw new Error(`Invalid number format for quantity or prices on row ${i + 1}.`);
+                            }
+
+                            tradeData.pnl = calculatePnl(tradeData);
+                            tradeData.id = startingId + newTransactions.length;
+                            newTransactions.push(tradeData);
+                        }
+
+                        allTransactions = [...allTransactions, ...newTransactions];
+                        saveState();
+                        updateDashboard();
+                        importStatus.textContent = `Successfully imported ${newTransactions.length} trades.`;
+                        importStatus.className = 'text-sm mb-4 text-green-400';
+                        setTimeout(() => resetAndHideModal(importModal), 2000);
+
+                    } catch (error) {
+                        importStatus.textContent = `Error: ${error.message}`;
+                        importStatus.className = 'text-sm mb-4 text-red-400';
+                    }
+                };
+                reader.readAsText(file);
+            });
+
+
+            // --- TABLE & CHART EVENT LISTENERS ---
+            tradesBody.addEventListener('click', (e) => {
+                const editButton = e.target.closest('.edit-btn');
+                const deleteButton = e.target.closest('.delete-btn');
+                const tradeRow = e.target.closest('tr[data-id]');
+                const tagButton = e.target.closest('.tag-filter');
+
+                if (tagButton) {
+                    logSearchInput.value = tagButton.dataset.tag;
+                    logSearchFilter = tagButton.dataset.tag.toLowerCase();
+                    updateDashboard();
+                    return;
+                }
+
+                if (editButton) {
+                    const itemId = parseInt(editButton.dataset.id);
+                    populateFormForEdit(itemId);
+                    return;
+                }
+
+                if (deleteButton) {
+                    const itemId = parseInt(deleteButton.dataset.id);
+                    const itemToDelete = allTransactions.find(t => t.id === itemId);
+                    if (itemToDelete && itemToDelete.isInitial) {
+                         // Don't let initial deposit be deleted from here, must be done via the settings
+                         return;
+                    }
+                    allTransactions = allTransactions.filter(t => t.id !== itemId);
+                    saveState();
+                    updateDashboard();
+                    return;
+                }
+
+                if (tradeRow) {
+                    const itemId = parseInt(tradeRow.dataset.id);
+                    const item = allTransactions.find(t => t.id === itemId);
+                    const nextRow = tradeRow.nextElementSibling;
+
+                    if (nextRow && nextRow.classList.contains('details-row')) {
+                        nextRow.remove();
+                    } else if (item && (item.notes || item.tags)) {
+                        const detailsRow = document.createElement('tr');
+                        detailsRow.className = 'details-row bg-gray-800';
+                        let notesHTML = item.notes ? `<p><strong class="text-gray-300">Notes:</strong> ${item.notes}</p>` : '';
+                        let tagsHTML = item.tags ? `<div class="mt-2"><strong class="text-gray-300">Tags:</strong> ${item.tags.split(',').map(t => `<button data-tag="${t.trim()}" class="tag-filter bg-indigo-500/50 hover:bg-indigo-500/80 text-indigo-300 text-xs font-medium mr-2 px-2.5 py-0.5 rounded transition">${t.trim()}</button>`).join('')}</div>` : '';
+                        detailsRow.innerHTML = `<td colspan="7" class="p-4 text-gray-400">${notesHTML}${tagsHTML}</td>`;
+                        tradeRow.insertAdjacentElement('afterend', detailsRow);
+                    }
+                }
+            });
+
+            tradeFilters.addEventListener('click', (e) => {
+                const filterButton = e.target.closest('.filter-btn');
+                if (!filterButton) return;
+
+                tradeTableFilter = filterButton.dataset.filter;
+                currentPage = 1; // Reset to first page on filter change
+
+                document.querySelectorAll('#trade-filters .filter-btn').forEach(btn => {
+                    btn.classList.remove('bg-indigo-600', 'text-white');
+                    btn.classList.add('bg-gray-700', 'hover:bg-gray-600', 'text-gray-300');
+                });
+                filterButton.classList.add('bg-indigo-600', 'text-white');
+                filterButton.classList.remove('bg-gray-700', 'hover:bg-gray-600', 'text-gray-300');
+
+                updateDashboard();
+            });
+
+            equityCurveFilterSelect.addEventListener('change', (e) => {
+                equityTimeFilter = e.target.value;
+                updateDashboard();
+            });
+            
+            logSearchInput.addEventListener('input', (e) => {
+                logSearchFilter = e.target.value.toLowerCase();
+                currentPage = 1; // Reset to first page on search
+                updateDashboard();
+            });
+            
+            exportCsvBtn.addEventListener('click', () => {
+                 // This will use the globally scoped filteredActivity from the last updateDashboard call
+                 exportActivityLogToCSV();
+            });
+            
+            autoCalcRiskBtn.addEventListener('click', () => {
+                const type = tradeTypeSelect.value;
+                const details = strategyDetails[type];
+                const strikes = Array.from(strikeContainer.querySelectorAll('input')).map(input => parseFloat(input.value));
+                const quantity = parseInt(document.getElementById('quantity').value) || 1;
+                const entryPrice = parseFloat(document.getElementById('entry_price').value) || 0;
+                const maxRiskInput = document.getElementById('max_risk');
+                let calculatedRisk = 0;
+
+                if (details.risk === 'debit') {
+                    calculatedRisk = entryPrice * 100 * quantity;
+                } else if (details.risk === 'spread' && strikes.length >= 2 && !strikes.some(isNaN)) {
+                     const width = Math.abs(strikes[0] - strikes[1]);
+                     calculatedRisk = width * 100 * quantity;
+                     if (type.includes('Short')) {
+                         const creditReceived = entryPrice * 100 * quantity;
+                         calculatedRisk -= creditReceived;
+                     }
+                } else if (details.risk === 'collateral' && strikes.length === 1 && !isNaN(strikes[0])) {
+                    const collateral = (strikes[0] * 100 * quantity) - (entryPrice * 100 * quantity);
+                    calculatedRisk = collateral > 0 ? collateral : 0;
+                }
+                maxRiskInput.value = calculatedRisk.toFixed(0);
+            });
+            
+            mainViewToggle.addEventListener('click', (e) => {
+                const btn = e.target.closest('.main-view-btn');
+                if (!btn) return;
+                mainView = btn.dataset.view;
+                updateDashboard();
+            });
+
+
+            // --- DASHBOARD UPDATE LOGIC ---
+            let filteredActivityForExport = []; // Variable to hold filtered data for export
+            function updateDashboard() {
+                const trades = allTransactions.filter(t => t.transaction_type === 'trade');
+                const latestDate = allTransactions.length > 0 ? dayjs(Math.max(...allTransactions.map(t => dayjs(t.transaction_type === 'trade' ? t.close : t.date)))) : dayjs();
+                const now = latestDate;
+                let currentPeriodTrades = trades;
+                
+                // Determine date ranges for current and previous periods
+                let currentStartDate, currentEndDate;
+                
+                switch (equityTimeFilter) {
+                    case 'today':
+                        currentStartDate = now.clone().startOf('day');
+                        currentEndDate = now.clone().endOf('day');
+                        break;
+                    case 'yesterday':
+                        currentStartDate = now.clone().subtract(1, 'day').startOf('day');
+                        currentEndDate = now.clone().subtract(1, 'day').endOf('day');
+                        break;
+                    case 'this-week':
+                        currentStartDate = now.clone().startOf('week');
+                        currentEndDate = now.clone().endOf('week');
+                        break;
+                    case 'last-week':
+                        currentStartDate = now.clone().subtract(1, 'week').startOf('week');
+                        currentEndDate = now.clone().subtract(1, 'week').endOf('week');
+                        break;
+                    case 'this-month':
+                        currentStartDate = now.clone().startOf('month');
+                        currentEndDate = now.clone().endOf('month');
+                        break;
+                    case 'last-month':
+                        currentStartDate = now.clone().subtract(1, 'month').startOf('month');
+                        currentEndDate = now.clone().subtract(1, 'month').endOf('month');
+                        break;
+                    case 'qtd':
+                        currentStartDate = now.clone().startOf('quarter');
+                        currentEndDate = now.clone().endOf('quarter');
+                        break;
+                    case 'last-quarter':
+                        currentStartDate = now.clone().subtract(1, 'quarter').startOf('quarter');
+                        currentEndDate = now.clone().subtract(1, 'quarter').endOf('quarter');
+                        break;
+                    case 'ytd':
+                        currentStartDate = now.clone().startOf('year');
+                        currentEndDate = now.clone().endOf('year');
+                        break;
+                    case 'last-year':
+                        currentStartDate = now.clone().subtract(1, 'year').startOf('year');
+                        currentEndDate = now.clone().subtract(1, 'year').endOf('year');
+                        break;
+                    case 'all':
+                    default:
+                        // No date filtering
+                        break;
+                }
+                
+                if (equityTimeFilter !== 'all') {
+                    currentPeriodTrades = trades.filter(t => {
+                        const closeDate = dayjs(t.close);
+                        return !closeDate.isBefore(currentStartDate, 'day') && !closeDate.isAfter(currentEndDate, 'day');
+                    });
+                }
+                
+                // --- KPI Calculations ---
+                const calculateKpis = (tradeList) => {
+                    const hasTrades = tradeList.length > 0;
+                    const totalPnl = hasTrades ? tradeList.reduce((acc, trade) => acc + trade.pnl, 0) : 0;
+                    const winningTrades = hasTrades ? tradeList.filter(trade => trade.pnl > 0) : [];
+                    const winRate = hasTrades ? (winningTrades.length / tradeList.length) * 100 : 0;
+                    const rocTrades = tradeList.filter(t => t.max_risk > 0);
+                    const avgRoc = rocTrades.length > 0 ? (rocTrades.reduce((acc, t) => acc + (t.pnl / t.max_risk), 0) / rocTrades.length) * 100 : 0;
+                    return { totalPnl, winRate, avgRoc, tradeCount: tradeList.length };
+                };
+
+                const currentKpis = calculateKpis(currentPeriodTrades);
+
+                // Update KPI cards
+                const pnlElement = document.getElementById('kpi-total-pnl');
+                pnlElement.textContent = `${currentKpis.totalPnl.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}`;
+                pnlElement.className = `text-3xl font-bold mt-1 ${currentKpis.totalPnl >= 0 ? 'text-green-400' : 'text-red-400'}`;
+                
+                document.getElementById('kpi-win-rate').textContent = `${currentKpis.winRate.toFixed(1)}%`;
+                document.getElementById('kpi-avg-roc').textContent = `${currentKpis.avgRoc.toFixed(1)}%`;
+                document.getElementById('kpi-total-trades').textContent = currentKpis.tradeCount;
+
+                // --- ACCOUNT VALUE & OVERALL STATS---
+                const allCashFlowEvents = allTransactions
+                    .filter(t => t.transaction_type !== 'trade')
+                    .map(t => ({ amount: t.transaction_type === 'deposit' ? t.amount : -t.amount }));
+                const totalCashFlow = allCashFlowEvents.reduce((acc, event) => acc + event.amount, 0);
+                const totalPnl = trades.reduce((acc, trade) => acc + trade.pnl, 0);
+                totalAccountValueEl.textContent = (totalCashFlow + totalPnl).toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+                
+                // --- Performance Stats Card (Dynamic) ---
+                document.getElementById('performance-stats-title').textContent = `Performance Stats (${equityCurveFilterSelect.options[equityCurveFilterSelect.selectedIndex].text})`;
+                const statsWins = currentPeriodTrades.filter(t => t.pnl > 0);
+                const statsLosses = currentPeriodTrades.filter(t => t.pnl <= 0);
+                const statsAvgWin = statsWins.length > 0 ? statsWins.reduce((sum, t) => sum + t.pnl, 0) / statsWins.length : 0;
+                const statsAvgLoss = statsLosses.length > 0 ? statsLosses.reduce((sum, t) => sum + t.pnl, 0) / statsLosses.length : 0;
+                const statsLargestWin = statsWins.length > 0 ? Math.max(...statsWins.map(t => t.pnl)) : 0;
+                const statsLargestLoss = statsLosses.length > 0 ? Math.min(...statsLosses.map(t => t.pnl)) : 0;
+                const grossProfit = statsWins.reduce((acc, t) => acc + t.pnl, 0);
+                const grossLoss = Math.abs(statsLosses.reduce((acc, t) => acc + t.pnl, 0));
+                const profitFactor = grossLoss > 0 ? grossProfit / grossLoss : Infinity;
+                const expectancy = currentPeriodTrades.length > 0 ? currentKpis.totalPnl / currentPeriodTrades.length : 0;
+
+                // Max Drawdown Calculation
+                const sortedPeriodTrades = [...currentPeriodTrades].sort((a,b) => new Date(a.close) - new Date(b.close));
+                let peakPnl = 0;
+                let maxDrawdown = 0;
+                let cumulativePnl = 0;
+                sortedPeriodTrades.forEach(trade => {
+                    cumulativePnl += trade.pnl;
+                    if (cumulativePnl > peakPnl) {
+                        peakPnl = cumulativePnl;
+                    }
+                    const drawdown = peakPnl - cumulativePnl;
+                    if (drawdown > maxDrawdown) {
+                        maxDrawdown = drawdown;
+                    }
+                });
+
+                document.getElementById('stats-avg-win').textContent = statsAvgWin.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+                document.getElementById('stats-avg-loss').textContent = statsAvgLoss.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+                document.getElementById('stats-largest-win').textContent = statsLargestWin.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+                document.getElementById('stats-largest-loss').textContent = statsLargestLoss.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+                document.getElementById('stats-profit-factor').textContent = profitFactor === Infinity ? '∞' : profitFactor.toFixed(2);
+                document.getElementById('stats-expectancy').textContent = expectancy.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+                document.getElementById('stats-max-drawdown').textContent = `-${maxDrawdown.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}`;
+
+
+                // --- P&L Curve Logic ---
+                const sortedTrades = [...trades].sort((a,b) => new Date(a.close) - new Date(b.close));
+                let chartStartDate = null;
+                let chartEndDate = now.endOf('day');
+                
+                const accountStartDate = allTransactions.find(t => t.isInitial)?.date;
+
+                if (equityTimeFilter !== 'all') {
+                    chartStartDate = currentStartDate;
+                    chartEndDate = currentEndDate;
+                } else if (accountStartDate) {
+                    chartStartDate = dayjs(accountStartDate);
+                }
+                
+                if (accountStartDate && chartStartDate && chartStartDate.isBefore(dayjs(accountStartDate))) {
+                    chartStartDate = dayjs(accountStartDate);
+                }
+
+                let periodStartingPnl = 0;
+                let periodTrades = [];
+                let startingLabel = 'Start';
+
+                if (chartStartDate && chartStartDate.isValid()) {
+                    const priorTrades = sortedTrades.filter(t => dayjs(t.close).isBefore(chartStartDate));
+                    periodStartingPnl = priorTrades.reduce((acc, trade) => acc + trade.pnl, 0);
+
+                    periodTrades = sortedTrades.filter(t => {
+                        const eventDate = dayjs(t.close);
+                        return !eventDate.isBefore(chartStartDate) && !eventDate.isAfter(chartEndDate);
+                    });
+                    startingLabel = chartStartDate.format('MM/DD/YY');
+                }
+
+                let runningPnl = periodStartingPnl;
+                const pnlData = periodTrades.map(trade => {
+                    runningPnl += trade.pnl;
+                    return runningPnl;
+                });
+                
+                const pnlLabels = periodTrades.map(t => dayjs(t.close).format('MM/DD/YY'));
+
+                if (pnlCurveChart) pnlCurveChart.destroy();
+                pnlCurveChart = new Chart(document.getElementById('pnlCurveChart'), {
+                    type: 'line', data: {
+                        labels: [startingLabel, ...pnlLabels],
+                        datasets: [{ label: 'Cumulative P&L', data: [periodStartingPnl, ...pnlData], borderColor: '#818cf8', backgroundColor: 'rgba(129, 140, 248, 0.2)', fill: true, tension: 0.3 }]
+                    },
+                    options: { maintainAspectRatio: false, responsive: true, scales: { y: { ticks: { color: '#9ca3af' } }, x: { ticks: { color: '#9ca3af' } } }, plugins: { legend: { display: false } } }
+                });
+
+
+                // P&L By Strategy Chart is now dynamic
+                const strategyPnl = currentPeriodTrades.reduce((acc, trade) => {
+                    if (!acc[trade.type]) acc[trade.type] = 0;
+                    acc[trade.type] += trade.pnl;
+                    return acc;
+                }, {});
+                if (pnlByStrategyChart) pnlByStrategyChart.destroy();
+                pnlByStrategyChart = new Chart(document.getElementById('pnlByStrategyChart'), {
+                    type: 'bar', data: {
+                        labels: Object.keys(strategyPnl),
+                        datasets: [{ label: 'Total P&L', data: Object.values(strategyPnl), backgroundColor: Object.values(strategyPnl).map(pnl => pnl >= 0 ? 'rgba(34, 197, 94, 0.7)' : 'rgba(239, 68, 68, 0.7)'), }]
+                    },
+                    options: { maintainAspectRatio: false, responsive: true, scales: { y: { ticks: { color: '#9ca3af' } }, x: { ticks: { color: '#9ca3af' } } }, plugins: { legend: { display: false } } }
+                });
+                
+                // --- Main View Toggle Logic ---
+                document.querySelectorAll('.main-view-btn').forEach(btn => {
+                    if (btn.dataset.view === mainView) {
+                        btn.classList.add('bg-indigo-600', 'text-white');
+                        btn.classList.remove('bg-gray-700', 'text-gray-300');
+                    } else {
+                        btn.classList.remove('bg-indigo-600', 'text-white');
+                        btn.classList.add('bg-gray-700', 'text-gray-300');
+                    }
+                });
+
+                if (mainView === 'calendar') {
+                    calendarViewEl.classList.remove('hidden');
+                    strategyViewEl.classList.add('hidden');
+                    mainViewTitle.textContent = 'Trading Calendar';
+                    calendarControlsWrapper.classList.remove('hidden');
+                } else {
+                    calendarViewEl.classList.add('hidden');
+                    strategyViewEl.classList.remove('hidden');
+                    mainViewTitle.textContent = `P&L by Strategy (${equityCurveFilterSelect.options[equityCurveFilterSelect.selectedIndex].text})`;
+                    calendarControlsWrapper.classList.add('hidden');
+                }
+
+                // Calendar Logic
+                renderCalendar();
+
+                // Update Recent Activity Table based on filter
+                let filteredActivity = allTransactions;
+                
+                // Category filter
+                switch(tradeTableFilter) {
+                    case 'trades':
+                        filteredActivity = allTransactions.filter(t => t.transaction_type === 'trade');
+                        break;
+                    case 'deposits':
+                        filteredActivity = allTransactions.filter(t => t.transaction_type === 'deposit');
+                        break;
+                    case 'withdrawals':
+                        filteredActivity = allTransactions.filter(t => t.transaction_type === 'withdrawal');
+                        break;
+                    case 'winners':
+                        filteredActivity = allTransactions.filter(t => t.transaction_type === 'trade' && t.pnl > 0);
+                        break;
+                    case 'losers':
+                        filteredActivity = allTransactions.filter(t => t.transaction_type === 'trade' && t.pnl <= 0);
+                        break;
+                    case 'all':
+                    default:
+                        filteredActivity = allTransactions;
+                        break;
+                }
+                
+                // Search filter
+                if (logSearchFilter) {
+                    filteredActivity = filteredActivity.filter(item => {
+                        if (item.transaction_type === 'trade') {
+                           return item.ticker.toLowerCase().includes(logSearchFilter) || 
+                                  (item.tags && item.tags.toLowerCase().includes(logSearchFilter));
+                        }
+                        return false; // Don't show non-trades in search results for now
+                    });
+                }
+                
+                filteredActivityForExport = filteredActivity; // Save for export function
+                
+                // Calculate totals for the entire filtered list (before pagination)
+                const totalAmount = filteredActivity.reduce((acc, item) => {
+                    if (item.transaction_type === 'trade') return acc + item.pnl;
+                    if (item.transaction_type === 'deposit') return acc + item.amount;
+                    if (item.transaction_type === 'withdrawal') return acc - item.amount;
+                    return acc;
+                }, 0);
+
+                const totalRocTrades = filteredActivity.filter(t => t.transaction_type === 'trade' && t.max_risk > 0);
+                const avgRocTotal = totalRocTrades.length > 0 ? (totalRocTrades.reduce((acc, t) => acc + (t.pnl / t.max_risk), 0) / totalRocTrades.length) * 100 : 0;
+
+                // Pagination Logic
+                const totalPages = Math.ceil(filteredActivity.length / itemsPerPage);
+                const startIndex = (currentPage - 1) * itemsPerPage;
+                const endIndex = startIndex + itemsPerPage;
+                const paginatedActivity = filteredActivity.slice(startIndex, endIndex);
+
+                tradesBody.innerHTML = '';
+                const recentActivity = [...paginatedActivity].sort((a,b) => new Date(a.transaction_type === 'trade' ? a.close : a.date) - new Date(b.transaction_type === 'trade' ? b.close : b.date)).reverse();
+                recentActivity.forEach(item => {
+                    const row = document.createElement('tr');
+                    row.className = 'border-b border-gray-700 hover:bg-gray-700/50 cursor-pointer text-sm';
+                    row.dataset.id = item.id;
+                    
+                    let date, type, description, amount, amountColor, duration = 'N/A', roc = 'N/A';
+
+                    if (item.transaction_type === 'trade') {
+                        date = dayjs(item.close).format('YYYY-MM-DD');
+                        type = 'Trade';
+                        description = `${item.type} on ${item.ticker}`;
+                        amount = item.pnl;
+                        amountColor = item.pnl >= 0 ? 'text-green-400' : 'text-red-400';
+                        duration = dayjs(item.close).diff(dayjs(item.open), 'day') + 'd';
+                        if (item.max_risk > 0) {
+                            roc = `${((item.pnl / item.max_risk) * 100).toFixed(1)}%`;
+                        }
+                    } else {
+                        date = dayjs(item.date).format('YYYY-MM-DD');
+                        type = item.isInitial ? 'Initial Deposit' : item.transaction_type.charAt(0).toUpperCase() + item.transaction_type.slice(1);
+                        description = item.notes || type;
+                        amount = item.transaction_type === 'deposit' ? item.amount : -item.amount;
+                        amountColor = item.transaction_type === 'deposit' ? 'text-blue-400' : 'text-orange-400';
+                    }
+
+                    row.innerHTML = `
+                        <td class="p-3 text-gray-400">${date}</td>
+                        <td class="p-3 font-semibold">${type}</td>
+                        <td class="p-3 text-gray-400">${description}</td>
+                        <td class="p-3 text-gray-400 text-right">${duration}</td>
+                        <td class="p-3 text-right font-mono ${amountColor}">${amount >= 0 ? '+' : ''}${amount.toFixed(2)}</td>
+                        <td class="p-3 text-right font-mono ${amountColor}">${roc}</td>
+                        <td class="p-3 text-right">
+                            ${item.transaction_type === 'trade' ? 
+                            `<button class="edit-btn p-1 text-gray-400 hover:text-white" data-id="${item.id}"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg></button>` : ''}
+                            ${!item.isInitial ? `<button class="delete-btn p-1 text-gray-400 hover:text-red-500" data-id="${item.id}"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg></button>`: ''}
+                        </td>
+                    `;
+                    tradesBody.appendChild(row);
+                });
+                
+                // Render Footer
+                const totalAmountColor = totalAmount >= 0 ? 'text-green-400' : 'text-red-400';
+                activityLogFooter.innerHTML = `
+                    <td colspan="4" class="p-3 text-right">Total for ${filteredActivity.length} items:</td>
+                    <td class="p-3 text-right font-mono ${totalAmountColor}">${totalAmount.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</td>
+                    <td class="p-3 text-right font-mono ${avgRocTotal >= 0 ? 'text-green-400' : 'text-red-400'}">${avgRocTotal.toFixed(1)}%</td>
+                    <td></td>
+                `;
+                
+                // Render Pagination
+                paginationControls.innerHTML = '';
+                if (totalPages > 1) {
+                    paginationControls.innerHTML = `
+                        <button id="prev-page-btn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-lg transition disabled:opacity-50" ${currentPage === 1 ? 'disabled' : ''}>Previous</button>
+                        <span>Page ${currentPage} of ${totalPages}</span>
+                        <button id="next-page-btn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-lg transition disabled:opacity-50" ${currentPage === totalPages ? 'disabled' : ''}>Next</button>
+                    `;
+                    document.getElementById('prev-page-btn').addEventListener('click', () => {
+                        if (currentPage > 1) {
+                            currentPage--;
+                            updateDashboard();
+                        }
+                    });
+                     document.getElementById('next-page-btn').addEventListener('click', () => {
+                        if (currentPage < totalPages) {
+                            currentPage++;
+                            updateDashboard();
+                        }
+                    });
+                }
+            }
+            
+             // --- CALENDAR FUNCTIONS ---
+            function renderCalendar() {
+                const trades = allTransactions.filter(t => t.transaction_type === 'trade');
+                const dailyData = trades.reduce((acc, trade) => {
+                    const closeDate = dayjs(trade.close).format('YYYY-MM-DD');
+                    if (!acc[closeDate]) acc[closeDate] = { pnl: 0, wins: 0, losses: 0 };
+                    acc[closeDate].pnl += trade.pnl;
+                    if (trade.pnl > 0) acc[closeDate].wins++; else acc[closeDate].losses++;
+                    return acc;
+                }, {});
+                
+                calendarGrid.innerHTML = '';
+                let periodPnl = 0;
+
+                if (calendarView === 'month') {
+                    calendarGrid.classList.remove('grid-cols-7');
+                    calendarGrid.classList.add('grid-cols-8');
+                    calendarPeriodLabel.textContent = calendarDate.format('MMMM YYYY');
+                    const startOfMonth = calendarDate.startOf('month');
+                    const daysInMonth = calendarDate.daysInMonth();
+                    const startDay = startOfMonth.day();
+                    
+                    calendarGrid.innerHTML = ['S', 'M', 'T', 'W', 'T', 'F', 'S', 'Weekly'].map(day => `<div class="font-bold text-xs text-gray-500 p-2 ${day === 'Weekly' ? 'text-right' : ''}">${day}</div>`).join('');
+
+                    for (let i = 0; i < startDay; i++) {
+                        calendarGrid.innerHTML += '<div></div>';
+                    }
+
+                    let weeklyPnl = 0;
+                    for (let i = 1; i <= daysInMonth; i++) {
+                        const day = startOfMonth.date(i);
+                        const dateStr = day.format('YYYY-MM-DD');
+                        const data = dailyData[dateStr] || { pnl: 0, wins: 0, losses: 0 };
+                        periodPnl += data.pnl;
+                        weeklyPnl += data.pnl;
+
+                        let bgColor = 'bg-gray-700/50';
+                        if (data.pnl > 0) bgColor = `rgba(34, 197, 94, ${Math.min(0.2 + data.pnl / 1000, 1)})`;
+                        if (data.pnl < 0) bgColor = `rgba(239, 68, 68, ${Math.min(0.2 + Math.abs(data.pnl) / 1000, 1)})`;
+                        
+                        const isToday = day.isSame(dayjs(), 'day');
+                        
+                        let tradeDots = '';
+                        if (data.wins > 0 || data.losses > 0) {
+                            tradeDots = '<div class="flex flex-wrap mt-1">';
+                            for(let w=0; w < data.wins; w++) tradeDots += '<div class="h-1.5 w-1.5 bg-green-400 rounded-full mr-1 mb-1"></div>';
+                            for(let l=0; l < data.losses; l++) tradeDots += '<div class="h-1.5 w-1.5 bg-red-400 rounded-full mr-1 mb-1"></div>';
+                            tradeDots += '</div>';
+                        }
+
+
+                        calendarGrid.innerHTML += `
+                            <div class="calendar-day p-2 rounded-lg text-left flex flex-col border border-transparent ${isToday ? '!border-indigo-500' : ''}" style="background-color: ${bgColor};">
+                                <span class="font-semibold text-sm ${isToday ? 'text-indigo-400' : ''}">${i}</span>
+                                ${tradeDots}
+                                ${data.pnl !== 0 ? `<span class="mt-auto text-xs font-bold ${data.pnl > 0 ? 'text-green-300' : 'text-red-300'}">${data.pnl.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</span>` : ''}
+                            </div>`;
+
+                        if (day.day() === 6 ) { // If it's a Saturday
+                            const pnlColor = weeklyPnl > 0 ? 'text-green-400' : weeklyPnl < 0 ? 'text-red-400' : 'text-gray-400';
+                            calendarGrid.innerHTML += `<div class="flex items-center justify-end font-semibold text-xs pr-2 ${pnlColor}">${weeklyPnl.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</div>`;
+                            weeklyPnl = 0;
+                        }
+                    }
+                    
+                    // After loop, handle the final week if month doesn't end on Saturday
+                    const lastDayOfMonth = calendarDate.endOf('month');
+                    if(lastDayOfMonth.day() !== 6) {
+                        for (let j = lastDayOfMonth.day(); j < 6; j++) {
+                           calendarGrid.innerHTML += '<div></div>';
+                        }
+                        const pnlColor = weeklyPnl > 0 ? 'text-green-400' : weeklyPnl < 0 ? 'text-red-400' : 'text-gray-400';
+                        calendarGrid.innerHTML += `<div class="flex items-center justify-end font-semibold text-xs pr-2 ${pnlColor}">${weeklyPnl.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</div>`;
+                    }
+
+
+                } else { // Week view
+                    calendarGrid.classList.remove('grid-cols-8');
+                    calendarGrid.classList.add('grid-cols-7');
+                    const startOfWeek = calendarDate.startOf('week');
+                    const endOfWeek = calendarDate.endOf('week');
+                    calendarPeriodLabel.textContent = `${startOfWeek.format('MMM D')} - ${endOfWeek.format('MMM D, YYYY')}`;
+
+                    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                    calendarGrid.innerHTML = days.map(day => `<div class="font-bold text-xs text-gray-500 p-2">${day}</div>`).join('');
+
+                    for (let i = 0; i < 7; i++) {
+                        const day = startOfWeek.add(i, 'day');
+                        const dateStr = day.format('YYYY-MM-DD');
+                        const data = dailyData[dateStr] || { pnl: 0, wins: 0, losses: 0 };
+                        periodPnl += data.pnl;
+
+                        let bgColor = 'bg-gray-700/50';
+                        if (data.pnl > 0) bgColor = `rgba(34, 197, 94, ${Math.min(0.2 + data.pnl / 1000, 1)})`;
+                        if (data.pnl < 0) bgColor = `rgba(239, 68, 68, ${Math.min(0.2 + Math.abs(data.pnl) / 1000, 1)})`;
+                        
+                        const isToday = day.isSame(dayjs(), 'day');
+                        
+                        let tradeDots = '';
+                        if (data.wins > 0 || data.losses > 0) {
+                            tradeDots = '<div class="flex flex-wrap mt-1">';
+                            for(let w=0; w < data.wins; w++) tradeDots += '<div class="h-1.5 w-1.5 bg-green-400 rounded-full mr-1 mb-1"></div>';
+                            for(let l=0; l < data.losses; l++) tradeDots += '<div class="h-1.5 w-1.5 bg-red-400 rounded-full mr-1 mb-1"></div>';
+                            tradeDots += '</div>';
+                        }
+
+                        calendarGrid.innerHTML += `
+                            <div class="calendar-day p-2 rounded-lg text-left flex flex-col border border-transparent ${isToday ? '!border-indigo-500' : ''}" style="background-color: ${bgColor};">
+                                <span class="font-semibold text-sm ${isToday ? 'text-indigo-400' : ''}">${day.format('D')}</span>
+                                ${tradeDots}
+                                ${data.pnl !== 0 ? `<span class="mt-auto text-xs font-bold ${data.pnl > 0 ? 'text-green-300' : 'text-red-300'}">${data.pnl.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</span>` : ''}
+                            </div>`;
+                    }
+                }
+                 calendarSummary.textContent = `Period P&L: ${periodPnl.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}`;
+            }
+
+            prevPeriodBtn.addEventListener('click', () => {
+                calendarDate = calendarDate.subtract(1, calendarView);
+                renderCalendar();
+            });
+
+            nextPeriodBtn.addEventListener('click', () => {
+                calendarDate = calendarDate.add(1, calendarView);
+                renderCalendar();
+            });
+
+            calendarMonthWeekToggle.addEventListener('click', (e) => {
+                const btn = e.target.closest('.calendar-view-btn');
+                if (!btn) return;
+                calendarView = btn.dataset.view;
+                document.querySelectorAll('#calendar-view-toggle-buttons .calendar-view-btn').forEach(b => {
+                    b.classList.remove('bg-indigo-600', 'text-white');
+                    b.classList.add('bg-gray-700', 'text-gray-300');
+                });
+                btn.classList.add('bg-indigo-600', 'text-white');
+                btn.classList.remove('bg-gray-700', 'text-gray-300');
+                renderCalendar();
+            });
+            
+            function exportActivityLogToCSV() {
+                const headers = ['Date', 'Type', 'Description', 'Duration (Days)', 'Amount', 'ROC %', 'Notes', 'Tags'];
+                const rows = filteredActivityForExport.map(item => {
+                    let rowData;
+                     if (item.transaction_type === 'trade') {
+                        rowData = [
+                            dayjs(item.close).format('YYYY-MM-DD'),
+                            'Trade',
+                            `"${item.type} on ${item.ticker}"`,
+                            dayjs(item.close).diff(dayjs(item.open), 'day'),
+                            item.pnl.toFixed(2),
+                            item.max_risk > 0 ? `${((item.pnl / item.max_risk) * 100).toFixed(1)}%` : 'N/A',
+                            `"${(item.notes || '').replace(/"/g, '""')}"`,
+                            `"${(item.tags || '').replace(/"/g, '""')}"`
+                        ];
+                    } else {
+                         rowData = [
+                            dayjs(item.date).format('YYYY-MM-DD'),
+                            item.isInitial ? 'Initial Deposit' : item.transaction_type.charAt(0).toUpperCase() + item.transaction_type.slice(1),
+                            `"${(item.notes || '').replace(/"/g, '""')}"`,
+                            'N/A',
+                            (item.transaction_type === 'deposit' ? item.amount : -item.amount).toFixed(2),
+                             'N/A',
+                             'N/A',
+                             'N/A'
+                        ];
+                    }
+                    return rowData.join(',');
+                });
+
+                const csvContent = "data:text/csv;charset=utf-8," + [headers.join(','), ...rows].join('\n');
+                const encodedUri = encodeURI(csvContent);
+                const link = document.createElement("a");
+                link.setAttribute("href", encodedUri);
+                link.setAttribute("download", "activity_log.csv");
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+
+            // Initial dashboard load
+            initialize();
+        });
+    </script>
+</body>
+</html>
+
