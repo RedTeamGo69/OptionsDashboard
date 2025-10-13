@@ -518,7 +518,7 @@
 
                 <div class="mb-4">
                     <label class="flex items-center text-sm font-medium text-gray-300 mb-2">
-                        <input type="checkbox" id="separate_commissions" class="h-4 w-4 bg-gray-700 border border-gray-600 text-indigo-600 focus:ring-indigo-500 rounded">
+                        <input type="checkbox" id="separate_commissions" class="h-4 w-4 bg-gray-700 border border-gray-600 text-indigo-600 focus:ring-2 focus:ring-indigo-500 rounded">
                         <span class="ml-2">Use Separate Commissions</span>
                     </label>
                     <div id="single_commission_container">
@@ -2999,6 +2999,12 @@
                     trade.entry_price_2 = parseFloat((entryPrice * 0.7).toFixed(2));
                     trade.exit_price_2 = parseFloat((exitPrice * 0.6).toFixed(2));
                 }
+                 // Clean up undefined fields before sending to Firestore
+                Object.keys(trade).forEach(key => {
+                    if (trade[key] === undefined) {
+                        delete trade[key];
+                    }
+                });
                 
                 trade.pnl = calculatePnl(trade); // Recalculate PNL with commissions
                 data.push(trade);
