@@ -351,7 +351,7 @@
                             </tr>
                         </thead>
                         <tbody id="recent-trades-body">
-                           <!-- Rows will be injected here -->
+                            <!-- Rows will be injected here -->
                         </tbody>
                         <tfoot>
                            <tr id="activity-log-footer" class="border-t-2 border-gray-600 font-bold"></tr>
@@ -586,12 +586,12 @@
                 <div class="bg-gray-900/50 p-4 rounded-lg mb-6">
                      <h3 class="font-semibold text-white mb-2">Required Columns & Format</h3>
                      <ul class="text-gray-400 text-xs space-y-1">
-                         <li><strong class="text-gray-300">Ticker:</strong> Stock symbol (e.g., AAPL)</li>
-                         <li><strong class="text-gray-300">TradeType:</strong> See dropdown for available types.</li>
-                         <li><strong class="text-gray-300">OpenDate / CloseDate / ExpirationDate:</strong> YYYY-MM-DD format</li>
-                         <li><strong class="text-gray-300">Strikes:</strong> Single value, or multiple values separated by a comma (e.g., "450,455,470,475" for an Iron Condor)</li>
-                         <li><strong class="text-gray-300">Quantity / EntryPrice / ExitPrice / CommissionsPerContract / MaxRisk:</strong> Numerical values</li>
-                         <li><strong class="text-gray-300">Notes / Tags (Optional):</strong> Your text notes for the trade. For tags, use a comma-separated list.</li>
+                          <li><strong class="text-gray-300">Ticker:</strong> Stock symbol (e.g., AAPL)</li>
+                          <li><strong class="text-gray-300">TradeType:</strong> See dropdown for available types.</li>
+                          <li><strong class="text-gray-300">OpenDate / CloseDate / ExpirationDate:</strong> YYYY-MM-DD format</li>
+                          <li><strong class="text-gray-300">Strikes:</strong> Single value, or multiple values separated by a comma (e.g., "450,455,470,475" for an Iron Condor)</li>
+                          <li><strong class="text-gray-300">Quantity / EntryPrice / ExitPrice / CommissionsPerContract / MaxRisk:</strong> Numerical values</li>
+                          <li><strong class="text-gray-300">Notes / Tags (Optional):</strong> Your text notes for the trade. For tags, use a comma-separated list.</li>
                      </ul>
                 </div>
                 
@@ -932,19 +932,22 @@
                     if (!currentActiveAccountExists) {
                         setActiveAccount(accounts[0].id);
                     } else {
-                        // If it exists, just update dashboard. The transaction listener is already active.
                         updateDashboard();
                     }
                 } else {
-                     // This is a new user with no accounts
-                    btnElements.resetDataBtn.disabled = true;
-                    appData.activeAccountId = null;
-                    appData.transactions = {};
-                     if (isInitialLoad) {
-                        // Create a default account for the new user
+                    // This block runs only if there are ZERO accounts.
+                    if (isInitialLoad) {
+                        // For a new user, create a default account. The listener will re-run and set it as active.
+                        // This avoids rendering an intermediate empty state where the user could perform actions.
                         addDoc(accountsCol, { name: 'Account 1' });
+                    } else {
+                        // This happens if a user deletes all their accounts.
+                        // In this case, we DO want to render the empty state.
+                        btnElements.resetDataBtn.disabled = true;
+                        appData.activeAccountId = null;
+                        appData.transactions = {};
+                        updateDashboard();
                     }
-                    updateDashboard();
                 }
                 isInitialLoad = false;
             });
@@ -1257,26 +1260,45 @@
         });
 
         loadSampleDataBtn.addEventListener('click', async () => {
-             if (!appData.activeAccountId) {
-                flashButton(loadSampleDataBtn, 'Create an account first!', 'bg-red-500');
-                return;
+            let accountId = appData.activeAccountId;
+            
+            // If there's no active account, it means no accounts exist. We must create one.
+            if (!accountId) {
+                try {
+                    const accountsCol = collection(db, 'artifacts', appId, 'users', userId, 'accounts');
+                    // The onSnapshot listener will see this new account and set it as active automatically.
+                    // We just need to wait for it to be created before we can add transactions to it.
+                    const newAccountRef = await addDoc(accountsCol, { name: 'Account 1' });
+                    accountId = newAccountRef.id;
+                } catch (error) {
+                    console.error("Error creating default account:", error);
+                    flashButton(loadSampleDataBtn, 'Error creating account!', 'bg-red-500');
+                    return;
+                }
             }
+        
             const batch = writeBatch(db);
-            const transCol = collection(db, 'artifacts', appId, 'users', userId, 'accounts', appData.activeAccountId, 'transactions');
+            // Use the now-guaranteed-to-exist accountId
+            const transCol = collection(db, 'artifacts', appId, 'users', userId, 'accounts', accountId, 'transactions');
             const sampleData = generateDummyData();
             sampleData.forEach(item => {
-                const docRef = doc(transCol); // Create a new doc with a random ID
+                const docRef = doc(transCol);
                 batch.set(docRef, item);
             });
             await batch.commit();
-
+        
             flashButton(loadSampleDataBtn, 'Data Loaded!', 'bg-green-500');
+            // The transaction snapshot listener will now fire with data and update the dashboard.
+            // Close the settings modal after a short delay.
+            setTimeout(() => {
+                resetAndHideModal(settingsModal);
+            }, 1500);
         });
         
          separateCommissionsCheckbox.addEventListener('change', () => {
-             singleCommissionContainer.classList.toggle('hidden', separateCommissionsCheckbox.checked);
-             separateCommissionsContainer.classList.toggle('hidden', !separateCommissionsCheckbox.checked);
-        });
+              singleCommissionContainer.classList.toggle('hidden', separateCommissionsCheckbox.checked);
+              separateCommissionsContainer.classList.toggle('hidden', !separateCommissionsCheckbox.checked);
+         });
 
         expiredCheckbox.addEventListener('change', () => {
             const exitPriceInput = document.getElementById('exit_price');
@@ -2898,28 +2920,28 @@
             const rows = filteredActivityForExport.map(item => {
                 let rowData;
                  if (item.transaction_type === 'trade') {
-                    rowData = [
-                        dayjs(item.close).format('YYYY-MM-DD'),
-                        'Trade',
-                        `"${item.type} on ${item.ticker}"`,
-                        dayjs(item.close).diff(dayjs(item.open), 'day'),
-                        item.pnl.toFixed(2),
-                        item.max_risk > 0 ? `${((calculateRawPnl(item) / item.max_risk) * 100).toFixed(1)}%` : 'N/A',
-                        `"${(item.notes || '').replace(/"/g, '""')}"`,
-                        `"${(item.tags || '').replace(/"/g, '""')}"`
-                    ];
-                } else {
                      rowData = [
-                        dayjs(item.date).format('YYYY-MM-DD'),
-                        item.isInitial ? 'Initial Deposit' : item.transaction_type.charAt(0).toUpperCase() + item.transaction_type.slice(1),
-                        `"${(item.notes || '').replace(/"/g, '""')}"`,
-                        'N/A',
-                        (item.transaction_type === 'deposit' ? item.amount : -item.amount).toFixed(2),
+                         dayjs(item.close).format('YYYY-MM-DD'),
+                         'Trade',
+                         `"${item.type} on ${item.ticker}"`,
+                         dayjs(item.close).diff(dayjs(item.open), 'day'),
+                         item.pnl.toFixed(2),
+                         item.max_risk > 0 ? `${((calculateRawPnl(item) / item.max_risk) * 100).toFixed(1)}%` : 'N/A',
+                         `"${(item.notes || '').replace(/"/g, '""')}"`,
+                         `"${(item.tags || '').replace(/"/g, '""')}"`
+                     ];
+                 } else {
+                      rowData = [
+                         dayjs(item.date).format('YYYY-MM-DD'),
+                         item.isInitial ? 'Initial Deposit' : item.transaction_type.charAt(0).toUpperCase() + item.transaction_type.slice(1),
+                         `"${(item.notes || '').replace(/"/g, '""')}"`,
                          'N/A',
-                         'N/A',
-                         'N/A'
-                    ];
-                }
+                         (item.transaction_type === 'deposit' ? item.amount : -item.amount).toFixed(2),
+                          'N/A',
+                          'N/A',
+                          'N/A'
+                     ];
+                 }
                 return rowData.join(',');
             });
 
@@ -3017,4 +3039,3 @@
     </script>
 </body>
 </html>
-
