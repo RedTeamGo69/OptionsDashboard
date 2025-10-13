@@ -517,7 +517,7 @@
 
                 <div class="mb-4">
                     <label class="flex items-center text-sm font-medium text-gray-300 mb-2">
-                        <input type="checkbox" id="separate_commissions" class="h-4 w-4 bg-gray-700 border border-gray-600 text-indigo-600 focus:ring-indigo-500 rounded">
+                        <input type="checkbox" id="separate_commissions" class="h-4 w-4 bg-gray-700 border-gray-600 text-indigo-600 focus:ring-indigo-500 rounded">
                         <span class="ml-2">Use Separate Commissions</span>
                     </label>
                     <div id="single_commission_container">
@@ -701,10 +701,11 @@
         let currentUserId = null;
         let appDataUnsubscribe = null; // To store the listener unsubscribe function
         let isAuthReady = false;
+        let hasInitialized = false; // Flag to prevent re-initialization on listener events
 
         // --- FIREBASE INITIALIZATION ---
         async function initializeFirebase() {
-             const isCanvasEnvironment = typeof __firebase_config !== 'undefined';
+             const isCanvasEnvironment = typeof __firebase_config !== 'undefined' && __firebase_config !== '{}';
             
             const firebaseConfig = isCanvasEnvironment
                 ? JSON.parse(__firebase_config)
@@ -718,7 +719,7 @@
                       measurementId: "G-2FLCF4T2JQ"
                   };
             
-            const initialAuthToken = isCanvasEnvironment ? __initial_auth_token : null;
+            const initialAuthToken = isCanvasEnvironment ? (typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null) : null;
 
             try {
                 app = initializeApp(firebaseConfig);
@@ -776,32 +777,36 @@
                     console.log("Firestore data received.");
                     const firestoreData = docSnap.data();
                     window.appData = { ...window.appData, ...firestoreData };
-                } else {
-                    // No data in Firestore, check local storage for migration
+                    hasInitialized = true; // Mark as initialized with data
+                    window.updateDashboard(); 
+                } else if (!hasInitialized) {
+                    hasInitialized = true; // Set flag immediately to prevent re-entry
+                    // No data in Firestore. Check for local data to migrate.
                     console.log("No document in Firestore. Checking for local data to migrate.");
                     const localData = localStorage.getItem('optionsOdysseyData');
                     if (localData) {
                         console.log("Found local storage data. Migrating to Firestore.");
                         try {
                             const parsedLocalData = JSON.parse(localData);
-                            // Set the local state from localStorage data
                             window.appData = parsedLocalData;
-                            saveState(); 
-                            localStorage.removeItem('optionsOdysseyData');
+                            // Save this data to Firestore, which will trigger this listener again.
+                            saveState().then(() => {
+                                // Once migration is confirmed, remove local data.
+                                localStorage.removeItem('optionsOdysseyData');
+                            });
                         } catch(e) {
-                             console.error("Failed to parse local data, initializing fresh.", e);
+                             console.error("Failed to parse local data, initializing fresh state.", e);
                              initializeAppState();
-                             saveState();
+                             saveState(); // Save the fresh state
                         }
                     } else {
-                        // No local data either, initialize a fresh state
-                        console.log("No local data found. Initializing a fresh state in Firestore.");
+                        // No Firestore data and no local data.
+                        // Initialize a fresh state and save it to create the document.
+                        console.log("No data found. Initializing a fresh state in Firestore.");
                         initializeAppState();
-                        saveState(); // Save the initial state to Firestore
+                        saveState(); // This will also trigger the listener again.
                     }
                 }
-                // Update the UI with the new data
-                window.updateDashboard(); 
             }, (error) => {
                 console.error("Firestore snapshot listener error:", error);
             });
