@@ -721,12 +721,9 @@
     <!-- Load compat scripts to create the global 'firebase' object for FirebaseUI -->
     <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/ui/6.0.1/firebase-ui-auth.js"></script>
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, query, addDoc, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
+    <script>
         // --- FIREBASE SETUP ---
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'options-odyssey-dev';
         const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
@@ -918,82 +915,73 @@
         }
 
         // --- FIREBASE & INITIALIZATION ---
-        async function initialize() {
+        function initialize() {
             try {
-                app = initializeApp(firebaseConfig);
-                db = getFirestore(app);
-                auth = getAuth(app);
+                app = firebase.initializeApp(firebaseConfig);
+                auth = firebase.auth();
+                db = firebase.firestore();
                 
-                // Initialize the FirebaseUI Widget using Firebase.
                 const ui = new firebaseui.auth.AuthUI(auth);
                 const uiConfig = {
                     callbacks: {
                         signInSuccessWithAuthResult: function(authResult, redirectUrl) {
-                            // User successfully signed in.
-                            // Return type determines whether we continue the redirect automatically
-                            // or whether we leave that to developer to handle.
                             resetAndHideModal(authModal);
-                            return false; // We handle the redirect.
+                            return false; 
                         },
-                        uiShown: function() {
-                            // The widget is rendered.
-                            // Hide the loader.
-                        }
                     },
                     signInFlow: 'popup',
                     signInOptions: [
-                        GoogleAuthProvider.PROVIDER_ID,
+                        firebase.auth.GoogleAuthProvider.PROVIDER_ID,
                     ],
-                    // tosUrl and privacyPolicyUrl accept either url string or a callback
-                    // function.
-                    // Terms of service url/callback.
-                    tosUrl: '<your-tos-url>',
-                    // Privacy policy url/callback.
-                    privacyPolicyUrl: function() {
-                        window.location.assign('<your-privacy-policy-url>');
-                    }
                 };
 
-                // Start the FirebaseUI authentication interface.
                 ui.start('#firebaseui-auth-container', uiConfig);
 
-                onAuthStateChanged(auth, async user => {
+                let isInitialAuthCheck = true;
+
+                auth.onAuthStateChanged(async (user) => {
                     if (user) {
                         userId = user.uid;
                         console.log(`${user.isAnonymous ? 'Anonymous' : 'Authenticated'} user signed in with UID:`, userId);
-                        btnElements.settingsBtn.disabled = false;
                         updateAuthUI(user);
                         attachFirestoreListeners();
                     } else {
-                        // User is signed out. For a seamless experience, sign them in anonymously.
-                        try {
-                           await signInAnonymously(auth);
-                           // The onAuthStateChanged listener will be called again with the anonymous user.
-                        } catch (error) {
-                            console.error("Anonymous Sign-In Error:", error);
-                            showError("Could not start a session. Please refresh the page.");
+                        if (isInitialAuthCheck) {
+                            try {
+                                await auth.signInAnonymously();
+                            } catch (error) {
+                                console.error("Anonymous Sign-In Error:", error);
+                                showError("Could not start a session. Please refresh the page.");
+                            }
+                        } else {
+                            userId = null;
+                            console.log("User is signed out.");
+                            detachFirestoreListeners();
                             updateAuthUI(null);
+                            appData = { accounts: [], activeAccountId: null, transactions: {}, settings: appData.settings };
+                            updateDashboard();
                         }
                     }
+                    isInitialAuthCheck = false;
                 });
 
             } catch(error) {
                 console.error("Firebase Initialization or Auth Error:", error);
-                showError("Could not connect to the database. Please check the console (F12) for more details and ensure Authentication providers are enabled in your Firebase project.");
+                showError("Could not connect to the database. Please check the console (F12) for more details.");
             }
         }
         
         function detachFirestoreListeners() {
-            unsubscribeAccounts();
-            unsubscribeTransactions();
-            unsubscribeSettings();
+            if (unsubscribeAccounts) unsubscribeAccounts();
+            if (unsubscribeTransactions) unsubscribeTransactions();
+            if (unsubscribeSettings) unsubscribeSettings();
         }
 
         function attachFirestoreListeners() {
             detachFirestoreListeners();
 
-            const accountsCol = collection(db, 'artifacts', appId, 'users', userId, 'accounts');
-            unsubscribeAccounts = onSnapshot(accountsCol, (snapshot) => {
+            const accountsCol = db.collection('artifacts').doc(appId).collection('users').doc(userId).collection('accounts');
+            unsubscribeAccounts = accountsCol.onSnapshot((snapshot) => {
                 const accounts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 appData.accounts = accounts;
 
@@ -1008,7 +996,7 @@
                     }
                 } else {
                     if (isInitialLoad) {
-                        addDoc(accountsCol, { name: 'Account 1' });
+                        accountsCol.add({ name: 'Account 1' });
                     } else {
                         btnElements.resetDataBtn.disabled = true;
                         appData.activeAccountId = null;
@@ -1017,16 +1005,21 @@
                     }
                 }
                 isInitialLoad = false;
+            }, (error) => {
+                console.error("Error fetching accounts:", error);
+                showError("Could not load account data. Check Firestore rules.");
             });
 
-            const settingsDoc = doc(db, 'artifacts', appId, 'users', userId, 'settings', 'userSettings');
-            unsubscribeSettings = onSnapshot(settingsDoc, (docSnap) => {
-                 if (docSnap.exists()) {
+            const settingsDoc = db.collection('artifacts').doc(appId).collection('users').doc(userId).collection('settings').doc('userSettings');
+            unsubscribeSettings = settingsDoc.onSnapshot((docSnap) => {
+                 if (docSnap.exists) {
                     appData.settings = docSnap.data();
                 } else {
-                    setDoc(settingsDoc, { currency: '$', defaultCommission: 0.65 });
+                    settingsDoc.set({ currency: '$', defaultCommission: 0.65 });
                 }
                 updateDashboard();
+            }, (error) => {
+                console.error("Error fetching settings:", error);
             });
         }
 
@@ -1034,17 +1027,20 @@
             if(unsubscribeTransactions) unsubscribeTransactions();
 
             if (appData.activeAccountId) {
-                const transCol = collection(db, 'artifacts', appId, 'users', userId, 'accounts', appData.activeAccountId, 'transactions');
-                unsubscribeTransactions = onSnapshot(transCol, (snapshot) => {
+                const transCol = db.collection('artifacts').doc(appId).collection('users').doc(userId).collection('accounts').doc(appData.activeAccountId).collection('transactions');
+                unsubscribeTransactions = transCol.onSnapshot((snapshot) => {
                     appData.transactions[appData.activeAccountId] = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                     updateDashboard();
+                }, (error) => {
+                     console.error("Error fetching transactions:", error);
+                     showError("Could not load transaction data. Check Firestore rules.");
                 });
             }
         }
 
-        async function setActiveAccount(accountId) {
+        function setActiveAccount(accountId) {
             appData.activeAccountId = accountId;
-            await setupTransactionListener(); 
+            setupTransactionListener(); 
         }
 
         function updateAuthUI(user) {
@@ -1055,11 +1051,17 @@
                 userProfile.classList.add('flex');
                 userAvatar.src = user.photoURL || `https://placehold.co/40x40/374151/E0E0E0?text=${user.email ? user.email[0].toUpperCase() : 'A'}`;
                 userEmail.textContent = user.email;
+                btnElements.settingsBtn.disabled = false;
             } else {
                 // User is anonymous or logged out
                 signInBtn.classList.remove('hidden');
                 userProfile.classList.add('hidden');
                 userProfile.classList.remove('flex');
+                if (!user) { // truly logged out
+                    btnElements.settingsBtn.disabled = true;
+                } else { // anonymous
+                    btnElements.settingsBtn.disabled = false;
+                }
             }
         }
 
@@ -1077,6 +1079,7 @@
         // --- ACCOUNT & SETTINGS LOGIC ---
         function renderAccountSwitcher() {
             accountSwitcherEl.innerHTML = '';
+            if (!userId) return; // Don't render if no user
             appData.accounts.forEach(account => {
                 const isActive = account.id === appData.activeAccountId;
                 const button = document.createElement('button');
@@ -1161,7 +1164,7 @@
                 }
             }
             
-            const transCol = collection(db, 'artifacts', appId, 'users', userId, 'accounts', appData.activeAccountId, 'transactions');
+            const transCol = db.collection('artifacts').doc(appId).collection('users').doc(userId).collection('accounts').doc(appData.activeAccountId).collection('transactions');
             let initialDeposit = allTransactions.find(t => t.isInitial);
 
             const newDepositData = {
@@ -1173,10 +1176,10 @@
             };
 
             if (initialDeposit) {
-                const docRef = doc(transCol, initialDeposit.id);
-                await updateDoc(docRef, { amount: newBalance, date: newDate });
+                const docRef = transCol.doc(initialDeposit.id);
+                await docRef.update({ amount: newBalance, date: newDate });
             } else {
-                await addDoc(transCol, newDepositData);
+                await transCol.add(newDepositData);
             }
 
             flashButton(saveStartingBalanceBtn, 'Saved!', 'bg-green-500');
@@ -1219,7 +1222,7 @@
         
         // Auth Modal Listeners
         signInBtn.addEventListener('click', () => authModal.classList.remove('hidden'));
-        signOutBtn.addEventListener('click', () => signOut(auth));
+        signOutBtn.addEventListener('click', () => auth.signOut());
         closeAuthBtn.addEventListener('click', () => authModal.classList.add('hidden'));
         authModal.addEventListener('click', (e) => {
             if (e.target === authModal) authModal.classList.add('hidden');
@@ -1273,9 +1276,9 @@
             }
         });
         confirmResetBtn.addEventListener('click', async () => {
-            const transCol = collection(db, 'artifacts', appId, 'users', userId, 'accounts', appData.activeAccountId, 'transactions');
-            const querySnapshot = await getDocs(transCol);
-            const batch = writeBatch(db);
+            const transCol = db.collection('artifacts').doc(appId).collection('users').doc(userId).collection('accounts').doc(appData.activeAccountId).collection('transactions');
+            const querySnapshot = await transCol.get();
+            const batch = db.batch();
             querySnapshot.forEach(doc => {
                 batch.delete(doc.ref);
             });
@@ -1312,16 +1315,16 @@
                  settingsChanged = true;
              }
              if(settingsChanged) {
-                 const settingsDoc = doc(db, 'artifacts', appId, 'users', userId, 'settings', 'userSettings');
-                 await setDoc(settingsDoc, newSettings);
+                 const settingsDoc = db.collection('artifacts').doc(appId).collection('users').doc(userId).collection('settings').doc('userSettings');
+                 await settingsDoc.set(newSettings);
              }
         });
 
         accountListManagerEl.addEventListener('change', async (e) => {
             if (e.target.classList.contains('account-name-input')) {
                 const accountId = e.target.dataset.id;
-                const accountDoc = doc(db, 'artifacts', appId, 'users', userId, 'accounts', accountId);
-                await updateDoc(accountDoc, { name: e.target.value });
+                const accountDoc = db.collection('artifacts').doc(appId).collection('users').doc(userId).collection('accounts').doc(accountId);
+                await accountDoc.update({ name: e.target.value });
             }
         });
 
@@ -1332,8 +1335,8 @@
                 // Double check it's not the active one
                 if (accountId === appData.activeAccountId || appData.accounts.length <= 1) return;
                 
-                const accountDoc = doc(db, 'artifacts', appId, 'users', userId, 'accounts', accountId);
-                await deleteDoc(accountDoc);
+                const accountDoc = db.collection('artifacts').doc(appId).collection('users').doc(userId).collection('accounts').doc(accountId);
+                await accountDoc.delete();
                 // The onSnapshot listener will handle UI updates
             }
         });
@@ -1342,8 +1345,8 @@
             if (appData.accounts.length >= MAX_ACCOUNTS) return;
             const newName = document.getElementById('newAccountName').value.trim();
             if (newName) {
-                const accountsCol = collection(db, 'artifacts', appId, 'users', userId, 'accounts');
-                await addDoc(accountsCol, { name: newName });
+                const accountsCol = db.collection('artifacts').doc(appId).collection('users').doc(userId).collection('accounts');
+                await accountsCol.add({ name: newName });
                 document.getElementById('newAccountName').value = '';
                 // onSnapshot will update UI
             }
@@ -1355,10 +1358,8 @@
             // If there's no active account, it means no accounts exist. We must create one.
             if (!accountId) {
                 try {
-                    const accountsCol = collection(db, 'artifacts', appId, 'users', userId, 'accounts');
-                    // The onSnapshot listener will see this new account and set it as active automatically.
-                    // We just need to wait for it to be created before we can add transactions to it.
-                    const newAccountRef = await addDoc(accountsCol, { name: 'Account 1' });
+                    const accountsCol = db.collection('artifacts').doc(appId).collection('users').doc(userId).collection('accounts');
+                    const newAccountRef = await accountsCol.add({ name: 'Account 1' });
                     accountId = newAccountRef.id;
                 } catch (error) {
                     console.error("Error creating default account:", error);
@@ -1367,19 +1368,16 @@
                 }
             }
         
-            const batch = writeBatch(db);
-            // Use the now-guaranteed-to-exist accountId
-            const transCol = collection(db, 'artifacts', appId, 'users', userId, 'accounts', accountId, 'transactions');
+            const batch = db.batch();
+            const transCol = db.collection('artifacts').doc(appId).collection('users').doc(userId).collection('accounts').doc(accountId).collection('transactions');
             const sampleData = generateDummyData();
             sampleData.forEach(item => {
-                const docRef = doc(transCol);
+                const docRef = transCol.doc();
                 batch.set(docRef, item);
             });
             await batch.commit();
         
             flashButton(loadSampleDataBtn, 'Data Loaded!', 'bg-green-500');
-            // The transaction snapshot listener will now fire with data and update the dashboard.
-            // Close the settings modal after a short delay.
             setTimeout(() => {
                 resetAndHideModal(settingsModal);
             }, 1500);
@@ -1568,8 +1566,8 @@
                 notes: document.getElementById('transaction_notes').value,
                 isInitial: false
             };
-            const transCol = collection(db, 'artifacts', appId, 'users', userId, 'accounts', appData.activeAccountId, 'transactions');
-            await addDoc(transCol, transactionData);
+            const transCol = db.collection('artifacts').doc(appId).collection('users').doc(userId).collection('accounts').doc(appData.activeAccountId).collection('transactions');
+            await transCol.add(transactionData);
             resetAndHideModal(transactionModal);
         });
 
@@ -1633,12 +1631,12 @@
             
             tradeData.pnl = calculatePnl(tradeData);
             
-            const transCol = collection(db, 'artifacts', appId, 'users', userId, 'accounts', appData.activeAccountId, 'transactions');
+            const transCol = db.collection('artifacts').doc(appId).collection('users').doc(userId).collection('accounts').doc(appData.activeAccountId).collection('transactions');
             if (tradeId) {
-                const docRef = doc(transCol, tradeId);
-                await setDoc(docRef, tradeData, { merge: true });
+                const docRef = transCol.doc(tradeId);
+                await docRef.set(tradeData, { merge: true });
             } else {
-                await addDoc(transCol, tradeData);
+                await transCol.add(tradeData);
             }
             resetAndHideModal(tradeModal);
         });
@@ -1763,8 +1761,8 @@
                         throw new Error(`Missing required columns: ${missingHeaders.join(', ')}`);
                     }
                     
-                    const batch = writeBatch(db);
-                    const transCol = collection(db, 'artifacts', appId, 'users', userId, 'accounts', appData.activeAccountId, 'transactions');
+                    const batch = db.batch();
+                    const transCol = db.collection('artifacts').doc(appId).collection('users').doc(userId).collection('accounts').doc(appData.activeAccountId).collection('transactions');
                     let newTradesCount = 0;
 
                     for (let i = 1; i < lines.length; i++) {
@@ -1805,7 +1803,7 @@
 
                         tradeData.pnl = calculatePnl(tradeData);
                         
-                        const docRef = doc(transCol);
+                        const docRef = transCol.doc();
                         batch.set(docRef, tradeData);
                         newTradesCount++;
                     }
@@ -1867,8 +1865,8 @@
                 if (itemToDelete && itemToDelete.isInitial) {
                      return;
                 }
-                const docRef = doc(db, 'artifacts', appId, 'users', userId, 'accounts', appData.activeAccountId, 'transactions', itemId);
-                deleteDoc(docRef);
+                const docRef = db.collection('artifacts').doc(appId).collection('users').doc(userId).collection('accounts').doc(appData.activeAccountId).collection('transactions').doc(itemId);
+                docRef.delete();
                 return;
             }
 
@@ -2143,7 +2141,21 @@
         // --- DASHBOARD UPDATE LOGIC ---
         let filteredActivityForExport = []; // Variable to hold filtered data for export
         function updateDashboard() {
-            if (!userId) return; // Don't run if user isn't authenticated
+            if (!userId) {
+                // If there's no user, clear the UI
+                tradesBody.innerHTML = '';
+                accountSwitcherEl.innerHTML = '';
+                totalAccountValueEl.textContent = formatCurrency(0);
+                totalDepositsEl.textContent = formatCurrency(0);
+                totalWithdrawalsEl.textContent = formatCurrency(0);
+                // Reset KPIs
+                document.getElementById('kpi-total-pnl').textContent = formatCurrency(0);
+                document.getElementById('kpi-win-rate').textContent = '0%';
+                document.getElementById('kpi-avg-roc').textContent = '0.0%';
+                document.getElementById('kpi-total-trades').textContent = '0';
+                // You might want to clear charts as well
+                return;
+            };
             
             renderAccountSwitcher();
             
