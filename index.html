@@ -954,15 +954,17 @@
                                 showError("Could not start a session. Please refresh the page.");
                             }
                         } else {
+                            // This means the user deliberately signed out.
                             userId = null;
                             console.log("User is signed out.");
                             detachFirestoreListeners();
                             updateAuthUI(null);
+                            // Clear all data from the UI to prevent showing old data.
                             appData = { accounts: [], activeAccountId: null, transactions: {}, settings: appData.settings };
-                            updateDashboard();
+                            updateDashboard(); // Re-render the empty state.
                         }
                     }
-                    isInitialAuthCheck = false;
+                    isInitialAuthCheck = false; // The first check is done.
                 });
 
             } catch(error) {
