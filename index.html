@@ -92,7 +92,7 @@
                     New Trade
                 </button>
                  <button id="settings-btn" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition flex items-center">
-                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
                     Settings
                 </button>
                  <button id="resetDataBtn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition flex items-center">
@@ -350,7 +350,7 @@
                             </tr>
                         </thead>
                         <tbody id="recent-trades-body">
-                           <!-- Rows will be injected here -->
+                            <!-- Rows will be injected here -->
                         </tbody>
                         <tfoot>
                            <tr id="activity-log-footer" class="border-t-2 border-gray-600 font-bold"></tr>
@@ -585,12 +585,12 @@
                 <div class="bg-gray-900/50 p-4 rounded-lg mb-6">
                      <h3 class="font-semibold text-white mb-2">Required Columns & Format</h3>
                      <ul class="text-gray-400 text-xs space-y-1">
-                         <li><strong class="text-gray-300">Ticker:</strong> Stock symbol (e.g., AAPL)</li>
-                         <li><strong class="text-gray-300">TradeType:</strong> See dropdown for available types.</li>
-                         <li><strong class="text-gray-300">OpenDate / CloseDate / ExpirationDate:</strong> YYYY-MM-DD format</li>
-                         <li><strong class="text-gray-300">Strikes:</strong> Single value, or multiple values separated by a comma (e.g., "450,455,470,475" for an Iron Condor)</li>
-                         <li><strong class="text-gray-300">Quantity / EntryPrice / ExitPrice / CommissionsPerContract / MaxRisk:</strong> Numerical values</li>
-                         <li><strong class="text-gray-300">Notes / Tags (Optional):</strong> Your text notes for the trade. For tags, use a comma-separated list.</li>
+                          <li><strong class="text-gray-300">Ticker:</strong> Stock symbol (e.g., AAPL)</li>
+                          <li><strong class="text-gray-300">TradeType:</strong> See dropdown for available types.</li>
+                          <li><strong class="text-gray-300">OpenDate / CloseDate / ExpirationDate:</strong> YYYY-MM-DD format</li>
+                          <li><strong class="text-gray-300">Strikes:</strong> Single value, or multiple values separated by a comma (e.g., "450,455,470,475" for an Iron Condor)</li>
+                          <li><strong class="text-gray-300">Quantity / EntryPrice / ExitPrice / CommissionsPerContract / MaxRisk:</strong> Numerical values</li>
+                          <li><strong class="text-gray-300">Notes / Tags (Optional):</strong> Your text notes for the trade. For tags, use a comma-separated list.</li>
                      </ul>
                 </div>
                 
@@ -687,14 +687,127 @@
         </div>
     </div>
 
+    <!-- Firebase SDKs -->
+    <script type="module">
+        // Import Firebase modules
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        import { getFirestore, doc, onSnapshot, setDoc, setLogLevel } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-    <script>
-        dayjs.extend(window.dayjs_plugin_quarterOfYear);
-        dayjs.extend(window.dayjs_plugin_weekOfYear);
+        // Global Firebase variables
+        let app;
+        let auth;
+        let db;
+        let currentUserId = null;
+        let appDataUnsubscribe = null; // To store the listener unsubscribe function
+        let isAuthReady = false;
+
+        // --- FIREBASE INITIALIZATION ---
+        async function initializeFirebase() {
+            // Use environment variables for configuration and authentication
+            const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+            const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+            const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+            try {
+                app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
+                setLogLevel('debug'); // For detailed logs in console
+            } catch (error) {
+                console.error("Firebase initialization failed:", error);
+                document.body.innerHTML = '<div class="text-center p-8 text-red-400">Failed to initialize the application. Please check the console.</div>';
+                return;
+            }
+
+            onAuthStateChanged(auth, user => {
+                if (user) {
+                    // User is signed in.
+                    console.log("User authenticated with UID:", user.uid);
+                    currentUserId = user.uid;
+                    isAuthReady = true;
+                    // Detach any old listener before attaching a new one
+                    if (appDataUnsubscribe) {
+                        appDataUnsubscribe();
+                    }
+                    setupRealtimeListener(currentUserId, appId);
+                } else {
+                    // User is signed out.
+                    console.log("User is signed out.");
+                    currentUserId = null;
+                    isAuthReady = false;
+                    if (appDataUnsubscribe) {
+                        appDataUnsubscribe();
+                    }
+                }
+            });
+
+            // Sign in the user
+            try {
+                 if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (error) {
+                console.error("Firebase sign-in failed:", error);
+            }
+        }
+
+        function setupRealtimeListener(userId, appId) {
+            if (!userId || !appId) return;
+
+            const docRef = doc(db, 'artifacts', appId, 'users', userId, 'data', 'main');
+
+            appDataUnsubscribe = onSnapshot(docRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    // Data exists in Firestore, load it
+                    console.log("Firestore data received.");
+                    const firestoreData = docSnap.data();
+                    // Merge with local state to be safe, though Firestore should be the source of truth
+                    window.appData = { ...window.appData, ...firestoreData };
+                } else {
+                    // No data in Firestore, check local storage for migration
+                    console.log("No document in Firestore. Checking for local data to migrate.");
+                    const localData = localStorage.getItem('optionsOdysseyData');
+                    if (localData) {
+                        console.log("Found local storage data. Migrating to Firestore.");
+                        try {
+                            const parsedLocalData = JSON.parse(localData);
+                            // Set the local state from localStorage data
+                            window.appData = parsedLocalData;
+                            // Save this data to Firestore, which triggers another snapshot
+                            saveState(); 
+                            // Optionally clear local storage after successful migration
+                            localStorage.removeItem('optionsOdysseyData');
+                        } catch(e) {
+                             console.error("Failed to parse local data, initializing fresh.", e);
+                             initializeAppState();
+                             saveState();
+                        }
+                    } else {
+                        // No local data either, initialize a fresh state
+                        console.log("No local data found. Initializing a fresh state in Firestore.");
+                        initializeAppState();
+                        saveState(); // Save the initial state to Firestore
+                    }
+                }
+                // Update the UI with the new data
+                window.updateDashboard(); 
+            }, (error) => {
+                console.error("Firestore snapshot listener error:", error);
+            });
+        }
+
+
+        window.dayjs.extend(window.dayjs_plugin_quarterOfYear);
+        window.dayjs.extend(window.dayjs_plugin_weekOfYear);
 
         document.addEventListener('DOMContentLoaded', () => {
+            // Define a global appData object to be accessible by Firebase functions
+            window.appData = {};
+            
             // --- STATE & CONFIG ---
-            let appData = {};
             const MAX_ACCOUNTS = 5;
             let tradeTableFilter = 'all';
             let equityTimeFilter = 'all';
@@ -810,49 +923,42 @@
 
 
             // --- DATA PERSISTENCE & HELPERS ---
-            function saveState() {
-                localStorage.setItem('optionsOdysseyData', JSON.stringify(appData));
+            window.saveState = async function() {
+                if (!isAuthReady || !currentUserId) {
+                    console.warn("Authentication not ready. Cannot save state.");
+                    return;
+                }
+                const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+                const docRef = doc(db, 'artifacts', appId, 'users', currentUserId, 'data', 'main');
+                try {
+                    // Use setDoc to overwrite the document with the current app state
+                    await setDoc(docRef, window.appData, { merge: true });
+                    console.log("State saved to Firestore.");
+                } catch (error) {
+                    console.error("Error saving state to Firestore:", error);
+                }
             }
 
-            function loadState() {
-                const savedData = localStorage.getItem('optionsOdysseyData');
-                if (savedData) {
-                    const parsedData = JSON.parse(savedData);
-                    // Migration from old single-account structure
-                    if (!parsedData.accounts) {
-                        const defaultAccountId = `acc_${Date.now()}`;
-                        appData = {
-                            accounts: [{ id: defaultAccountId, name: 'Default Account' }],
-                            activeAccountId: defaultAccountId,
-                            transactions: { [defaultAccountId]: parsedData.transactions || [] }, // Use old transactions array
-                            settings: parsedData.settings || { currency: '$', defaultCommission: 0.65 }
-                        };
-                        saveState(); // Save the new structure
-                    } else {
-                        appData = parsedData;
-                    }
-                } else {
-                    // Initialize with a default structure
-                    const defaultAccountId = `acc_${Date.now()}`;
-                    appData = {
-                        accounts: [{ id: defaultAccountId, name: 'Account 1' }],
-                        activeAccountId: defaultAccountId,
-                        transactions: { [defaultAccountId]: [] },
-                        settings: { currency: '$', defaultCommission: 0.65 }
-                    };
-                }
+            window.initializeAppState = function() {
+                const defaultAccountId = `acc_${Date.now()}`;
+                window.appData = {
+                    accounts: [{ id: defaultAccountId, name: 'Account 1' }],
+                    activeAccountId: defaultAccountId,
+                    transactions: { [defaultAccountId]: [] },
+                    settings: { currency: '$', defaultCommission: 0.65 }
+                };
             }
             
             function getActiveTransactions() {
-                return appData.transactions[appData.activeAccountId] || [];
+                return window.appData.transactions && window.appData.activeAccountId ? window.appData.transactions[window.appData.activeAccountId] || [] : [];
             }
             
             function getActiveAccount() {
-                return appData.accounts.find(acc => acc.id === appData.activeAccountId);
+                return window.appData.accounts ? window.appData.accounts.find(acc => acc.id === window.appData.activeAccountId) : null;
             }
 
             function getCurrency() {
-                return appData.settings.currency || '$';
+                return window.appData.settings ? window.appData.settings.currency || '$' : '$';
             }
             
             function formatCurrency(value) {
@@ -873,25 +979,27 @@
 
             // --- INITIALIZATION ---
             function initialize() {
-                loadState();
-                updateDashboard();
+                // Firebase initialization is now the entry point.
+                // updateDashboard will be called by the realtime listener.
+                console.log("DOM content loaded. Initializing Firebase...");
             }
             
             function flashButton(button, text, colorClass, duration = 2000) {
-                 const originalContent = button.innerHTML;
-                 button.textContent = text;
-                 button.classList.add(colorClass);
-                 setTimeout(() => {
-                     button.innerHTML = originalContent;
-                     button.classList.remove(colorClass);
-                 }, duration);
+                const originalContent = button.innerHTML;
+                button.textContent = text;
+                button.classList.add(colorClass);
+                setTimeout(() => {
+                    button.innerHTML = originalContent;
+                    button.classList.remove(colorClass);
+                }, duration);
             }
 
             // --- ACCOUNT & SETTINGS LOGIC ---
             function renderAccountSwitcher() {
                 accountSwitcherEl.innerHTML = '';
-                appData.accounts.forEach(account => {
-                    const isActive = account.id === appData.activeAccountId;
+                 if (!window.appData.accounts) return;
+                window.appData.accounts.forEach(account => {
+                    const isActive = account.id === window.appData.activeAccountId;
                     const button = document.createElement('button');
                     button.textContent = account.name;
                     button.dataset.id = account.id;
@@ -901,7 +1009,7 @@
                         : 'bg-gray-700 hover:bg-gray-600 text-gray-300'
                     }`;
                     button.addEventListener('click', () => {
-                        appData.activeAccountId = account.id;
+                        window.appData.activeAccountId = account.id;
                         saveState();
                         updateDashboard();
                     });
@@ -910,9 +1018,12 @@
             }
 
             function renderSettingsModal() {
+                 if (!window.appData.settings) {
+                    window.appData.settings = { currency: '$', defaultCommission: 0.65 };
+                 }
                 // Populate general settings
-                currencySettingInput.value = appData.settings.currency || '$';
-                commissionSettingInput.value = appData.settings.defaultCommission || 0;
+                currencySettingInput.value = window.appData.settings.currency || '$';
+                commissionSettingInput.value = window.appData.settings.defaultCommission || 0;
 
                 // Populate active account name for starting balance section
                 const activeAccount = getActiveAccount();
@@ -936,8 +1047,9 @@
 
                 // Populate account manager
                 accountListManagerEl.innerHTML = '';
-                appData.accounts.forEach(account => {
-                    const isActivatable = account.id !== appData.activeAccountId && appData.accounts.length > 1;
+                 if (!window.appData.accounts) return;
+                window.appData.accounts.forEach(account => {
+                    const isActivatable = account.id !== window.appData.activeAccountId && window.appData.accounts.length > 1;
                     const div = document.createElement('div');
                     div.className = 'flex items-center gap-2';
                     div.innerHTML = `
@@ -950,7 +1062,7 @@
                 });
 
                 // Check account limit
-                const atLimit = appData.accounts.length >= MAX_ACCOUNTS;
+                const atLimit = window.appData.accounts.length >= MAX_ACCOUNTS;
                 addAccountBtn.disabled = atLimit;
                 document.getElementById('account-limit-msg').classList.toggle('hidden', !atLimit);
             }
@@ -992,7 +1104,7 @@
                     });
                 }
 
-                appData.transactions[appData.activeAccountId] = allTransactions;
+                window.appData.transactions[window.appData.activeAccountId] = allTransactions;
                 saveState();
                 updateDashboard();
                 flashButton(saveStartingBalanceBtn, 'Saved!', 'bg-green-500');
@@ -1019,7 +1131,7 @@
                     document.getElementById('closing_commission').disabled = false;
                     document.getElementById('closing_commission').classList.remove('bg-gray-600');
                     // Set default commission from settings
-                    document.getElementById('commissions').value = appData.settings.defaultCommission || 0;
+                    document.getElementById('commissions').value = window.appData.settings.defaultCommission || 0;
 
                     updateStrikeInputs();
                 } else if (modalElement.id === 'importModal') {
@@ -1037,7 +1149,7 @@
             addTradeBtn.addEventListener('click', () => {
                 modal.classList.remove('hidden');
                 // Pre-fill default commission when opening for a new trade
-                document.getElementById('commissions').value = appData.settings.defaultCommission || 0;
+                document.getElementById('commissions').value = window.appData.settings.defaultCommission || 0;
             });
             cancelBtn.addEventListener('click', () => resetAndHideModal(modal));
             modal.addEventListener('click', (e) => {
@@ -1081,7 +1193,7 @@
                 }
             });
             confirmResetBtn.addEventListener('click', () => {
-                appData.transactions[appData.activeAccountId] = [];
+                window.appData.transactions[window.appData.activeAccountId] = [];
                 saveState();
                 currentPage = 1;
                 logSearchFilter = '';
@@ -1104,23 +1216,23 @@
             settingsModal.addEventListener('change', (e) => {
                 let settingsChanged = false;
                  if (e.target.id === 'setting-currency') {
-                     appData.settings.currency = e.target.value || '$';
-                     settingsChanged = true;
+                      window.appData.settings.currency = e.target.value || '$';
+                      settingsChanged = true;
                  }
                  if (e.target.id === 'setting-commission') {
-                     appData.settings.defaultCommission = parseFloat(e.target.value) || 0;
-                     settingsChanged = true;
+                      window.appData.settings.defaultCommission = parseFloat(e.target.value) || 0;
+                      settingsChanged = true;
                  }
                  if(settingsChanged) {
-                     saveState();
-                     updateDashboard(); // Re-render to apply currency/commission changes
+                      saveState();
+                      updateDashboard(); // Re-render to apply currency/commission changes
                  }
             });
 
             accountListManagerEl.addEventListener('change', (e) => {
                 if (e.target.classList.contains('account-name-input')) {
                     const accountId = e.target.dataset.id;
-                    const account = appData.accounts.find(acc => acc.id === accountId);
+                    const account = window.appData.accounts.find(acc => acc.id === accountId);
                     if (account) {
                         account.name = e.target.value;
                         saveState();
@@ -1135,10 +1247,10 @@
                 if (deleteBtn) {
                     const accountId = deleteBtn.dataset.id;
                     // Double check it's not the active one
-                    if (accountId === appData.activeAccountId || appData.accounts.length <= 1) return;
+                    if (accountId === window.appData.activeAccountId || window.appData.accounts.length <= 1) return;
                     
-                    appData.accounts = appData.accounts.filter(acc => acc.id !== accountId);
-                    delete appData.transactions[accountId];
+                    window.appData.accounts = window.appData.accounts.filter(acc => acc.id !== accountId);
+                    delete window.appData.transactions[accountId];
                     
                     saveState();
                     renderSettingsModal(); // Re-render the list inside the modal
@@ -1147,12 +1259,12 @@
             });
 
              addAccountBtn.addEventListener('click', () => {
-                if (appData.accounts.length >= MAX_ACCOUNTS) return;
+                if (window.appData.accounts.length >= MAX_ACCOUNTS) return;
                 const newName = document.getElementById('newAccountName').value.trim();
                 if (newName) {
                     const newAccountId = `acc_${Date.now()}`;
-                    appData.accounts.push({ id: newAccountId, name: newName });
-                    appData.transactions[newAccountId] = [];
+                    window.appData.accounts.push({ id: newAccountId, name: newName });
+                    window.appData.transactions[newAccountId] = [];
                     document.getElementById('newAccountName').value = '';
                     saveState();
                     renderSettingsModal();
@@ -1161,7 +1273,7 @@
             });
 
             loadSampleDataBtn.addEventListener('click', () => {
-                appData.transactions[appData.activeAccountId] = generateDummyData();
+                window.appData.transactions[window.appData.activeAccountId] = generateDummyData();
                 saveState();
                 updateDashboard();
                 renderSettingsModal(); // Re-render modal to hide the button
@@ -1169,9 +1281,9 @@
             });
             
              separateCommissionsCheckbox.addEventListener('change', () => {
-                 singleCommissionContainer.classList.toggle('hidden', separateCommissionsCheckbox.checked);
-                 separateCommissionsContainer.classList.toggle('hidden', !separateCommissionsCheckbox.checked);
-            });
+                  singleCommissionContainer.classList.toggle('hidden', separateCommissionsCheckbox.checked);
+                  separateCommissionsContainer.classList.toggle('hidden', !separateCommissionsCheckbox.checked);
+             });
 
             expiredCheckbox.addEventListener('change', () => {
                 const exitPriceInput = document.getElementById('exit_price');
@@ -1192,9 +1304,9 @@
                     }
 
                     if (!separateCommissionsCheckbox.checked) {
-                       separateCommissionsCheckbox.click(); // This forces separate commissions
+                        separateCommissionsCheckbox.click(); // This forces separate commissions
                     }
-                    document.getElementById('opening_commission').value = appData.settings.defaultCommission || 0;
+                    document.getElementById('opening_commission').value = window.appData.settings.defaultCommission || 0;
                     closingCommInput.value = 0;
                     closingCommInput.disabled = true;
                     closingCommInput.classList.add('bg-gray-600');
@@ -1354,7 +1466,7 @@
                     isInitial: false
                 };
                 allTransactions.push(transactionData);
-                appData.transactions[appData.activeAccountId] = allTransactions;
+                window.appData.transactions[window.appData.activeAccountId] = allTransactions;
                 saveState();
                 updateDashboard();
                 resetAndHideModal(transactionModal);
@@ -1424,7 +1536,7 @@
                     tradeData.id = allTransactions.length > 0 ? Math.max(...allTransactions.map(t => t.id)) + 1 : 0;
                     allTransactions.push(tradeData);
                 }
-                appData.transactions[appData.activeAccountId] = allTransactions;
+                window.appData.transactions[window.appData.activeAccountId] = allTransactions;
                 saveState();
                 updateDashboard();
                 resetAndHideModal(modal);
@@ -1595,7 +1707,7 @@
                             newTransactions.push(tradeData);
                         }
 
-                        appData.transactions[appData.activeAccountId] = [...allTransactions, ...newTransactions];
+                        window.appData.transactions[window.appData.activeAccountId] = [...allTransactions, ...newTransactions];
                         saveState();
                         updateDashboard();
                         importStatus.textContent = `Successfully imported ${newTransactions.length} trades.`;
@@ -1654,7 +1766,7 @@
                         // Don't let initial deposit be deleted from here, must be done via the settings
                          return;
                     }
-                    appData.transactions[appData.activeAccountId] = allTransactions.filter(t => t.id !== itemId);
+                    window.appData.transactions[window.appData.activeAccountId] = allTransactions.filter(t => t.id !== itemId);
                     saveState();
                     updateDashboard();
                     return;
@@ -1682,41 +1794,41 @@
                             content += `
                                 <div class="p-4">
                                      <div class="flex flex-col text-sm mb-4">
-                                        <span class="text-xs text-gray-500">Open / Close Dates</span>
-                                        <span class="font-semibold text-gray-300">${dayjs(item.open).format('YYYY-MM-DD')} to ${dayjs(item.close).format('YYYY-MM-DD')}</span>
-                                    </div>
-                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                        <!-- Leg 1 -->
-                                        <div>
-                                            <h5 class="text-sm font-semibold text-indigo-400 mb-2">Leg 1: ${item.strikes[0]}</h5>
-                                            <div class="space-y-2 text-sm text-gray-400">
-                                                <div class="flex justify-between"><span>Quantity:</span> <span class="font-semibold text-gray-300">${item.quantity}</span></div>
-                                                <div class="flex justify-between"><span>Entry / Exit:</span> <span class="font-semibold text-gray-300">${formatCurrency(item.entry_price)} / ${formatCurrency(item.exit_price)}</span></div>
-                                            </div>
-                                        </div>
-                                        <!-- Leg 2 -->
-                                        <div>
-                                            <h5 class="text-sm font-semibold text-indigo-400 mb-2">Leg 2: ${item.strikes[1]}</h5>
-                                            <div class="space-y-2 text-sm text-gray-400">
-                                                <div class="flex justify-between"><span>Quantity:</span> <span class="font-semibold text-gray-300">${item.quantity_2}</span></div>
-                                                <div class="flex justify-between"><span>Entry / Exit:</span> <span class="font-semibold text-gray-300">${formatCurrency(item.entry_price_2)} / ${formatCurrency(item.exit_price_2)}</span></div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="border-t border-gray-700/50 mt-4 pt-4 grid grid-cols-2 sm:grid-cols-3 gap-4 text-sm">
-                                        <div class="flex flex-col">
-                                            <span class="text-xs text-gray-500">Commissions</span>
-                                            <span class="font-semibold text-gray-300">${formatCurrency(totalCommissions)}</span>
-                                        </div>
-                                        <div class="flex flex-col">
-                                            <span class="text-xs text-gray-500">Max Risk</span>
-                                            <span class="font-semibold text-gray-300">${formatCurrency(item.max_risk)}</span>
-                                        </div>
-                                        <div class="flex flex-col">
-                                            <span class="text-xs text-gray-500">Return on Capital</span>
-                                            <span class="font-semibold ${rocColor}">${rocValue}</span>
-                                        </div>
-                                    </div>
+                                         <span class="text-xs text-gray-500">Open / Close Dates</span>
+                                         <span class="font-semibold text-gray-300">${dayjs(item.open).format('YYYY-MM-DD')} to ${dayjs(item.close).format('YYYY-MM-DD')}</span>
+                                     </div>
+                                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                         <!-- Leg 1 -->
+                                         <div>
+                                             <h5 class="text-sm font-semibold text-indigo-400 mb-2">Leg 1: ${item.strikes[0]}</h5>
+                                             <div class="space-y-2 text-sm text-gray-400">
+                                                 <div class="flex justify-between"><span>Quantity:</span> <span class="font-semibold text-gray-300">${item.quantity}</span></div>
+                                                 <div class="flex justify-between"><span>Entry / Exit:</span> <span class="font-semibold text-gray-300">${formatCurrency(item.entry_price)} / ${formatCurrency(item.exit_price)}</span></div>
+                                             </div>
+                                         </div>
+                                         <!-- Leg 2 -->
+                                         <div>
+                                             <h5 class="text-sm font-semibold text-indigo-400 mb-2">Leg 2: ${item.strikes[1]}</h5>
+                                             <div class="space-y-2 text-sm text-gray-400">
+                                                 <div class="flex justify-between"><span>Quantity:</span> <span class="font-semibold text-gray-300">${item.quantity_2}</span></div>
+                                                 <div class="flex justify-between"><span>Entry / Exit:</span> <span class="font-semibold text-gray-300">${formatCurrency(item.entry_price_2)} / ${formatCurrency(item.exit_price_2)}</span></div>
+                                             </div>
+                                         </div>
+                                     </div>
+                                     <div class="border-t border-gray-700/50 mt-4 pt-4 grid grid-cols-2 sm:grid-cols-3 gap-4 text-sm">
+                                         <div class="flex flex-col">
+                                             <span class="text-xs text-gray-500">Commissions</span>
+                                             <span class="font-semibold text-gray-300">${formatCurrency(totalCommissions)}</span>
+                                         </div>
+                                         <div class="flex flex-col">
+                                             <span class="text-xs text-gray-500">Max Risk</span>
+                                             <span class="font-semibold text-gray-300">${formatCurrency(item.max_risk)}</span>
+                                         </div>
+                                         <div class="flex flex-col">
+                                             <span class="text-xs text-gray-500">Return on Capital</span>
+                                             <span class="font-semibold ${rocColor}">${rocValue}</span>
+                                         </div>
+                                     </div>
                                 </div>
                             `;
 
@@ -1728,9 +1840,9 @@
                             <div class="p-4">
                                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-x-6 gap-y-4 text-gray-400 text-sm">
                                      <div class="flex flex-col sm:col-span-2">
-                                        <span class="text-xs text-gray-500">Open / Close Dates</span>
-                                        <span class="font-semibold text-gray-300">${dayjs(item.open).format('YYYY-MM-DD')} to ${dayjs(item.close).format('YYYY-MM-DD')}</span>
-                                    </div>
+                                         <span class="text-xs text-gray-500">Open / Close Dates</span>
+                                         <span class="font-semibold text-gray-300">${dayjs(item.open).format('YYYY-MM-DD')} to ${dayjs(item.close).format('YYYY-MM-DD')}</span>
+                                     </div>
                                     <div class="flex flex-col">
                                         <span class="text-xs text-gray-500">Strikes</span>
                                         <span class="font-semibold text-gray-300">${item.strikes.join(' / ')}</span>
@@ -1930,7 +2042,11 @@
 
             // --- DASHBOARD UPDATE LOGIC ---
             let filteredActivityForExport = []; // Variable to hold filtered data for export
-            function updateDashboard() {
+            window.updateDashboard = function() {
+                if (!isAuthReady || !window.appData) {
+                    console.log("Dashboard update skipped: auth not ready or no data.");
+                    return;
+                }
                 renderAccountSwitcher();
                 
                 const allTransactions = getActiveTransactions();
@@ -2574,7 +2690,7 @@
                         labels: Object.keys(pnlByDay),
                         datasets: [{ label: 'Total P&L', data: Object.values(pnlByDay), backgroundColor: Object.values(pnlByDay).map(pnl => pnl >= 0 ? 'rgba(52, 211, 153, 0.7)' : 'rgba(251, 113, 133, 0.7)') }]
                     },
-                     options: { ...analyticsChartOptions, onClick: (event, elements) => {
+                      options: { ...analyticsChartOptions, onClick: (event, elements) => {
                         if (elements.length > 0) {
                             const elementIndex = elements[0].index;
                             const clickedLabel = event.chart.data.labels[elementIndex];
@@ -2904,6 +3020,10 @@
             // Initial dashboard load
             initialize();
         });
+        
+        // Start Firebase initialization as soon as the script runs
+        initializeFirebase();
+
     </script>
 </body>
 </html>
