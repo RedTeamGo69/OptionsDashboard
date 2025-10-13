@@ -9,6 +9,8 @@
     <script src="https://cdn.jsdelivr.net/npm/dayjs@1/dayjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.4/plugin/quarterOfYear.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.4/plugin/weekOfYear.js"></script>
+    <!-- FirebaseUI CSS -->
+    <link type="text/css" rel="stylesheet" href="https://www.gstatic.com/firebasejs/ui/6.0.1/firebase-ui-auth.css" />
     <style>
         /* Custom scrollbar for better dark mode aesthetics */
         ::-webkit-scrollbar {
@@ -80,6 +82,21 @@
                 </h1>
             </div>
             <div class="flex items-center gap-2 flex-wrap">
+                 <!-- Auth Buttons -->
+                <div id="auth-container" class="flex items-center gap-2">
+                    <button id="signInBtn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg>
+                        Sign In
+                    </button>
+                    <div id="user-profile" class="hidden items-center gap-3 bg-gray-800 p-1.5 pr-3 rounded-full">
+                        <img id="user-avatar" class="h-8 w-8 rounded-full" src="" alt="User avatar">
+                        <span id="user-email" class="text-sm font-medium text-gray-300"></span>
+                        <button id="signOutBtn" class="text-gray-400 hover:text-white" title="Sign Out">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                        </button>
+                    </div>
+                </div>
+
                 <button id="importTradesBtn" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition flex items-center">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
                     Import
@@ -365,6 +382,19 @@
         <footer class="text-center py-8 text-gray-600 text-sm">
              <p>created by EllGeeQuu</p>
         </footer>
+    </div>
+
+    <!-- Auth Modal -->
+    <div id="authModal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-gray-800 rounded-xl shadow-2xl w-full max-w-sm">
+            <div class="p-8">
+                <h2 class="text-2xl font-bold text-white mb-6 text-center">Sign In / Register</h2>
+                <div id="firebaseui-auth-container"></div>
+                 <div class="text-center mt-4">
+                     <button id="closeAuthBtn" class="text-gray-400 hover:text-white text-sm">Close</button>
+                 </div>
+            </div>
+        </div>
     </div>
 
     <!-- Transaction Modal -->
@@ -688,10 +718,13 @@
         </div>
     </div>
 
-
+    <!-- Load compat scripts to create the global 'firebase' object for FirebaseUI -->
+    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/ui/6.0.1/firebase-ui-auth.js"></script>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, query, addDoc, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- FIREBASE SETUP ---
@@ -755,6 +788,7 @@
             importModal: document.getElementById('importModal'),
             resetModal: document.getElementById('resetModal'),
             settingsModal: document.getElementById('settingsModal'),
+            authModal: document.getElementById('authModal'),
         };
 
         const btnElements = {
@@ -777,6 +811,9 @@
             autoCalcRiskBtn: document.getElementById('autoCalcRiskBtn'),
             loadSampleDataBtn: document.getElementById('loadSampleDataBtn'),
             clearChartFilterBtn: document.getElementById('clear-chart-filter'),
+            signInBtn: document.getElementById('signInBtn'),
+            signOutBtn: document.getElementById('signOutBtn'),
+            closeAuthBtn: document.getElementById('closeAuthBtn'),
         };
 
         const formElements = {
@@ -809,6 +846,9 @@
             accountListManagerEl: document.getElementById('accounts-list-manager'),
             chartFilterDisplay: document.getElementById('chart-filter-display'),
             sampleDataWrapper: document.getElementById('sample-data-wrapper'),
+            userProfile: document.getElementById('user-profile'),
+            userAvatar: document.getElementById('user-avatar'),
+            userEmail: document.getElementById('user-email'),
         };
 
         const viewElements = {
@@ -842,10 +882,10 @@
             activityLogHeader: document.getElementById('activity-log-header'),
         };
 
-        const { tradeModal, transactionModal, importModal, resetModal, settingsModal } = modalElements;
-        const { addTradeBtn, cancelBtn, addTransactionBtn, cancelTransactionBtn, importTradesBtn, cancelImportBtn, processImportBtn, downloadTemplateBtn, resetDataBtn, cancelResetBtn, confirmResetBtn, settingsBtn, closeSettingsBtn, addAccountBtn, saveStartingBalanceBtn, exportCsvBtn, autoCalcRiskBtn, loadSampleDataBtn, clearChartFilterBtn } = btnElements;
+        const { tradeModal, transactionModal, importModal, resetModal, settingsModal, authModal } = modalElements;
+        const { addTradeBtn, cancelBtn, addTransactionBtn, cancelTransactionBtn, importTradesBtn, cancelImportBtn, processImportBtn, downloadTemplateBtn, resetDataBtn, cancelResetBtn, confirmResetBtn, settingsBtn, closeSettingsBtn, addAccountBtn, saveStartingBalanceBtn, exportCsvBtn, autoCalcRiskBtn, loadSampleDataBtn, clearChartFilterBtn, signInBtn, signOutBtn, closeAuthBtn } = btnElements;
         const { tradeForm, transactionForm, tradeTypeSelect, strikeContainer, expiredCheckbox, separateCommissionsCheckbox, singleCommissionContainer, separateCommissionsContainer, resetConfirmInput, csvFileInput, startingBalanceInput, startingBalanceDateInput, currencySettingInput, commissionSettingInput } = formElements;
-        const { tradesBody, totalAccountValueEl, totalDepositsEl, totalWithdrawalsEl, fileNameSpan, importStatus, activityLogFooter, paginationControls, accountSwitcherEl, accountListManagerEl, chartFilterDisplay, sampleDataWrapper } = displayElements;
+        const { tradesBody, totalAccountValueEl, totalDepositsEl, totalWithdrawalsEl, fileNameSpan, importStatus, activityLogFooter, paginationControls, accountSwitcherEl, accountListManagerEl, chartFilterDisplay, sampleDataWrapper, userProfile, userAvatar, userEmail } = displayElements;
         const { mainViewToggle, calendarViewEl, strategyViewEl, analyticsViewEl, mainViewTitle, calendarControlsWrapper } = viewElements;
         const { calendarGrid, calendarPeriodLabel, prevPeriodBtn, nextPeriodBtn, calendarMonthWeekToggle, calendarSummary } = calendarElements;
         const { tradeFilters, equityCurveFilterSelect, logSearchInput, dateModeToggle, dateModeDynamicLabel, dateModeLiveLabel, customDateFilterWrapper, customStartDateInput, customEndDateInput, activityLogHeader } = filterElements;
@@ -883,31 +923,63 @@
                 app = initializeApp(firebaseConfig);
                 db = getFirestore(app);
                 auth = getAuth(app);
+                
+                // Initialize the FirebaseUI Widget using Firebase.
+                const ui = new firebaseui.auth.AuthUI(auth);
+                const uiConfig = {
+                    callbacks: {
+                        signInSuccessWithAuthResult: function(authResult, redirectUrl) {
+                            // User successfully signed in.
+                            // Return type determines whether we continue the redirect automatically
+                            // or whether we leave that to developer to handle.
+                            resetAndHideModal(authModal);
+                            return false; // We handle the redirect.
+                        },
+                        uiShown: function() {
+                            // The widget is rendered.
+                            // Hide the loader.
+                        }
+                    },
+                    signInFlow: 'popup',
+                    signInOptions: [
+                        GoogleAuthProvider.PROVIDER_ID,
+                    ],
+                    // tosUrl and privacyPolicyUrl accept either url string or a callback
+                    // function.
+                    // Terms of service url/callback.
+                    tosUrl: '<your-tos-url>',
+                    // Privacy policy url/callback.
+                    privacyPolicyUrl: function() {
+                        window.location.assign('<your-privacy-policy-url>');
+                    }
+                };
 
-                if (typeof __initial_auth_token !== 'undefined') {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
-                }
+                // Start the FirebaseUI authentication interface.
+                ui.start('#firebaseui-auth-container', uiConfig);
 
-                onAuthStateChanged(auth, user => {
+                onAuthStateChanged(auth, async user => {
                     if (user) {
                         userId = user.uid;
-                        console.log("User signed in with UID:", userId);
+                        console.log(`${user.isAnonymous ? 'Anonymous' : 'Authenticated'} user signed in with UID:`, userId);
                         btnElements.settingsBtn.disabled = false;
+                        updateAuthUI(user);
                         attachFirestoreListeners();
                     } else {
-                        userId = null;
-                        btnElements.settingsBtn.disabled = true;
-                        btnElements.resetDataBtn.disabled = true;
-                        detachFirestoreListeners();
-                        console.log("User signed out.");
+                        // User is signed out. For a seamless experience, sign them in anonymously.
+                        try {
+                           await signInAnonymously(auth);
+                           // The onAuthStateChanged listener will be called again with the anonymous user.
+                        } catch (error) {
+                            console.error("Anonymous Sign-In Error:", error);
+                            showError("Could not start a session. Please refresh the page.");
+                            updateAuthUI(null);
+                        }
                     }
                 });
 
             } catch(error) {
                 console.error("Firebase Initialization or Auth Error:", error);
-                showError("Could not connect to the database. Please check the console (F12) for more details and ensure Anonymous Authentication is enabled in your Firebase project.");
+                showError("Could not connect to the database. Please check the console (F12) for more details and ensure Authentication providers are enabled in your Firebase project.");
             }
         }
         
@@ -935,14 +1007,9 @@
                         updateDashboard();
                     }
                 } else {
-                    // This block runs only if there are ZERO accounts.
                     if (isInitialLoad) {
-                        // For a new user, create a default account. The listener will re-run and set it as active.
-                        // This avoids rendering an intermediate empty state where the user could perform actions.
                         addDoc(accountsCol, { name: 'Account 1' });
                     } else {
-                        // This happens if a user deletes all their accounts.
-                        // In this case, we DO want to render the empty state.
                         btnElements.resetDataBtn.disabled = true;
                         appData.activeAccountId = null;
                         appData.transactions = {};
@@ -977,8 +1044,23 @@
 
         async function setActiveAccount(accountId) {
             appData.activeAccountId = accountId;
-            // The setupTransactionListener will be called which will trigger updateDashboard
             await setupTransactionListener(); 
+        }
+
+        function updateAuthUI(user) {
+            if (user && !user.isAnonymous) {
+                // User is signed in with a provider
+                signInBtn.classList.add('hidden');
+                userProfile.classList.remove('hidden');
+                userProfile.classList.add('flex');
+                userAvatar.src = user.photoURL || `https://placehold.co/40x40/374151/E0E0E0?text=${user.email ? user.email[0].toUpperCase() : 'A'}`;
+                userEmail.textContent = user.email;
+            } else {
+                // User is anonymous or logged out
+                signInBtn.classList.remove('hidden');
+                userProfile.classList.add('hidden');
+                userProfile.classList.remove('flex');
+            }
         }
 
 
@@ -1135,6 +1217,14 @@
             }
         }
         
+        // Auth Modal Listeners
+        signInBtn.addEventListener('click', () => authModal.classList.remove('hidden'));
+        signOutBtn.addEventListener('click', () => signOut(auth));
+        closeAuthBtn.addEventListener('click', () => authModal.classList.add('hidden'));
+        authModal.addEventListener('click', (e) => {
+            if (e.target === authModal) authModal.classList.add('hidden');
+        });
+
         // Trade Modal Listeners
         addTradeBtn.addEventListener('click', () => {
             tradeModal.classList.remove('hidden');
@@ -2949,7 +3039,7 @@
             const encodedUri = encodeURI(csvContent);
             const link = document.createElement("a");
             link.setAttribute("href", encodedUri);
-            link.setAttribute("download", `activity_log_${getActiveAccount().name.replace(' ','_')}.csv`);
+            link.setAttribute("download", `activity_log_${getActiveAccount()?.name.replace(' ','_') || 'export'}.csv`);
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
@@ -3039,3 +3129,4 @@
     </script>
 </body>
 </html>
+
