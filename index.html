@@ -517,7 +517,7 @@
 
                 <div class="mb-4">
                     <label class="flex items-center text-sm font-medium text-gray-300 mb-2">
-                        <input type="checkbox" id="separate_commissions" class="h-4 w-4 bg-gray-700 border-gray-600 text-indigo-600 focus:ring-indigo-500 rounded">
+                        <input type="checkbox" id="separate_commissions" class="h-4 w-4 bg-gray-700 border border-gray-600 text-indigo-600 focus:ring-indigo-500 rounded">
                         <span class="ml-2">Use Separate Commissions</span>
                     </label>
                     <div id="single_commission_container">
@@ -704,10 +704,21 @@
 
         // --- FIREBASE INITIALIZATION ---
         async function initializeFirebase() {
-            // Use environment variables for configuration and authentication
-            const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-            const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
-            const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+             const isCanvasEnvironment = typeof __firebase_config !== 'undefined';
+            
+            const firebaseConfig = isCanvasEnvironment
+                ? JSON.parse(__firebase_config)
+                : {
+                      apiKey: "AIzaSyBz1r3idn-lJlPzol1V3QfBz_28iJvzbpg",
+                      authDomain: "options-odssey.firebaseapp.com",
+                      projectId: "options-odssey",
+                      storageBucket: "options-odssey.firebasestorage.app",
+                      messagingSenderId: "684769306457",
+                      appId: "1:684769306457:web:fa3beccbfd031decaf4e48",
+                      measurementId: "G-2FLCF4T2JQ"
+                  };
+            
+            const initialAuthToken = isCanvasEnvironment ? __initial_auth_token : null;
 
             try {
                 app = initializeApp(firebaseConfig);
@@ -722,17 +733,14 @@
 
             onAuthStateChanged(auth, user => {
                 if (user) {
-                    // User is signed in.
                     console.log("User authenticated with UID:", user.uid);
                     currentUserId = user.uid;
                     isAuthReady = true;
-                    // Detach any old listener before attaching a new one
                     if (appDataUnsubscribe) {
                         appDataUnsubscribe();
                     }
-                    setupRealtimeListener(currentUserId, appId);
+                    setupRealtimeListener(currentUserId);
                 } else {
-                    // User is signed out.
                     console.log("User is signed out.");
                     currentUserId = null;
                     isAuthReady = false;
@@ -754,17 +762,19 @@
             }
         }
 
-        function setupRealtimeListener(userId, appId) {
-            if (!userId || !appId) return;
+        function setupRealtimeListener(userId) {
+            if (!userId) return;
 
-            const docRef = doc(db, 'artifacts', appId, 'users', userId, 'data', 'main');
+            const isCanvasEnvironment = typeof __app_id !== 'undefined';
+            const docRef = isCanvasEnvironment
+                ? doc(db, 'artifacts', __app_id, 'users', userId, 'data', 'main')
+                : doc(db, 'options-odyssey-users', userId);
 
             appDataUnsubscribe = onSnapshot(docRef, (docSnap) => {
                 if (docSnap.exists()) {
                     // Data exists in Firestore, load it
                     console.log("Firestore data received.");
                     const firestoreData = docSnap.data();
-                    // Merge with local state to be safe, though Firestore should be the source of truth
                     window.appData = { ...window.appData, ...firestoreData };
                 } else {
                     // No data in Firestore, check local storage for migration
@@ -776,9 +786,7 @@
                             const parsedLocalData = JSON.parse(localData);
                             // Set the local state from localStorage data
                             window.appData = parsedLocalData;
-                            // Save this data to Firestore, which triggers another snapshot
                             saveState(); 
-                            // Optionally clear local storage after successful migration
                             localStorage.removeItem('optionsOdysseyData');
                         } catch(e) {
                              console.error("Failed to parse local data, initializing fresh.", e);
@@ -928,8 +936,10 @@
                     console.warn("Authentication not ready. Cannot save state.");
                     return;
                 }
-                const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-                const docRef = doc(db, 'artifacts', appId, 'users', currentUserId, 'data', 'main');
+                const isCanvasEnvironment = typeof __app_id !== 'undefined';
+                const docRef = isCanvasEnvironment
+                    ? doc(db, 'artifacts', __app_id, 'users', currentUserId, 'data', 'main')
+                    : doc(db, 'options-odyssey-users', currentUserId);
                 try {
                     // Use setDoc to overwrite the document with the current app state
                     await setDoc(docRef, window.appData, { merge: true });
@@ -3027,3 +3037,4 @@
     </script>
 </body>
 </html>
+
