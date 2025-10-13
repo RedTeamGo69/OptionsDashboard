@@ -578,19 +578,20 @@
                         <li>Save your file as a CSV.</li>
                         <li>Click "Choose File" and select your saved CSV file.</li>
                         <li>Click "Import" to add the trades to your currently active account.</li>
-                        <li class="text-amber-400">Note: Complex strategies like Calendar and Ratio Spreads are not currently supported via CSV import.</li>
                     </ol>
                 </div>
 
                 <div class="bg-gray-900/50 p-4 rounded-lg mb-6">
-                     <h3 class="font-semibold text-white mb-2">Required Columns & Format</h3>
+                     <h3 class="font-semibold text-white mb-2">Columns & Format</h3>
                      <ul class="text-gray-400 text-xs space-y-1">
-                          <li><strong class="text-gray-300">Ticker:</strong> Stock symbol (e.g., AAPL)</li>
-                          <li><strong class="text-gray-300">TradeType:</strong> See dropdown for available types.</li>
-                          <li><strong class="text-gray-300">OpenDate / CloseDate / ExpirationDate:</strong> YYYY-MM-DD format</li>
-                          <li><strong class="text-gray-300">Strikes:</strong> Single value, or multiple values separated by a comma (e.g., "450,455,470,475" for an Iron Condor)</li>
-                          <li><strong class="text-gray-300">Quantity / EntryPrice / ExitPrice / CommissionsPerContract / MaxRisk:</strong> Numerical values</li>
-                          <li><strong class="text-gray-300">Notes / Tags (Optional):</strong> Your text notes for the trade. For tags, use a comma-separated list.</li>
+                        <li><strong class="text-gray-300">Required:</strong> Ticker, TradeType, OpenDate, CloseDate, ExpirationDate, Strikes, Quantity, EntryPrice, ExitPrice</li>
+                        <li><strong class="text-gray-300">Dates:</strong> Must be in YYYY-MM-DD format.</li>
+                        <li><strong class="text-gray-300">Strikes:</strong> Comma-separated for multi-strike strategies (e.g., "450,455").</li>
+                        <li><strong class="text-gray-300">Commissions:</strong> Provide either `CommissionsPerContract` OR both `OpeningCommission` and `ClosingCommission`.</li>
+                        <li><strong class="text-gray-300">ExpirationDate2:</strong> Required for Calendar Spreads.</li>
+                        <li><strong class="text-gray-300">Quantity2, EntryPrice2, ExitPrice2:</strong> Required for Ratio Spreads.</li>
+                        <li><strong class="text-gray-300">Expired:</strong> Enter TRUE if the trade expired worthless (sets exit price to 0).</li>
+                        <li><strong class="text-gray-300">Optional:</strong> MaxRisk, Notes, Tags (comma-separated).</li>
                      </ul>
                 </div>
                 
@@ -1351,10 +1352,14 @@
                 flashButton(loadSampleDataBtn, 'Data Loaded!', 'bg-green-500');
             });
             
-             separateCommissionsCheckbox.addEventListener('change', () => {
-                  singleCommissionContainer.classList.toggle('hidden', separateCommissionsCheckbox.checked);
-                  separateCommissionsContainer.classList.toggle('hidden', !separateCommissionsCheckbox.checked);
-             });
+            separateCommissionsCheckbox.addEventListener('change', () => {
+                singleCommissionContainer.classList.toggle('hidden', separateCommissionsCheckbox.checked);
+                separateCommissionsContainer.classList.toggle('hidden', !separateCommissionsCheckbox.checked);
+                if (separateCommissionsCheckbox.checked) {
+                    document.getElementById('opening_commission').value = window.appData.settings.defaultCommission || 0;
+                }
+            });
+
 
             expiredCheckbox.addEventListener('change', () => {
                 const exitPriceInput = document.getElementById('exit_price');
@@ -1687,8 +1692,8 @@
             
             // --- IMPORT LOGIC ---
             downloadTemplateBtn.addEventListener('click', () => {
-                const headers = "Ticker,TradeType,OpenDate,CloseDate,ExpirationDate,Strikes,Quantity,EntryPrice,ExitPrice,CommissionsPerContract,MaxRisk,Tags,Notes";
-                const exampleRow = "SPY,Short Put Spread,2025-10-01,2025-10-10,2025-10-17,\"450,445\",10,1.20,0.40,0.65,400,\"spy,index\",\"Managed for profit\"";
+                const headers = "Ticker,TradeType,OpenDate,CloseDate,ExpirationDate,Strikes,Quantity,EntryPrice,ExitPrice,CommissionsPerContract,OpeningCommission,ClosingCommission,Expired,MaxRisk,Tags,Notes,ExpirationDate2,Quantity2,EntryPrice2,ExitPrice2";
+                const exampleRow = "SPY,Short Put Spread,2025-10-01,2025-10-10,2025-10-17,\"450,445\",10,1.20,0.40,,0.65,0.65,FALSE,400,\"spy,index\",\"Managed for profit\",,,,";
                 const csvContent = "data:text/csv;charset=utf-8," + headers + "\n" + exampleRow;
                 const encodedUri = encodeURI(csvContent);
                 const link = document.createElement("a");
@@ -1726,7 +1731,7 @@
                         }
 
                         const header = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
-                        const requiredHeaders = ["Ticker","TradeType","OpenDate","CloseDate","ExpirationDate","Strikes","Quantity","EntryPrice","ExitPrice","CommissionsPerContract","MaxRisk"];
+                        const requiredHeaders = ["Ticker","TradeType","OpenDate","CloseDate","ExpirationDate","Strikes","Quantity","EntryPrice","ExitPrice"];
                         const missingHeaders = requiredHeaders.filter(h => !header.includes(h));
 
                         if (missingHeaders.length > 0) {
@@ -1738,7 +1743,6 @@
                         const startingId = allTransactions.length > 0 ? Math.max(...allTransactions.map(t => t.id)) + 1 : 0;
 
                         for (let i = 1; i < lines.length; i++) {
-                             // More robust CSV line parsing that handles commas inside quotes
                             const values = lines[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
                             const row = header.reduce((obj, col, index) => {
                                 obj[col] = (values[index] || '').trim().replace(/"/g, '');
@@ -1748,14 +1752,20 @@
                             if (!row.Ticker || !row.TradeType || !row.OpenDate || !row.CloseDate || !row.ExpirationDate) {
                                 throw new Error(`Missing required data on row ${i + 1}.`);
                             }
-                            if (!dayjs(row.OpenDate).isValid() || !dayjs(row.CloseDate).isValid() || !dayjs(row.ExpirationDate).isValid()) {
+                             if (!dayjs(row.OpenDate).isValid() || !dayjs(row.CloseDate).isValid() || !dayjs(row.ExpirationDate).isValid()) {
                                 throw new Error(`Invalid date format on row ${i + 1}. Please use YYYY-MM-DD.`);
                             }
                             
+                            const type = row.TradeType;
+                            const details = strategyDetails[type];
+                            if (!details) {
+                                throw new Error(`Invalid TradeType "${type}" on row ${i + 1}.`);
+                            }
+
                             const tradeData = {
                                 transaction_type: 'trade',
                                 ticker: row.Ticker.toUpperCase(),
-                                type: row.TradeType,
+                                type: type,
                                 open: row.OpenDate,
                                 close: row.CloseDate,
                                 expiration: row.ExpirationDate,
@@ -1763,13 +1773,23 @@
                                 quantity: parseInt(row.Quantity),
                                 entry_price: parseFloat(row.EntryPrice),
                                 exit_price: parseFloat(row.ExitPrice),
-                                commissions: parseFloat(row.CommissionsPerContract) || 0,
                                 max_risk: parseFloat(row.MaxRisk) || 0,
                                 tags: row.Tags || '',
                                 notes: row.Notes || '',
+                                isExpired: (row.Expired || '').toUpperCase() === 'TRUE',
+                                // Complex strategy fields
+                                expiration_2: (details.expirations === 2 && row.ExpirationDate2) ? row.ExpirationDate2 : undefined,
+                                ratio: details.ratio === true,
+                                quantity_2: (details.ratio === true && row.Quantity2) ? parseInt(row.Quantity2) : undefined,
+                                entry_price_2: (details.ratio === true && row.EntryPrice2) ? parseFloat(row.EntryPrice2) : undefined,
+                                exit_price_2: (details.ratio === true && row.ExitPrice2) ? parseFloat(row.ExitPrice2) : undefined,
+                                // Commission logic
+                                commissions: (row.CommissionsPerContract !== undefined && row.CommissionsPerContract !== '') ? parseFloat(row.CommissionsPerContract) : (appData.settings.defaultCommission || 0),
+                                opening_commission: (row.OpeningCommission !== undefined && row.OpeningCommission !== '') ? parseFloat(row.OpeningCommission) : undefined,
+                                closing_commission: (row.ClosingCommission !== undefined && row.ClosingCommission !== '') ? parseFloat(row.ClosingCommission) : undefined,
                             };
-                            
-                             if (isNaN(tradeData.quantity) || isNaN(tradeData.entry_price) || isNaN(tradeData.exit_price)) {
+
+                            if (isNaN(tradeData.quantity) || isNaN(tradeData.entry_price) || isNaN(tradeData.exit_price)) {
                                 throw new Error(`Invalid number format for quantity or prices on row ${i + 1}.`);
                             }
 
