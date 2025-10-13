@@ -63,6 +63,7 @@
     </style>
 </head>
 <body class="bg-gray-900 text-gray-200 font-sans antialiased">
+    <div id="error-banner" class="hidden bg-red-600 text-white text-center p-2 fixed top-0 left-0 w-full z-[100]"></div>
     <div id="app" class="p-4 sm:p-6 lg:p-8">
         <!-- Header -->
         <header class="flex flex-wrap justify-between items-center mb-6 gap-4">
@@ -869,6 +870,12 @@
             if (Object.is(value, -0)) value = 0;
             return value.toLocaleString('en-US', { style: 'currency', currency: 'USD', currencyDisplay: 'narrowSymbol' }).replace('$', getCurrency());
         }
+        
+        function showError(message) {
+            const banner = document.getElementById('error-banner');
+            banner.textContent = message;
+            banner.classList.remove('hidden');
+        }
 
         // --- FIREBASE & INITIALIZATION ---
         async function initialize() {
@@ -899,7 +906,8 @@
                 });
 
             } catch(error) {
-                console.error("Firebase Initialization Error:", error);
+                console.error("Firebase Initialization or Auth Error:", error);
+                showError("Could not connect to the database. Please check the console (F12) for more details and ensure Anonymous Authentication is enabled in your Firebase project.");
             }
         }
         
