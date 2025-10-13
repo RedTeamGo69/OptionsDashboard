@@ -484,7 +484,7 @@
                             <div class="flex justify-between items-center mb-1">
                                 <label for="exit_price" class="block text-sm font-medium text-gray-300">Exit Price</label>
                                 <label class="flex items-center text-xs text-gray-400 cursor-pointer">
-                                    <input type="checkbox" id="expired_worthless" class="h-3 w-3 bg-gray-700 border-gray-600 text-indigo-600 focus:ring-indigo-500 rounded">
+                                    <input type="checkbox" id="expired_worthless" class="h-3 w-3 bg-gray-700 border border-gray-600 text-indigo-600 focus:ring-indigo-500 rounded">
                                     <span class="ml-1.5">Expired</span>
                                 </label>
                             </div>
@@ -517,7 +517,7 @@
 
                 <div class="mb-4">
                     <label class="flex items-center text-sm font-medium text-gray-300 mb-2">
-                        <input type="checkbox" id="separate_commissions" class="h-4 w-4 bg-gray-700 border-gray-600 text-indigo-600 focus:ring-indigo-500 rounded">
+                        <input type="checkbox" id="separate_commissions" class="h-4 w-4 bg-gray-700 border border-gray-600 text-indigo-600 focus:ring-indigo-500 rounded">
                         <span class="ml-2">Use Separate Commissions</span>
                     </label>
                     <div id="single_commission_container">
@@ -1508,7 +1508,7 @@
                 const { commissions, opening_commission, closing_commission, quantity, quantity_2, isExpired, ratio } = trade;
                 const totalQuantity = ratio ? quantity + quantity_2 : quantity;
 
-                if (opening_commission !== undefined && closing_commission !== undefined) {
+                if (opening_commission != null && closing_commission != null) {
                     return (opening_commission + closing_commission) * totalQuantity;
                 } else {
                     // For single commission, assume it's per leg per side.
@@ -1583,22 +1583,22 @@
                     open: openDate,
                     close: closeDate,
                     expiration: document.getElementById('expiration_date').value,
-                    expiration_2: details.expirations === 2 ? document.getElementById('expiration_date_2').value : undefined,
+                    expiration_2: details.expirations === 2 ? document.getElementById('expiration_date_2').value : null,
                     strikes: Array.from(strikeContainer.querySelectorAll('input')).map(input => parseFloat(input.value)),
                     quantity: parseInt(document.getElementById('quantity').value),
                     entry_price: parseFloat(document.getElementById('entry_price').value),
                     exit_price: parseFloat(document.getElementById('exit_price').value),
                     commissions: parseFloat(document.getElementById('commissions').value),
-                    opening_commission: separateCommissionsCheckbox.checked ? parseFloat(document.getElementById('opening_commission').value) : undefined,
-                    closing_commission: separateCommissionsCheckbox.checked ? parseFloat(document.getElementById('closing_commission').value) : undefined,
+                    opening_commission: separateCommissionsCheckbox.checked ? parseFloat(document.getElementById('opening_commission').value) : null,
+                    closing_commission: separateCommissionsCheckbox.checked ? parseFloat(document.getElementById('closing_commission').value) : null,
                     max_risk: parseFloat(document.getElementById('max_risk').value) || 0,
                     tags: document.getElementById('tags').value,
                     notes: document.getElementById('notes').value,
                     isExpired: expiredCheckbox.checked,
                     ratio: details.ratio === true,
-                    quantity_2: details.ratio === true ? parseInt(document.getElementById('quantity_2').value) : undefined,
-                    entry_price_2: details.ratio === true ? parseFloat(document.getElementById('entry_price_2').value) : undefined,
-                    exit_price_2: details.ratio === true ? parseFloat(document.getElementById('exit_price_2').value) : undefined,
+                    quantity_2: details.ratio === true ? parseInt(document.getElementById('quantity_2').value) : null,
+                    entry_price_2: details.ratio === true ? parseFloat(document.getElementById('entry_price_2').value) : null,
+                    exit_price_2: details.ratio === true ? parseFloat(document.getElementById('exit_price_2').value) : null,
                 };
                 
                 tradeData.pnl = calculatePnl(tradeData);
@@ -1651,7 +1651,7 @@
                 document.getElementById('tags').value = item.tags;
                 document.getElementById('notes').value = item.notes;
                 
-                if(item.opening_commission !== undefined) {
+                if(item.opening_commission != null) {
                     separateCommissionsCheckbox.checked = true;
                     singleCommissionContainer.classList.add('hidden');
                     separateCommissionsContainer.classList.remove('hidden');
@@ -1778,15 +1778,15 @@
                                 notes: row.Notes || '',
                                 isExpired: (row.Expired || '').toUpperCase() === 'TRUE',
                                 // Complex strategy fields
-                                expiration_2: (details.expirations === 2 && row.ExpirationDate2) ? row.ExpirationDate2 : undefined,
+                                expiration_2: (details.expirations === 2 && row.ExpirationDate2) ? row.ExpirationDate2 : null,
                                 ratio: details.ratio === true,
-                                quantity_2: (details.ratio === true && row.Quantity2) ? parseInt(row.Quantity2) : undefined,
-                                entry_price_2: (details.ratio === true && row.EntryPrice2) ? parseFloat(row.EntryPrice2) : undefined,
-                                exit_price_2: (details.ratio === true && row.ExitPrice2) ? parseFloat(row.ExitPrice2) : undefined,
+                                quantity_2: (details.ratio === true && row.Quantity2) ? parseInt(row.Quantity2) : null,
+                                entry_price_2: (details.ratio === true && row.EntryPrice2) ? parseFloat(row.EntryPrice2) : null,
+                                exit_price_2: (details.ratio === true && row.ExitPrice2) ? parseFloat(row.ExitPrice2) : null,
                                 // Commission logic
                                 commissions: (row.CommissionsPerContract !== undefined && row.CommissionsPerContract !== '') ? parseFloat(row.CommissionsPerContract) : (appData.settings.defaultCommission || 0),
-                                opening_commission: (row.OpeningCommission !== undefined && row.OpeningCommission !== '') ? parseFloat(row.OpeningCommission) : undefined,
-                                closing_commission: (row.ClosingCommission !== undefined && row.ClosingCommission !== '') ? parseFloat(row.ClosingCommission) : undefined,
+                                opening_commission: (row.OpeningCommission !== undefined && row.OpeningCommission !== '') ? parseFloat(row.OpeningCommission) : null,
+                                closing_commission: (row.ClosingCommission !== undefined && row.ClosingCommission !== '') ? parseFloat(row.ClosingCommission) : null,
                             };
 
                             if (isNaN(tradeData.quantity) || isNaN(tradeData.entry_price) || isNaN(tradeData.exit_price)) {
@@ -3096,10 +3096,10 @@
                         notes: 'Sample trade data.',
                         isExpired: Math.random() > 0.9,
                         ratio: details.ratio === true,
-                        expiration_2: details.expirations === 2 ? closeDate.add(Math.floor(Math.random() * 20) + 28, 'day').format('YYYY-MM-DD') : undefined,
-                        quantity_2: details.ratio === true ? (Math.floor(Math.random() * 5) + 1) * 2 : undefined,
-                        entry_price_2: details.ratio === true ? parseFloat((entryPrice * 0.7).toFixed(2)) : undefined,
-                        exit_price_2: details.ratio === true ? parseFloat((exitPrice * 0.6).toFixed(2)) : undefined,
+                        expiration_2: details.expirations === 2 ? closeDate.add(Math.floor(Math.random() * 20) + 28, 'day').format('YYYY-MM-DD') : null,
+                        quantity_2: details.ratio === true ? (Math.floor(Math.random() * 5) + 1) * 2 : null,
+                        entry_price_2: details.ratio === true ? parseFloat((entryPrice * 0.7).toFixed(2)) : null,
+                        exit_price_2: details.ratio === true ? parseFloat((exitPrice * 0.6).toFixed(2)) : null,
                     };
 
                     trade.pnl = calculatePnl(trade); // Recalculate PNL with commissions
