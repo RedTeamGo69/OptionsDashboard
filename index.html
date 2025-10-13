@@ -660,7 +660,7 @@
                 </div>
 
                 <!-- Account Management -->
-                 <div>
+                 <div class="mb-8">
                     <h3 class="text-lg font-semibold text-indigo-400 mb-4 border-b border-gray-700 pb-2">Manage Accounts</h3>
                     <div id="accounts-list-manager" class="space-y-3 mb-6">
                         <!-- Account manager list will be injected here -->
@@ -671,6 +671,25 @@
                     </div>
                     <p id="account-limit-msg" class="text-xs text-gray-500 mt-2 text-right hidden">Maximum of 5 accounts.</p>
                 </div>
+
+                <!-- Sync Account -->
+                <div class="mb-8">
+                    <h3 class="text-lg font-semibold text-indigo-400 mb-4 border-b border-gray-700 pb-2">Sync Across Devices</h3>
+                    <p class="text-sm text-gray-400 mb-3">To sync data, copy your current Account ID and use the "Link Device" option on your other device.</p>
+                    
+                    <label for="currentAccountId" class="block text-sm font-medium text-gray-300 mb-1">Your Current Account ID</label>
+                    <div class="flex items-center gap-2 mb-4">
+                        <input type="text" id="currentAccountId" readonly class="w-full bg-gray-900 border border-gray-600 rounded-lg px-3 py-2 text-gray-400 focus:outline-none">
+                        <button id="copyAccountIdBtn" class="bg-gray-600 hover:bg-gray-500 text-white font-semibold py-2 px-3 rounded-lg transition">Copy</button>
+                    </div>
+
+                    <label for="linkAccountIdInput" class="block text-sm font-medium text-gray-300 mb-1">Enter an existing Account ID to link this device</label>
+                    <div class="flex items-center gap-4">
+                        <input type="text" id="linkAccountIdInput" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="Paste Account ID here...">
+                        <button id="linkDeviceBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition whitespace-nowrap">Link Device</button>
+                    </div>
+                </div>
+
 
                 <!-- Sample Data -->
                 <div id="sample-data-wrapper" class="mt-8">
@@ -698,7 +717,7 @@
         let app;
         let auth;
         let db;
-        let currentUserId = null;
+        let dataUserId = null; // This will hold the persistent user ID for data storage
         let appDataUnsubscribe = null; // To store the listener unsubscribe function
         let isAuthReady = false;
         let hasInitialized = false; // Flag to prevent re-initialization on listener events
@@ -735,15 +754,27 @@
             onAuthStateChanged(auth, user => {
                 if (user) {
                     console.log("User authenticated with UID:", user.uid);
-                    currentUserId = user.uid;
                     isAuthReady = true;
+
+                    // NEW LOGIC: Use a persistent ID from local storage for data,
+                    // or create one from the auth UID if it's the first time on this device.
+                    let storedUserId = localStorage.getItem('optionsOdysseyUserId');
+                    if (storedUserId) {
+                        console.log("Found existing User ID in local storage:", storedUserId);
+                        dataUserId = storedUserId;
+                    } else {
+                        console.log("No User ID in local storage. Creating new one from auth UID.");
+                        dataUserId = user.uid; // Use the anonymous UID for a new device
+                        localStorage.setItem('optionsOdysseyUserId', dataUserId);
+                    }
+
                     if (appDataUnsubscribe) {
                         appDataUnsubscribe();
                     }
-                    setupRealtimeListener(currentUserId);
+                    setupRealtimeListener(dataUserId);
                 } else {
                     console.log("User is signed out.");
-                    currentUserId = null;
+                    dataUserId = null;
                     isAuthReady = false;
                     if (appDataUnsubscribe) {
                         appDataUnsubscribe();
@@ -765,6 +796,7 @@
 
         function setupRealtimeListener(userId) {
             if (!userId) return;
+            dataUserId = userId; // Ensure global variable is set
 
             const isCanvasEnvironment = typeof __app_id !== 'undefined';
             const docRef = isCanvasEnvironment
@@ -933,18 +965,22 @@
             const commissionSettingInput = document.getElementById('setting-commission');
             const sampleDataWrapper = document.getElementById('sample-data-wrapper');
             const loadSampleDataBtn = document.getElementById('loadSampleDataBtn');
+            const currentAccountIdInput = document.getElementById('currentAccountId');
+            const copyAccountIdBtn = document.getElementById('copyAccountIdBtn');
+            const linkAccountIdInput = document.getElementById('linkAccountIdInput');
+            const linkDeviceBtn = document.getElementById('linkDeviceBtn');
 
 
             // --- DATA PERSISTENCE & HELPERS ---
             window.saveState = async function() {
-                if (!isAuthReady || !currentUserId) {
+                if (!isAuthReady || !dataUserId) {
                     console.warn("Authentication not ready. Cannot save state.");
                     return;
                 }
                 const isCanvasEnvironment = typeof __app_id !== 'undefined';
                 const docRef = isCanvasEnvironment
-                    ? doc(db, 'artifacts', __app_id, 'users', currentUserId, 'data', 'main')
-                    : doc(db, 'options-odyssey-users', currentUserId);
+                    ? doc(db, 'artifacts', __app_id, 'users', dataUserId, 'data', 'main')
+                    : doc(db, 'options-odyssey-users', dataUserId);
                 try {
                     // Use setDoc to overwrite the document with the current app state
                     await setDoc(docRef, window.appData, { merge: true });
@@ -1219,12 +1255,32 @@
             
             // Settings Modal Listeners
             settingsBtn.addEventListener('click', () => {
+                if (dataUserId) {
+                    currentAccountIdInput.value = dataUserId;
+                }
                 renderSettingsModal();
                 settingsModal.classList.remove('hidden');
             });
             closeSettingsBtn.addEventListener('click', () => settingsModal.classList.add('hidden'));
             settingsModal.addEventListener('click', (e) => {
                 if (e.target === settingsModal) settingsModal.classList.add('hidden');
+            });
+
+            copyAccountIdBtn.addEventListener('click', () => {
+                currentAccountIdInput.select();
+                document.execCommand('copy');
+                flashButton(copyAccountIdBtn, 'Copied!', 'bg-green-500');
+            });
+
+            linkDeviceBtn.addEventListener('click', () => {
+                const newId = linkAccountIdInput.value.trim();
+                if (newId) {
+                    localStorage.setItem('optionsOdysseyUserId', newId);
+                    linkDeviceBtn.textContent = "Linked! Reloading...";
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
+                }
             });
 
             // Settings Event Delegation
