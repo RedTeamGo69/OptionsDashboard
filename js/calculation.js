@@ -2,7 +2,8 @@
 import { getSettings } from './state.js';
 
 export function formatCurrency(value) {
-    if (typeof value !== 'number' || isNaN(value)) return `${getSettings().currency}0.00`;
+    const currency = getSettings().currency || '$';
+    if (typeof value !== 'number' || isNaN(value)) return `${currency}0.00`;
     if (Math.abs(value) < 0.001) value = 0;
     if (Object.is(value, -0)) value = 0;
     
@@ -10,20 +11,20 @@ export function formatCurrency(value) {
         style: 'currency',
         currency: 'USD',
         currencyDisplay: 'narrowSymbol'
-    }).replace('$', getSettings().currency);
+    }).replace('$', currency);
 }
 
 export function getTradeCommissions(trade) {
     const { commissions, opening_commission, closing_commission, quantity, quantity_2, isExpired, ratio } = trade;
-    const totalQuantity = ratio ? quantity + quantity_2 : quantity;
-
+    
     if (opening_commission != null && closing_commission != null) {
+        const totalQuantity = ratio ? quantity + quantity_2 : quantity;
         return (opening_commission + closing_commission) * totalQuantity;
     } else {
-        if (isExpired) {
+        if(isExpired) {
             return ratio ? (commissions * quantity) + (commissions * quantity_2) : (commissions * quantity);
         } else {
-            return ratio ? (commissions * quantity * 2) + (commissions * quantity_2 * 2) : (commissions * quantity * 2);
+             return ratio ? (commissions * quantity * 2) + (commissions * quantity_2 * 2) : (commissions * quantity * 2);
         }
     }
 }
