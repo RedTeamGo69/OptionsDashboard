@@ -723,6 +723,58 @@
         let isAuthReady = false;
         let hasInitialized = false; // Flag to prevent re-initialization on listener events
 
+        // --- FIREBASE INITIALIZATION HELPERS ---
+        // FIX: Moved setupRealtimeListener to be a window property so it's accessible by onAuthStateChanged callback
+        window.setupRealtimeListener = function(userId) {
+            if (!userId) return;
+            dataUserId = userId; // Ensure global variable is set
+
+            const isCanvasEnvironment = typeof __app_id !== 'undefined';
+            const docRef = isCanvasEnvironment
+                ? doc(db, 'artifacts', __app_id, 'users', userId, 'data', 'main')
+                : doc(db, 'options-odyssey-users', userId);
+
+            appDataUnsubscribe = onSnapshot(docRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    // Data exists in Firestore, load it
+                    console.log("Firestore data received.");
+                    const firestoreData = docSnap.data();
+                    window.appData = { ...window.appData, ...firestoreData };
+                    hasInitialized = true; // Mark as initialized with data
+                    window.updateDashboard(); 
+                } else if (!hasInitialized) {
+                    hasInitialized = true; // Set flag immediately to prevent re-entry
+                    // No data in Firestore. Check for local data to migrate.
+                    console.log("No document in Firestore. Checking for local data to migrate.");
+                    const localData = localStorage.getItem('optionsOdysseyData');
+                    if (localData) {
+                        console.log("Found local storage data. Migrating to Firestore.");
+                        try {
+                            const parsedLocalData = JSON.parse(localData);
+                            window.appData = parsedLocalData;
+                            // Save this data to Firestore, which will trigger this listener again.
+                            window.saveState().then(() => {
+                                // Once migration is confirmed, remove local data.
+                                localStorage.removeItem('optionsOdysseyData');
+                            });
+                        } catch(e) {
+                             console.error("Failed to parse local data, initializing fresh state.", e);
+                             window.initializeAppState();
+                             window.saveState(); // Save the fresh state
+                        }
+                    } else {
+                        // No Firestore data and no local data.
+                        // Initialize a fresh state and save it to create the document.
+                        console.log("No data found. Initializing a fresh state in Firestore.");
+                        window.initializeAppState();
+                        window.saveState(); // This will also trigger the listener again.
+                    }
+                }
+            }, (error) => {
+                console.error("Firestore snapshot listener error:", error);
+            });
+        }
+
         // --- FIREBASE INITIALIZATION ---
         async function initializeFirebase() {
              const isCanvasEnvironment = typeof __firebase_config !== 'undefined' && __firebase_config !== '{}';
@@ -772,7 +824,8 @@
                     if (appDataUnsubscribe) {
                         appDataUnsubscribe();
                     }
-                    setupRealtimeListener(dataUserId);
+                    // This call now works because setupRealtimeListener is attached to window
+                    window.setupRealtimeListener(dataUserId);
                 } else {
                     console.log("User is signed out.");
                     dataUserId = null;
@@ -793,56 +846,6 @@
             } catch (error) {
                 console.error("Firebase sign-in failed:", error);
             }
-        }
-
-        function setupRealtimeListener(userId) {
-            if (!userId) return;
-            dataUserId = userId; // Ensure global variable is set
-
-            const isCanvasEnvironment = typeof __app_id !== 'undefined';
-            const docRef = isCanvasEnvironment
-                ? doc(db, 'artifacts', __app_id, 'users', userId, 'data', 'main')
-                : doc(db, 'options-odyssey-users', userId);
-
-            appDataUnsubscribe = onSnapshot(docRef, (docSnap) => {
-                if (docSnap.exists()) {
-                    // Data exists in Firestore, load it
-                    console.log("Firestore data received.");
-                    const firestoreData = docSnap.data();
-                    window.appData = { ...window.appData, ...firestoreData };
-                    hasInitialized = true; // Mark as initialized with data
-                    window.updateDashboard(); 
-                } else if (!hasInitialized) {
-                    hasInitialized = true; // Set flag immediately to prevent re-entry
-                    // No data in Firestore. Check for local data to migrate.
-                    console.log("No document in Firestore. Checking for local data to migrate.");
-                    const localData = localStorage.getItem('optionsOdysseyData');
-                    if (localData) {
-                        console.log("Found local storage data. Migrating to Firestore.");
-                        try {
-                            const parsedLocalData = JSON.parse(localData);
-                            window.appData = parsedLocalData;
-                            // Save this data to Firestore, which will trigger this listener again.
-                            saveState().then(() => {
-                                // Once migration is confirmed, remove local data.
-                                localStorage.removeItem('optionsOdysseyData');
-                            });
-                        } catch(e) {
-                             console.error("Failed to parse local data, initializing fresh state.", e);
-                             initializeAppState();
-                             saveState(); // Save the fresh state
-                        }
-                    } else {
-                        // No Firestore data and no local data.
-                        // Initialize a fresh state and save it to create the document.
-                        console.log("No data found. Initializing a fresh state in Firestore.");
-                        initializeAppState();
-                        saveState(); // This will also trigger the listener again.
-                    }
-                }
-            }, (error) => {
-                console.error("Firestore snapshot listener error:", error);
-            });
         }
 
 
@@ -1504,25 +1507,25 @@
                 return pnl;
             }
 
+            // FIX: Simplified and corrected commission calculation logic.
             function getTradeCommissions(trade) {
                 const { commissions, opening_commission, closing_commission, quantity, quantity_2, isExpired, ratio } = trade;
-                const totalQuantity = ratio ? quantity + quantity_2 : quantity;
+                const totalContracts = ratio ? (quantity + quantity_2) : quantity;
 
                 if (opening_commission != null && closing_commission != null) {
-                    return (opening_commission + closing_commission) * totalQuantity;
+                    // Case 1: Separate commissions (Opening + Closing)
+                    // If expired, assume closing commission is 0 (only open transaction occurred)
+                    const closeComm = isExpired ? 0 : closing_commission;
+                    return (opening_commission * totalContracts) + (closeComm * totalContracts);
                 } else {
-                    // For single commission, assume it's per leg per side.
-                    // For a ratio spread, that's 4 transactions total if not expired.
-                    const sides = ratio ? 4 : 2;
-                    const effectiveQty = ratio ? (quantity + quantity_2) : quantity;
-
-                    if(isExpired) {
-                        return ratio ? (commissions * quantity) + (commissions * quantity_2) : (commissions * quantity);
-                    } else {
-                         return ratio ? (commissions * quantity * 2) + (commissions * quantity_2 * 2) : (commissions * quantity * 2);
-                    }
+                    // Case 2: Single commission (Per Contract, Per Leg)
+                    // If expired, assume only one transaction (open) occurred per contract.
+                    // If not expired, two transactions (open and close) occurred per contract.
+                    const numTransactions = isExpired ? 1 : 2;
+                    return commissions * totalContracts * numTransactions;
                 }
             }
+
 
             function calculatePnl(trade) {
                 const rawPnl = calculateRawPnl(trade);
@@ -1533,14 +1536,20 @@
             transactionForm.addEventListener('submit', (e) => {
                 e.preventDefault();
                  const allTransactions = getActiveTransactions();
+                // FIX #1: Ensure robust number parsing for transaction form
                 const transactionData = {
                     id: allTransactions.length > 0 ? Math.max(...allTransactions.map(t => t.id)) + 1 : 0,
+                    amount: parseFloat(document.getElementById('transaction_amount').value) || 0, // Fallback to 0
                     transaction_type: document.getElementById('transaction_type').value,
-                    amount: parseFloat(document.getElementById('transaction_amount').value),
                     date: document.getElementById('transaction_date').value,
                     notes: document.getElementById('transaction_notes').value,
                     isInitial: false
                 };
+                // Ensure amount is positive
+                if (transactionData.amount <= 0) {
+                     flashButton(document.querySelector('#transactionForm button[type="submit"]'), 'Amount must be positive!', 'bg-red-500', 3000);
+                     return;
+                }
                 allTransactions.push(transactionData);
                 window.appData.transactions[window.appData.activeAccountId] = allTransactions;
                 saveState();
@@ -1575,7 +1584,8 @@
 
                 const type = document.getElementById('trade_type').value;
                 const details = strategyDetails[type];
-
+                
+                // FIX #1: Use robust parsing for all number inputs in the trade form
                 const tradeData = {
                     transaction_type: 'trade',
                     ticker: document.getElementById('underlying_ticker').value.toUpperCase(),
@@ -1584,22 +1594,30 @@
                     close: closeDate,
                     expiration: document.getElementById('expiration_date').value,
                     expiration_2: details.expirations === 2 ? document.getElementById('expiration_date_2').value : null,
-                    strikes: Array.from(strikeContainer.querySelectorAll('input')).map(input => parseFloat(input.value)),
-                    quantity: parseInt(document.getElementById('quantity').value),
-                    entry_price: parseFloat(document.getElementById('entry_price').value),
-                    exit_price: parseFloat(document.getElementById('exit_price').value),
-                    commissions: parseFloat(document.getElementById('commissions').value),
-                    opening_commission: separateCommissionsCheckbox.checked ? parseFloat(document.getElementById('opening_commission').value) : null,
-                    closing_commission: separateCommissionsCheckbox.checked ? parseFloat(document.getElementById('closing_commission').value) : null,
+                    // Use fallback 0 for strike prices on empty input
+                    strikes: Array.from(strikeContainer.querySelectorAll('input')).map(input => parseFloat(input.value) || 0),
+                    quantity: parseInt(document.getElementById('quantity').value) || 0,
+                    entry_price: parseFloat(document.getElementById('entry_price').value) || 0,
+                    exit_price: parseFloat(document.getElementById('exit_price').value) || 0,
+                    // Use fallback 0 for commissions/risk on empty input
+                    commissions: parseFloat(document.getElementById('commissions').value) || 0,
+                    opening_commission: separateCommissionsCheckbox.checked ? parseFloat(document.getElementById('opening_commission').value) || 0 : null,
+                    closing_commission: separateCommissionsCheckbox.checked ? parseFloat(document.getElementById('closing_commission').value) || 0 : null,
                     max_risk: parseFloat(document.getElementById('max_risk').value) || 0,
                     tags: document.getElementById('tags').value,
                     notes: document.getElementById('notes').value,
                     isExpired: expiredCheckbox.checked,
                     ratio: details.ratio === true,
-                    quantity_2: details.ratio === true ? parseInt(document.getElementById('quantity_2').value) : null,
-                    entry_price_2: details.ratio === true ? parseFloat(document.getElementById('entry_price_2').value) : null,
-                    exit_price_2: details.ratio === true ? parseFloat(document.getElementById('exit_price_2').value) : null,
+                    quantity_2: details.ratio === true ? parseInt(document.getElementById('quantity_2').value) || 0 : null,
+                    entry_price_2: details.ratio === true ? parseFloat(document.getElementById('entry_price_2').value) || 0 : null,
+                    exit_price_2: details.ratio === true ? parseFloat(document.getElementById('exit_price_2').value) || 0 : null,
                 };
+
+                // Basic validation: quantity must be > 0
+                 if (tradeData.quantity <= 0) {
+                     flashButton(saveBtn, 'Quantity must be > 0', 'bg-red-500', 3000);
+                     return;
+                 }
                 
                 tradeData.pnl = calculatePnl(tradeData);
 
@@ -1692,9 +1710,18 @@
             
             // --- IMPORT LOGIC ---
             downloadTemplateBtn.addEventListener('click', () => {
-                const headers = "Ticker,TradeType,OpenDate,CloseDate,ExpirationDate,Strikes,Quantity,EntryPrice,ExitPrice,CommissionsPerContract,OpeningCommission,ClosingCommission,Expired,MaxRisk,Tags,Notes,ExpirationDate2,Quantity2,EntryPrice2,ExitPrice2";
-                const exampleRow = "SPY,Short Put Spread,2025-10-01,2025-10-10,2025-10-17,\"450,445\",10,1.20,0.40,,0.65,0.65,FALSE,400,\"spy,index\",\"Managed for profit\",,,,";
-                const csvContent = "data:text/csv;charset=utf-8," + headers + "\n" + exampleRow;
+                const headers = ['Ticker','TradeType','OpenDate','CloseDate','ExpirationDate','Strikes','Quantity','EntryPrice','ExitPrice','CommissionsPerContract','OpeningCommission','ClosingCommission','Expired','MaxRisk','Tags','Notes','ExpirationDate2','Quantity2','EntryPrice2','ExitPrice2'];
+                const exampleRow = ['SPY','Short Put Spread','2025-10-01','2025-10-10','2025-10-17','"450,445"',10,1.20,0.40,'','0.65','0.65',false,400,'"spy,index"','"Managed for profit"','','','',''];
+                
+                // Helper to format rows for CSV, handling commas and quotes
+                const formatForCsv = (data) => data.map(val => {
+                    if (typeof val === 'string' && (val.includes(',') || val.includes('"') || val.includes('\n'))) {
+                        return `"${val.replace(/"/g, '""')}"`;
+                    }
+                    return val;
+                }).join(',');
+
+                const csvContent = "data:text/csv;charset=utf-8," + [formatForCsv(headers), formatForCsv(exampleRow)].join('\n');
                 const encodedUri = encodeURI(csvContent);
                 const link = document.createElement("a");
                 link.setAttribute("href", encodedUri);
@@ -1730,7 +1757,27 @@
                             throw new Error("CSV file is empty or has no data rows.");
                         }
 
-                        const header = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+                        // Regex to split by comma, respecting quotes
+                        const parseCsvLine = (line) => {
+                            const result = [];
+                            let current = '';
+                            let inQuotes = false;
+                            for (let i = 0; i < line.length; i++) {
+                                const char = line[i];
+                                if (char === '"') {
+                                    inQuotes = !inQuotes;
+                                } else if (char === ',' && !inQuotes) {
+                                    result.push(current.trim().replace(/^"|"$/g, '').replace(/""/g, '"'));
+                                    current = '';
+                                } else {
+                                    current += char;
+                                }
+                            }
+                            result.push(current.trim().replace(/^"|"$/g, '').replace(/""/g, '"'));
+                            return result;
+                        };
+                        
+                        const header = parseCsvLine(lines[0]).map(h => h.trim());
                         const requiredHeaders = ["Ticker","TradeType","OpenDate","CloseDate","ExpirationDate","Strikes","Quantity","EntryPrice","ExitPrice"];
                         const missingHeaders = requiredHeaders.filter(h => !header.includes(h));
 
@@ -1743,9 +1790,9 @@
                         const startingId = allTransactions.length > 0 ? Math.max(...allTransactions.map(t => t.id)) + 1 : 0;
 
                         for (let i = 1; i < lines.length; i++) {
-                            const values = lines[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+                            const values = parseCsvLine(lines[i]);
                             const row = header.reduce((obj, col, index) => {
-                                obj[col] = (values[index] || '').trim().replace(/"/g, '');
+                                obj[col] = (values[index] || '').trim();
                                 return obj;
                             }, {});
                             
@@ -1769,30 +1816,32 @@
                                 open: row.OpenDate,
                                 close: row.CloseDate,
                                 expiration: row.ExpirationDate,
-                                strikes: (row.Strikes || '').split(',').map(s => parseFloat(s.trim())).filter(s => !isNaN(s)),
-                                quantity: parseInt(row.Quantity),
-                                entry_price: parseFloat(row.EntryPrice),
-                                exit_price: parseFloat(row.ExitPrice),
+                                strikes: (row.Strikes || '').split(',').map(s => parseFloat(s.trim()) || 0).filter(s => !isNaN(s)), // Use fallback 0
+                                quantity: parseInt(row.Quantity) || 0, // Use fallback 0
+                                entry_price: parseFloat(row.EntryPrice) || 0, // Use fallback 0
+                                exit_price: parseFloat(row.ExitPrice) || 0, // Use fallback 0
                                 max_risk: parseFloat(row.MaxRisk) || 0,
                                 tags: row.Tags || '',
                                 notes: row.Notes || '',
                                 isExpired: (row.Expired || '').toUpperCase() === 'TRUE',
-                                // Complex strategy fields
+                                // Complex strategy fields - use fallback 0 for numbers
                                 expiration_2: (details.expirations === 2 && row.ExpirationDate2) ? row.ExpirationDate2 : null,
                                 ratio: details.ratio === true,
-                                quantity_2: (details.ratio === true && row.Quantity2) ? parseInt(row.Quantity2) : null,
-                                entry_price_2: (details.ratio === true && row.EntryPrice2) ? parseFloat(row.EntryPrice2) : null,
-                                exit_price_2: (details.ratio === true && row.ExitPrice2) ? parseFloat(row.ExitPrice2) : null,
-                                // Commission logic
-                                commissions: (row.CommissionsPerContract !== undefined && row.CommissionsPerContract !== '') ? parseFloat(row.CommissionsPerContract) : (appData.settings.defaultCommission || 0),
-                                opening_commission: (row.OpeningCommission !== undefined && row.OpeningCommission !== '') ? parseFloat(row.OpeningCommission) : null,
-                                closing_commission: (row.ClosingCommission !== undefined && row.ClosingCommission !== '') ? parseFloat(row.ClosingCommission) : null,
+                                quantity_2: (details.ratio === true && row.Quantity2) ? parseInt(row.Quantity2) || 0 : null,
+                                entry_price_2: (details.ratio === true && row.EntryPrice2) ? parseFloat(row.EntryPrice2) || 0 : null,
+                                exit_price_2: (details.ratio === true && row.ExitPrice2) ? parseFloat(row.ExitPrice2) || 0 : null,
+                                // Commission logic - use fallback 0
+                                commissions: (row.CommissionsPerContract !== undefined && row.CommissionsPerContract !== '') ? parseFloat(row.CommissionsPerContract) || 0 : (window.appData.settings.defaultCommission || 0),
+                                opening_commission: (row.OpeningCommission !== undefined && row.OpeningCommission !== '') ? parseFloat(row.OpeningCommission) || 0 : null,
+                                closing_commission: (row.ClosingCommission !== undefined && row.ClosingCommission !== '') ? parseFloat(row.ClosingCommission) || 0 : null,
                             };
 
-                            if (isNaN(tradeData.quantity) || isNaN(tradeData.entry_price) || isNaN(tradeData.exit_price)) {
-                                throw new Error(`Invalid number format for quantity or prices on row ${i + 1}.`);
+                             if (tradeData.quantity <= 0) {
+                                 throw new Error(`Quantity must be > 0 on row ${i + 1}.`);
                             }
-
+                            
+                            // NOTE: We rely on robust parsing above. No need for further NaN checks here.
+                            
                             tradeData.pnl = calculatePnl(tradeData);
                             tradeData.id = startingId + newTransactions.length;
                             newTransactions.push(tradeData);
@@ -2410,8 +2459,16 @@
                         labels: Object.keys(strategyPnl),
                         datasets: [{ label: 'Total P&L', data: Object.values(strategyPnl), backgroundColor: Object.values(strategyPnl).map(pnl => pnl >= 0 ? 'rgba(34, 197, 94, 0.7)' : 'rgba(239, 68, 68, 0.7)'), }]
                     },
-                    options: { maintainAspectRatio: false, responsive: true, scales: { y: { ticks: { color: '#9ca3af' } }, x: { ticks: { color: '#9ca3af' } } }, plugins: { legend: { display: false } }, 
+                    options: { 
+                        maintainAspectRatio: false, 
+                        responsive: true, 
+                        scales: { 
+                            y: { ticks: { color: '#9ca3af' } }, 
+                            x: { ticks: { color: '#9ca3af' } } 
+                        }, 
+                        plugins: { legend: { display: false } }, 
                         onClick: (event, elements) => {
+                            // FIX #2: Ensure setChartFilter is called when clicking the strategy chart
                             if (elements.length > 0) {
                                 const elementIndex = elements[0].index;
                                 const clickedLabel = event.chart.data.labels[elementIndex];
@@ -2467,7 +2524,7 @@
                             filteredActivity = allTransactions.filter(t => t.transaction_type === 'trade' && t.ticker === chartFilter.value);
                             break;
                         case 'tag':
-                            filteredActivity = allTransactions.filter(t => t.transaction_type === 'trade' && t.tags && t.tags.split(',').map(tag => tag.trim()).includes(chartFilter.value));
+                            filteredActivity = allTransactions.filter(t => t.transaction_type === 'trade' && t.tags && t.tags.toLowerCase().split(',').map(tag => tag.trim()).includes(chartFilter.value.toLowerCase()));
                             break;
                         case 'day':
                             const dayMap = { 'Mon': 1, 'Tue': 2, 'Wed': 3, 'Thu': 4, 'Fri': 5 };
@@ -2570,12 +2627,16 @@
                 }
 
                 const filterSpan = chartFilterDisplay.querySelector('span');
-                if (chartFilter.type) {
+                if (chartFilter.type || selectedCalendarDate) {
                     chartFilterDisplay.classList.remove('hidden');
-                    const displayValue = chartFilter.displayValue || chartFilter.value;
-                    let typeDisplay = chartFilter.type.charAt(0).toUpperCase() + chartFilter.type.slice(1);
-                    if (typeDisplay === 'PnlRange') typeDisplay = 'P&L Range';
-                    filterSpan.textContent = `${typeDisplay}: ${displayValue}`;
+                    if (selectedCalendarDate) {
+                        filterSpan.textContent = `Date: ${selectedCalendarDate}`;
+                    } else {
+                        const displayValue = chartFilter.displayValue || chartFilter.value;
+                        let typeDisplay = chartFilter.type.charAt(0).toUpperCase() + chartFilter.type.slice(1);
+                        if (typeDisplay === 'Pnlrange') typeDisplay = 'P&L Range';
+                        filterSpan.textContent = `${typeDisplay}: ${displayValue}`;
+                    }
                 } else {
                     chartFilterDisplay.classList.add('hidden');
                 }
@@ -3052,7 +3113,7 @@
                         const randomDay = Math.random() * end.diff(start, 'day');
                         date = start.add(randomDay, 'day');
                     } while (date.day() === 0 || date.day() === 6);
-                    return date;
+                    return dayjs(date.format('YYYY-MM-DD')); // Ensure date is clean
                 };
 
                 data.push({ id: 0, transaction_type: 'deposit', amount: 25000, date: '2025-07-01', notes: 'Initial Deposit', isInitial: true });
@@ -3118,4 +3179,3 @@
     </script>
 </body>
 </html>
-
