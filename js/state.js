@@ -18,7 +18,7 @@ const state = {
         currentPage: 1,
         itemsPerPage: 10,
         mainView: 'calendar',
-        dateMode: 'live',
+        dateMode: 'live', // 'live' or 'dynamic'
         sortBy: 'date',
         sortDirection: 'desc',
         selectedCalendarDate: null,
@@ -85,39 +85,23 @@ export function initializeAppState() {
     };
 }
 
-export function addOrUpdateTransaction(item) {
-    const allTransactions = getActiveTransactions();
+export function addOrUpdateTransaction(item, allTransactions) {
     if (item.id !== undefined && item.id !== null) {
-        // Update existing
         const index = allTransactions.findIndex(t => t.id == item.id);
         if (index !== -1) {
             allTransactions[index] = { ...allTransactions[index], ...item };
         }
     } else {
-        // Add new
-        const newId = allTransactions.length > 0 ? Math.max(...allTransactions.map(t => t.id)) + 1 : 0;
-        item.id = newId;
+        item.id = allTransactions.length > 0 ? Math.max(...allTransactions.map(t => t.id)) + 1 : 0;
         allTransactions.push(item);
     }
     state.appData.transactions[state.appData.activeAccountId] = allTransactions;
 }
 
-export function deleteTransaction(itemId) {
-    let allTransactions = getActiveTransactions();
-    allTransactions = allTransactions.filter(t => t.id !== itemId);
-    state.appData.transactions[state.appData.activeAccountId] = allTransactions;
+export function deleteTransaction(itemId, allTransactions) {
+    state.appData.transactions[state.appData.activeAccountId] = allTransactions.filter(t => t.id !== itemId);
 }
 
-export function setTransactionsForActiveAccount(transactions) {
-    if (!state.appData.transactions) {
-        state.appData.transactions = {};
-    }
-    state.appData.transactions[state.appData.activeAccountId] = transactions;
-}
-
-export function setActiveAccountId(id) {
-    state.appData.activeAccountId = id;
-}
 
 export function setUiState(key, value) {
     if (state.ui.hasOwnProperty(key)) {
