@@ -10,25 +10,373 @@
     <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.4/plugin/quarterOfYear.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.4/plugin/weekOfYear.js"></script>
     <style>
-        /* Your original styles go here */
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #1f2937; }
-        ::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 4px; }
-        .modal-content { max-height: 90vh; }
-        .calendar-day { min-height: 6rem; }
-        .toggle-bg:after { content: ''; position: absolute; top: 2px; left: 2px; background-color: white; border-radius: 9999px; width: 1.25rem; height: 1.25rem; transition: transform 0.2s ease-in-out; }
-        input:checked + .toggle-bg:after { transform: translateX(100%); }
+        /* Custom scrollbar for better dark mode aesthetics */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1f2937;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #4b5563;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #6b7280;
+        }
+        .modal-content {
+            max-height: 90vh;
+        }
+        .calendar-day {
+            min-height: 6rem;
+        }
+         .toggle-bg:after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            background-color: white;
+            border-radius: 9999px;
+            width: 1.25rem;
+            height: 1.25rem;
+            transition: transform 0.2s ease-in-out;
+        }
+        input:checked + .toggle-bg:after {
+            transform: translateX(100%);
+        }
+        .calendar-pnl-text {
+            font-size: 0.65rem; /* approx 10.4px */
+            line-height: 0.8rem;
+            word-break: break-all;
+        }
+
+        @media (min-width: 640px) { /* sm breakpoint */
+            .calendar-pnl-text {
+                font-size: 0.75rem; /* back to text-xs */
+                line-height: 1rem;
+            }
+        }
+        /* Make chart bars clickable */
+        #pnlByStrategyChart, #pnlByTickerChart, #pnlByTagChart, #pnlByDayChart, #pnlDistributionChart {
+            cursor: pointer;
+        }
     </style>
 </head>
 <body class="bg-gray-900 text-gray-200 font-sans antialiased">
-    
-    <!-- Your entire original body HTML goes here, from <div id="app"> to the end of the modals -->
     <div id="app" class="p-4 sm:p-6 lg:p-8">
-        <!-- Header, Main Grid, Modals, etc. -->
-        <!-- I am omitting it for brevity, but you should copy your full body content here -->
+        <!-- Header -->
+        <header class="flex flex-wrap justify-between items-center mb-6 gap-4">
+            <div>
+                <h1 class="text-2xl sm:text-3xl font-bold text-white flex items-center gap-3">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M4 12C4 7.58172 7.58172 4 12 4C16.4183 4 20 7.58172 20 12C20 16.4183 16.4183 20 12 20" stroke="#818cf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M12 14C13.1046 14 14 13.1046 14 12C14 10.8954 13.1046 10 12 10C10.8954 10 10 10.8954 10 12C10 13.1046 10.8954 14 12 14Z" stroke="#a78bfa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M12 4V2" stroke="#818cf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M20 12L22 12" stroke="#818cf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M12 20V22" stroke="#818cf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <span>Options Odyssey</span>
+                </h1>
+            </div>
+            <div class="flex items-center gap-2 flex-wrap">
+                <button id="importTradesBtn" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                    Import
+                </button>
+                 <button id="addTransactionBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                    Transaction
+                </button>
+                <button id="addTradeBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-transform transform hover:scale-105 flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    New Trade
+                </button>
+                 <button id="settings-btn" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                    Settings
+                </button>
+                 <button id="resetDataBtn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                    Reset
+                </button>
+            </div>
+        </header>
+
+        <!-- Account Value & Settings -->
+        <div class="grid grid-cols-1 gap-6 mb-6">
+            <div class="bg-gray-800 p-5 rounded-xl shadow-lg flex flex-col justify-between">
+                 <div id="account-switcher" class="flex flex-wrap items-center gap-2 mb-4 border-b border-gray-700 pb-4">
+                     <!-- Account tabs will be injected here -->
+                 </div>
+                <div class="flex justify-between items-center w-full">
+                    <div>
+                        <h3 class="text-sm font-medium text-gray-400">Total Account Value</h3>
+                        <p id="total-account-value" class="text-4xl font-bold text-white mt-1">$0.00</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-sm font-medium text-gray-400">Total Deposits</p>
+                        <p id="total-deposits" class="text-lg font-semibold text-blue-400">$0.00</p>
+                        <p class="text-sm font-medium text-gray-400 mt-2">Total Withdrawals</p>
+                        <p id="total-withdrawals" class="text-lg font-semibold text-orange-400">$0.00</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Dashboard Grid -->
+        <main class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <!-- KPIs -->
+            <div class="bg-gray-800 p-5 rounded-xl shadow-lg col-span-1 flex flex-col justify-center">
+                <div>
+                    <h3 class="text-sm font-medium text-gray-400">Total P&L</h3>
+                    <p id="kpi-total-pnl" class="text-3xl font-bold text-green-400 mt-1">$0.00</p>
+                </div>
+            </div>
+            <div class="bg-gray-800 p-5 rounded-xl shadow-lg col-span-1 flex flex-col justify-center">
+                <div>
+                    <h3 class="text-sm font-medium text-gray-400">Win Rate</h3>
+                    <p id="kpi-win-rate" class="text-3xl font-bold text-white mt-1">0%</p>
+                </div>
+            </div>
+            <div class="bg-gray-800 p-5 rounded-xl shadow-lg col-span-1 flex flex-col justify-center">
+                <div>
+                    <h3 class="text-sm font-medium text-gray-400">Average ROC %</h3>
+                    <p id="kpi-avg-roc" class="text-3xl font-bold text-white mt-1">0.0%</p>
+                </div>
+            </div>
+            <div class="bg-gray-800 p-5 rounded-xl shadow-lg col-span-1 flex flex-col justify-center">
+                <div>
+                    <h3 class="text-sm font-medium text-gray-400">Trades</h3>
+                    <p id="kpi-total-trades" class="text-3xl font-bold text-white mt-1">0</p>
+                </div>
+            </div>
+
+            <!-- Visualizations -->
+            <div class="bg-gray-800 p-5 rounded-xl shadow-lg col-span-1 md:col-span-4 lg:col-span-3">
+                <div class="flex flex-wrap justify-between items-center mb-4 gap-4">
+                    <h3 class="text-lg font-semibold text-white">P&L Curve</h3>
+                     <div class="flex items-center gap-4 flex-wrap">
+                         <div class="flex items-center gap-2 text-sm">
+                             <span id="date-mode-dynamic-label" class="text-gray-400">Dynamic</span>
+                             <label for="date-mode-toggle" class="relative inline-flex items-center cursor-pointer">
+                                 <input type="checkbox" id="date-mode-toggle" class="sr-only">
+                                 <div class="w-11 h-6 bg-gray-600 rounded-full toggle-bg"></div>
+                             </label>
+                             <span id="date-mode-live-label" class="text-indigo-400 font-semibold">Live</span>
+                         </div>
+                        <select id="equity-curve-filter-select" class="bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                            <option value="all">All Time</option>
+                            <option value="ytd">Year to Date (YTD)</option>
+                            <option value="qtd">This Quarter (QTD)</option>
+                            <option value="mtd">This Month (MTD)</option>
+                            <option value="this-week">This Week</option>
+                            <option value="today">Today</option>
+                            <option value="custom">Custom...</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="custom-date-filter-wrapper" class="hidden flex items-center gap-4 mb-4 p-3 bg-gray-900/50 rounded-lg">
+                    <div class="flex items-center gap-2">
+                         <label for="custom-start-date" class="text-sm text-gray-400">From:</label>
+                         <input type="date" id="custom-start-date" class="bg-gray-700 border border-gray-600 rounded-lg px-3 py-1 text-white text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                    </div>
+                    <div class="flex items-center gap-2">
+                         <label for="custom-end-date" class="text-sm text-gray-400">To:</label>
+                         <input type="date" id="custom-end-date" class="bg-gray-700 border border-gray-600 rounded-lg px-3 py-1 text-white text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                    </div>
+                </div>
+                <div class="relative h-80 sm:h-96">
+                    <canvas id="pnlCurveChart"></canvas>
+                </div>
+            </div>
+            <div class="bg-gray-800 p-5 rounded-xl shadow-lg col-span-1 md:col-span-4 lg:col-span-1">
+                <h3 id="performance-stats-title" class="text-lg font-semibold text-white mb-4">Performance Stats (All Time)</h3>
+                <div id="performance-stats" class="space-y-3 pt-2 text-sm">
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-400">Avg Win / Avg Loss</span>
+                        <div>
+                            <span id="stats-avg-win" class="font-semibold text-green-400">$0.00</span>
+                            <span class="text-gray-500"> / </span>
+                            <span id="stats-avg-loss" class="font-semibold text-red-400">$0.00</span>
+                        </div>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-400">Largest Win / Loss</span>
+                         <div>
+                            <span id="stats-largest-win" class="font-semibold text-green-400">$0.00</span>
+                            <span class="text-gray-500"> / </span>
+                            <span id="stats-largest-loss" class="font-semibold text-red-400">$0.00</span>
+                        </div>
+                    </div>
+                     <div class="flex justify-between items-center">
+                        <span class="text-gray-400">Profit Factor</span>
+                        <span id="stats-profit-factor" class="font-semibold text-white">0.00</span>
+                    </div>
+                     <div class="flex justify-between items-center">
+                        <span class="text-gray-400">Expectancy</span>
+                        <span id="stats-expectancy" class="font-semibold text-white">$0.00</span>
+                    </div>
+                     <div class="flex justify-between items-center">
+                        <span class="text-gray-400">Max Drawdown</span>
+                        <span id="stats-max-drawdown" class="font-semibold text-white">$0.00</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-400">Avg Holding Period</span>
+                        <span id="stats-avg-hold" class="font-semibold text-white">0 days</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-400">Longest Win Streak</span>
+                        <span id="stats-win-streak" class="font-semibold text-white">0</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-400">Longest Loss Streak</span>
+                        <span id="stats-loss-streak" class="font-semibold text-white">0</span>
+                    </div>
+                     <div class="flex justify-between items-center">
+                        <span class="text-gray-400">Total Commissions</span>
+                        <span id="stats-total-comm" class="font-semibold text-white">$0.00</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Toggleable Main View: Calendar / Strategy -->
+            <div class="bg-gray-800 p-5 rounded-xl shadow-lg md:col-span-2 lg:col-span-4">
+                 <div class="flex flex-wrap justify-between items-center mb-4 gap-4">
+                     <div class="flex items-center gap-4">
+                        <h3 id="main-view-title" class="text-lg font-semibold text-white">Trading Calendar</h3>
+                        <div id="calendar-controls-wrapper">
+                            <button id="prev-period" class="bg-gray-700 p-2 rounded-lg hover:bg-gray-600 transition">
+                                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+                            </button>
+                             <span id="calendar-period-label" class="font-semibold text-lg mx-4">October 2025</span>
+                            <button id="next-period" class="bg-gray-700 p-2 rounded-lg hover:bg-gray-600 transition">
+                               <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2" id="main-view-toggle">
+                       <button data-view="calendar" class="main-view-btn bg-indigo-600 text-white py-1 px-3 rounded-lg text-sm transition">Calendar</button>
+                       <button data-view="strategy" class="main-view-btn bg-gray-700 hover:bg-gray-600 text-gray-300 py-1 px-3 rounded-lg text-sm transition">Strategy</button>
+                       <button data-view="analytics" class="main-view-btn bg-gray-700 hover:bg-gray-600 text-gray-300 py-1 px-3 rounded-lg text-sm transition">Analytics</button>
+                    </div>
+                </div>
+
+                <!-- Calendar View -->
+                <div id="calendar-view">
+                     <div class="flex items-center gap-2 mb-4" id="calendar-view-toggle-buttons">
+                       <button data-view="month" class="calendar-view-btn bg-indigo-600 text-white py-1 px-3 rounded-lg text-sm transition">Month</button>
+                       <button data-view="week" class="calendar-view-btn bg-gray-700 hover:bg-gray-600 text-gray-300 py-1 px-3 rounded-lg text-sm transition">Week</button>
+                    </div>
+                    <div id="calendar-grid" class="grid grid-cols-7 gap-1 text-center"></div>
+                    <div id="calendar-summary" class="text-right mt-2 text-sm text-gray-400"></div>
+                </div>
+
+                <!-- Strategy View -->
+                <div id="strategy-view" class="hidden relative h-96">
+                    <canvas id="pnlByStrategyChart"></canvas>
+                </div>
+
+                <!-- Analytics View -->
+                <div id="analytics-view" class="hidden grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="bg-gray-900/50 p-4 rounded-lg">
+                        <h4 class="text-md font-semibold text-white mb-3">P&L by Ticker</h4>
+                        <div class="relative h-64"><canvas id="pnlByTickerChart"></canvas></div>
+                    </div>
+                    <div class="bg-gray-900/50 p-4 rounded-lg">
+                        <h4 class="text-md font-semibold text-white mb-3">P&L by Tag</h4>
+                        <div class="relative h-64"><canvas id="pnlByTagChart"></canvas></div>
+                    </div>
+                    <div class="bg-gray-900/50 p-4 rounded-lg">
+                        <h4 class="text-md font-semibold text-white mb-3">P&L by Day of Week</h4>
+                        <div class="relative h-64"><canvas id="pnlByDayChart"></canvas></div>
+                    </div>
+                    <div class="bg-gray-900/50 p-4 rounded-lg">
+                        <h4 class="text-md font-semibold text-white mb-3">P&L Distribution</h4>
+                        <div class="relative h-64"><canvas id="pnlDistributionChart"></canvas></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Recent Trades Table -->
+            <div class="bg-gray-800 p-5 rounded-xl shadow-lg col-span-1 md:col-span-2 lg:col-span-4">
+                <div class="flex flex-wrap justify-between items-center mb-4 gap-y-4">
+                    <div class="flex items-center gap-4">
+                        <h3 class="text-lg font-semibold text-white">Activity Log</h3>
+                        <div id="chart-filter-display" class="hidden items-center gap-2 bg-gray-700 rounded-lg pr-2">
+                            <span class="text-sm text-gray-300 pl-3 py-1"></span>
+                            <button id="clear-chart-filter" class="text-red-400 hover:text-red-300 font-bold text-xl leading-none pb-1">&times;</button>
+                        </div>
+                    </div>
+                    <div class="ml-auto flex items-center gap-4 flex-wrap">
+                        <div id="trade-filters" class="flex items-center gap-2 flex-wrap">
+                            <button data-filter="all" class="filter-btn bg-indigo-600 text-white py-1 px-3 rounded-lg text-sm transition">All</button>
+                            <button data-filter="trades" class="filter-btn bg-gray-700 hover:bg-gray-600 text-gray-300 py-1 px-3 rounded-lg text-sm transition">Trades</button>
+                            <button data-filter="deposits" class="filter-btn bg-gray-700 hover:bg-gray-600 text-gray-300 py-1 px-3 rounded-lg text-sm transition">Deposits</button>
+                            <button data-filter="withdrawals" class="filter-btn bg-gray-700 hover:bg-gray-600 text-gray-300 py-1 px-3 rounded-lg text-sm transition">Withdrawals</button>
+                            <button data-filter="winners" class="filter-btn bg-gray-700 hover:bg-gray-600 text-gray-300 py-1 px-3 rounded-lg text-sm transition">Winners</button>
+                            <button data-filter="losers" class="filter-btn bg-gray-700 hover:bg-gray-600 text-gray-300 py-1 px-3 rounded-lg text-sm transition">Losers</button>
+                        </div>
+                         <div class="relative w-full sm:w-auto">
+                            <input type="text" id="logSearch" class="w-full bg-gray-700 border border-gray-600 rounded-lg pl-10 pr-4 py-2 text-white text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="Search Ticker or Tag...">
+                            <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" /></svg>
+                        </div>
+                         <button id="exportCsvBtn" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                              <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                            </svg>
+                            Export
+                        </button>
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead id="activity-log-header">
+                            <tr class="border-b border-gray-700 text-sm">
+                                <th class="p-3 font-semibold">
+                                    <button class="sort-btn flex items-center gap-1 hover:text-white transition" data-sort="date">Date<span class="sort-indicator"></span></button>
+                                </th>
+                                <th class="p-3 font-semibold">Type</th>
+                                <th class="p-3 font-semibold">Description</th>
+                                <th class="p-3 font-semibold text-right">
+                                     <button class="sort-btn flex items-center gap-1 w-full justify-end hover:text-white transition" data-sort="duration">Duration<span class="sort-indicator"></span></button>
+                                </th>
+                                <th class="p-3 font-semibold text-right">
+                                     <button class="sort-btn flex items-center gap-1 w-full justify-end hover:text-white transition" data-sort="amount">Amount<span class="sort-indicator"></span></button>
+                                </th>
+                                <th class="p-3 font-semibold text-right">
+                                     <button class="sort-btn flex items-center gap-1 w-full justify-end hover:text-white transition" data-sort="roc">ROC %<span class="sort-indicator"></span></button>
+                                </th>
+                                <th class="p-3 font-semibold text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recent-trades-body">
+                            <!-- Rows will be injected here -->
+                        </tbody>
+                        <tfoot>
+                           <tr id="activity-log-footer" class="border-t-2 border-gray-600 font-bold"></tr>
+                        </tfoot>
+                    </table>
+                </div>
+                <div id="pagination-controls" class="flex justify-between items-center mt-4 text-sm"></div>
+            </div>
+        </main>
+
+        <footer class="text-center py-8 text-gray-600 text-sm">
+             <p>created by EllGeeQuu</p>
+        </footer>
     </div>
+
+    <!-- All Modals from your original file go here -->
+    <div id="transactionModal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50 hidden"><!-- ... content ... --></div>
+    <div id="tradeModal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50 hidden"><!-- ... content ... --></div>
+    <div id="importModal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50 hidden"><!-- ... content ... --></div>
+    <div id="resetModal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50 hidden"><!-- ... content ... --></div>
+    <div id="settingsModal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50 hidden"><!-- ... content ... --></div>
+
 
     <!-- The only script tag should be this one -->
     <script type="module" src="js/main.js"></script>
+    
 </body>
 </html>
+
