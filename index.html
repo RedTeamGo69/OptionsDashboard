@@ -2595,31 +2595,43 @@
 
                 // Sorting logic
                 filteredActivity.sort((a, b) => {
+                    let compare = 0;
                     let valA, valB;
+
                     switch (sortBy) {
                         case 'date':
                             valA = getItemDate(a);
                             valB = getItemDate(b);
-                            return sortDirection === 'asc' ? valA - valB : valB - valA;
+                            compare = valA.diff(valB);
+                            break;
                         case 'duration':
                             valA = a.transaction_type === 'trade' ? dayjs(a.close).diff(dayjs(a.open), 'day') : -1;
                             valB = b.transaction_type === 'trade' ? dayjs(b.close).diff(dayjs(b.open), 'day') : -1;
+                            compare = valA - valB;
                             break;
                         case 'amount':
                             valA = a.transaction_type === 'trade' ? a.pnl : (a.transaction_type === 'deposit' ? a.amount : -a.amount);
                             valB = b.transaction_type === 'trade' ? b.pnl : (b.transaction_type === 'deposit' ? b.amount : -b.amount);
+                            compare = valA - valB;
                             break;
                         case 'roc':
                             valA = (a.transaction_type === 'trade' && a.max_risk > 0) ? (calculateRawPnl(a) / a.max_risk) : -Infinity;
                             valB = (b.transaction_type === 'trade' && b.max_risk > 0) ? (calculateRawPnl(b) / b.max_risk) : -Infinity;
+                            compare = valA - valB;
                             break;
-                        default:
-                            return 0;
+                    }
+
+                    // Apply primary sort direction
+                    if (sortDirection === 'desc') {
+                        compare = -compare;
                     }
                     
-                    if (valA < valB) return sortDirection === 'asc' ? -1 : 1;
-                    if (valA > valB) return sortDirection === 'asc' ? 1 : -1;
-                    return 0;
+                    // If primary sort is a tie, use ID as a secondary, stable sort, respecting the primary direction
+                    if (compare === 0) {
+                        return sortDirection === 'desc' ? b.id - a.id : a.id - b.id;
+                    }
+
+                    return compare;
                 });
 
                 // Update sort indicators in the header
@@ -3199,4 +3211,5 @@
     </script>
 </body>
 </html>
+
 
