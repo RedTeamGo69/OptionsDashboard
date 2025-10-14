@@ -1,11 +1,10 @@
 // main.js: The main entry point for the application.
 
 import { initializeFirebase, saveState } from './firebase.js';
-import { 
-    getAppData, 
+import {
     getActiveTransactions,
     setInitialDayjs,
-    setUiState, 
+    setUiState,
     addOrUpdateTransaction,
     deleteTransaction
 } from './state.js';
@@ -45,63 +44,75 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // --- EVENT LISTENERS ---
 function setupEventListeners() {
-    // Modal Buttons
+    // Modal Buttons & Forms
     const addTradeBtn = document.getElementById('addTradeBtn');
     const tradeModal = document.getElementById('tradeModal');
     const cancelBtn = document.getElementById('cancelBtn');
+    const tradeForm = document.getElementById('tradeForm');
+    const addTransactionBtn = document.getElementById('addTransactionBtn');
+    const transactionModal = document.getElementById('transactionModal');
+    const cancelTransactionBtn = document.getElementById('cancelTransactionBtn');
+    const transactionForm = document.getElementById('transactionForm');
 
-    addTradeBtn.addEventListener('click', () => tradeModal.classList.remove('hidden'));
+    addTradeBtn.addEventListener('click', () => {
+        tradeForm.reset();
+        document.getElementById('modal-title').textContent = 'Log New Trade';
+        tradeModal.classList.remove('hidden');
+    });
     cancelBtn.addEventListener('click', () => tradeModal.classList.add('hidden'));
 
-    // Trade Form Submission
-    const tradeForm = document.getElementById('tradeForm');
-    tradeForm.addEventListener('submit', (e) => {
+    addTransactionBtn.addEventListener('click', () => transactionModal.classList.remove('hidden'));
+    cancelTransactionBtn.addEventListener('click', () => transactionModal.classList.add('hidden'));
+
+    tradeForm.addEventListener('submit', handleFormSubmit);
+    transactionForm.addEventListener('submit', handleFormSubmit);
+
+    function handleFormSubmit(e) {
         e.preventDefault();
+        const formId = e.target.id;
+        let data;
 
-        const tradeId = document.getElementById('trade_id').value;
-        const type = document.getElementById('trade_type').value;
-        const details = strategyDetails[type];
-        const strikeContainer = document.getElementById('strike-price-container');
-        const separateCommissionsCheckbox = document.getElementById('separate_commissions');
-        const expiredCheckbox = document.getElementById('expired_worthless');
+        if (formId === 'tradeForm') {
+            const type = document.getElementById('trade_type').value;
+            const details = strategyDetails[type];
+            const strikeContainer = document.getElementById('strike-price-container');
 
-        const tradeData = {
-            transaction_type: 'trade',
-            ticker: document.getElementById('underlying_ticker').value.toUpperCase(),
-            type: type,
-            open: document.getElementById('open_date').value,
-            close: document.getElementById('close_date').value,
-            expiration: document.getElementById('expiration_date').value,
-            strikes: Array.from(strikeContainer.querySelectorAll('input')).map(input => parseFloat(input.value)),
-            quantity: parseInt(document.getElementById('quantity').value),
-            entry_price: parseFloat(document.getElementById('entry_price').value),
-            exit_price: parseFloat(document.getElementById('exit_price').value),
-            max_risk: parseFloat(document.getElementById('max_risk').value) || 0,
-            tags: document.getElementById('tags').value,
-            notes: document.getElementById('notes').value,
-            isExpired: expiredCheckbox.checked,
-            ratio: details.ratio === true,
-            // Add other fields from your form...
-        };
+            data = {
+                transaction_type: 'trade',
+                ticker: document.getElementById('underlying_ticker').value.toUpperCase(),
+                type: type,
+                open: document.getElementById('open_date').value,
+                close: document.getElementById('close_date').value,
+                expiration: document.getElementById('expiration_date').value,
+                strikes: Array.from(strikeContainer.querySelectorAll('input')).map(input => parseFloat(input.value)),
+                quantity: parseInt(document.getElementById('quantity').value),
+                entry_price: parseFloat(document.getElementById('entry_price').value),
+                exit_price: parseFloat(document.getElementById('exit_price').value),
+                max_risk: parseFloat(document.getElementById('max_risk').value) || 0,
+                tags: document.getElementById('tags').value,
+                notes: document.getElementById('notes').value,
+                isExpired: document.getElementById('expired_worthless').checked,
+                ratio: details.ratio === true,
+            };
+            data.pnl = calculatePnl(data);
+            const tradeId = document.getElementById('trade_id').value;
+            if (tradeId) data.id = parseInt(tradeId);
+            tradeModal.classList.add('hidden');
 
-        // Add PnL calculation
-        tradeData.pnl = calculatePnl(tradeData);
-        
-        // If it's an existing trade, set the ID to ensure it updates instead of creates
-        if (tradeId) {
-            tradeData.id = parseInt(tradeId);
+        } else if (formId === 'transactionForm') {
+            data = {
+                transaction_type: document.getElementById('transaction_type').value,
+                amount: parseFloat(document.getElementById('transaction_amount').value),
+                date: document.getElementById('transaction_date').value,
+                notes: document.getElementById('transaction_notes').value,
+            };
+            transactionModal.classList.add('hidden');
         }
 
-        // Update the state
-        addOrUpdateTransaction(tradeData);
-
-        // Save the new state to Firebase
+        addOrUpdateTransaction(data);
         saveState();
-
-        // Hide the modal
-        tradeModal.classList.add('hidden');
-        tradeForm.reset();
-    });
+        e.target.reset();
+    }
 
     // Activity Log Event Delegation (for edit/delete)
     const tradesBody = document.getElementById('recent-trades-body');
@@ -114,21 +125,24 @@ function setupEventListeners() {
                 saveState();
             }
         }
-        
-        // Add logic for edit button here...
     });
     
-    // Add other event listeners for filters, search, etc.
-    // Example for trade filters:
+    // Trade Filters
     const tradeFilters = document.getElementById('trade-filters');
     tradeFilters.addEventListener('click', (e) => {
         const filterButton = e.target.closest('.filter-btn');
         if (filterButton) {
+            // Update button styles
+            tradeFilters.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('bg-indigo-600', 'text-white');
+                btn.classList.add('bg-gray-700', 'text-gray-300');
+            });
+            filterButton.classList.add('bg-indigo-600', 'text-white');
+            filterButton.classList.remove('bg-gray-700', 'text-gray-300');
+
             const filter = filterButton.dataset.filter;
             setUiState('tradeTableFilter', filter);
-            // Re-rendering is handled by Firebase, but if you want instant UI
-            // feedback without waiting for the database, you can call renderDashboard()
-            renderDashboard(); // We need to import this from ui.js
+            renderDashboard(); 
         }
     });
 }
