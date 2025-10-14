@@ -1,8 +1,8 @@
 // firebase.js: Handles all Firebase interactions.
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore, doc, onSnapshot, setDoc, setLogLevel } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { getAppData, getAuthState, setAuthState, setAppData, initializeAppState } from './state.js';
 import { renderDashboard } from './ui.js';
 
@@ -23,6 +23,7 @@ export async function initializeFirebase() {
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         db = getFirestore(app);
+        setLogLevel('debug');
         
         onAuthStateChanged(auth, user => {
             const currentAuth = getAuthState();
@@ -35,7 +36,7 @@ export async function initializeFirebase() {
                 const unsubscribe = setupRealtimeListener(storedUserId);
                 setAuthState({ isAuthReady: true, dataUserId: storedUserId, unsubscribe, hasInitialized: false });
             } else {
-                setAuthState({ isAuthReady: false });
+                setAuthState({ isAuthReady: false, dataUserId: null, unsubscribe: null });
             }
         });
 
@@ -63,7 +64,7 @@ function setupRealtimeListener(userId) {
                 try {
                     setAppData(JSON.parse(localData));
                     localStorage.removeItem('optionsOdysseyData');
-                    saveState(); // Migrate to Firestore
+                    saveState();
                 } catch (e) {
                     initializeAppState();
                     saveState();
@@ -88,7 +89,6 @@ export async function saveState() {
     const docRef = doc(db, 'options-odyssey-users', dataUserId);
     try {
         await setDoc(docRef, getAppData(), { merge: true });
-        console.log("State saved to Firestore.");
     } catch (error) {
         console.error("Error saving state to Firestore:", error);
     }
