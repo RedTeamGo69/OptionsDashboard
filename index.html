@@ -366,13 +366,346 @@
         </footer>
     </div>
 
-    <!-- All Modals from your original file go here -->
-    <div id="transactionModal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50 hidden"><!-- ... content ... --></div>
-    <div id="tradeModal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50 hidden"><!-- ... content ... --></div>
-    <div id="importModal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50 hidden"><!-- ... content ... --></div>
-    <div id="resetModal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50 hidden"><!-- ... content ... --></div>
-    <div id="settingsModal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50 hidden"><!-- ... content ... --></div>
+    <!-- Transaction Modal -->
+    <div id="transactionModal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-gray-800 rounded-xl shadow-2xl w-full max-w-md modal-content overflow-y-auto">
+            <form id="transactionForm" class="p-6 sm:p-8">
+                <h2 class="text-2xl font-bold text-white mb-6">Log Transaction</h2>
+                <div class="mb-4">
+                    <label for="transaction_type" class="block text-sm font-medium text-gray-300 mb-1">Transaction Type</label>
+                    <select id="transaction_type" required class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                        <option value="deposit">Deposit</option>
+                        <option value="withdrawal">Withdrawal</option>
+                    </select>
+                </div>
+                <div class="mb-4">
+                    <label for="transaction_amount" class="block text-sm font-medium text-gray-300 mb-1">Amount</label>
+                    <input type="number" step="0.01" id="transaction_amount" required class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="1000.00">
+                </div>
+                <div class="mb-4">
+                    <label for="transaction_date" class="block text-sm font-medium text-gray-300 mb-1">Date</label>
+                    <input type="date" id="transaction_date" required class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                </div>
+                <div class="mb-6">
+                    <label for="transaction_notes" class="block text-sm font-medium text-gray-300 mb-1">Notes</label>
+                    <textarea id="transaction_notes" rows="3" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="e.g., Contribution to account"></textarea>
+                </div>
+                <div class="flex justify-end gap-4">
+                    <button type="button" id="cancelTransactionBtn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-6 rounded-lg transition">Cancel</button>
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg transition">Save Transaction</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
+
+    <!-- Trade Entry Modal -->
+    <div id="tradeModal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-gray-800 rounded-xl shadow-2xl w-full max-w-lg modal-content overflow-y-auto">
+            <form id="tradeForm" class="p-6 sm:p-8">
+                <h2 id="modal-title" class="text-2xl font-bold text-white mb-6">Log New Trade</h2>
+                <input type="hidden" id="trade_id">
+
+                <!-- Trade Identity -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label for="underlying_ticker" class="block text-sm font-medium text-gray-300 mb-1">Underlying Ticker</label>
+                        <input type="text" id="underlying_ticker" required class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="e.g., AAPL">
+                    </div>
+                    <div>
+                        <label for="trade_type" class="block text-sm font-medium text-gray-300 mb-1">Trade Type</label>
+                        <select id="trade_type" required class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                            <option>Long Call</option>
+                            <option>Long Put</option>
+                            <option>Short Call</option>
+                            <option>Short Put</option>
+                            <option>Long Call Spread</option>
+                            <option>Long Put Spread</option>
+                            <option>Short Call Spread</option>
+                            <option>Short Put Spread</option>
+                            <option>Calendar Spread</option>
+                            <option>Long Ratio Spread</option>
+                            <option>Short Ratio Spread</option>
+                            <option>Long Straddle</option>
+                            <option>Short Straddle</option>
+                            <option>Long Strangle</option>
+                            <option>Short Strangle</option>
+                            <option>Long Butterfly</option>
+                            <option>Short Butterfly</option>
+                            <option>Short Iron Condor</option>
+                            <option>Short Iron Butterfly</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Trade Execution -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label for="open_date" class="block text-sm font-medium text-gray-300 mb-1">Open Date</label>
+                        <input type="date" id="open_date" required class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label for="close_date" class="block text-sm font-medium text-gray-300 mb-1">Close Date</label>
+                        <input type="date" id="close_date" required class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                    </div>
+                </div>
+                
+                <!-- Contract Details -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                    <div id="expiration_date_container">
+                        <label for="expiration_date" class="block text-sm font-medium text-gray-300 mb-1">Expiration Date</label>
+                        <input type="date" id="expiration_date" required class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                    </div>
+                    <div id="expiration_date_2_container" class="hidden">
+                        <label for="expiration_date_2" class="block text-sm font-medium text-gray-300 mb-1">Expiration Date 2</label>
+                        <input type="date" id="expiration_date_2" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                    </div>
+                </div>
+
+                <div id="strike-price-container" class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
+                    <!-- Strike price fields will be injected here -->
+                </div>
+                
+                <div class="border-t border-gray-700/50 my-4"></div>
+                
+                <!-- Leg 1 Financials -->
+                <div id="leg_1_container">
+                    <h4 class="text-md font-semibold text-indigo-400 mb-3" id="leg_1_title">Financials</h4>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+                        <div>
+                            <label for="quantity" class="block text-sm font-medium text-gray-300 mb-1">Quantity</label>
+                            <input type="number" id="quantity" required min="1" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="5">
+                        </div>
+                        <div>
+                            <label for="entry_price" class="block text-sm font-medium text-gray-300 mb-1">Entry Price</label>
+                            <input type="number" step="0.01" id="entry_price" required class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="1.25">
+                        </div>
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <label for="exit_price" class="block text-sm font-medium text-gray-300">Exit Price</label>
+                                <label class="flex items-center text-xs text-gray-400 cursor-pointer">
+                                    <input type="checkbox" id="expired_worthless" class="h-3 w-3 bg-gray-700 border border-gray-600 text-indigo-600 focus:ring-indigo-500 rounded">
+                                    <span class="ml-1.5">Expired</span>
+                                </label>
+                            </div>
+                            <input type="number" step="0.01" id="exit_price" required class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="0.65">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Leg 2 Financials (for Ratios) -->
+                <div id="ratio-inputs-container" class="hidden">
+                    <h4 class="text-md font-semibold text-indigo-400 mb-3">Leg 2 Financials</h4>
+                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+                        <div>
+                            <label for="quantity_2" class="block text-sm font-medium text-gray-300 mb-1">Quantity 2</label>
+                            <input type="number" id="quantity_2" min="1" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="2">
+                        </div>
+                        <div>
+                            <label for="entry_price_2" class="block text-sm font-medium text-gray-300 mb-1">Entry Price 2</label>
+                            <input type="number" step="0.01" id="entry_price_2" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="0.80">
+                        </div>
+                        <div>
+                            <label for="exit_price_2" class="block text-sm font-medium text-gray-300 mb-1">Exit Price 2</label>
+                            <input type="number" step="0.01" id="exit_price_2" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="0.30">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="border-t border-gray-700/50 my-4"></div>
+
+
+                <div class="mb-4">
+                    <label class="flex items-center text-sm font-medium text-gray-300 mb-2">
+                        <input type="checkbox" id="separate_commissions" class="h-4 w-4 bg-gray-700 border border-gray-600 text-indigo-600 focus:ring-indigo-500 rounded">
+                        <span class="ml-2">Use Separate Commissions</span>
+                    </label>
+                    <div id="single_commission_container">
+                        <label for="commissions" class="block text-sm font-medium text-gray-300 mb-1">Commissions (Per Contract, Per Leg)</label>
+                        <input type="number" step="0.01" id="commissions" value="0" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="0.65">
+                    </div>
+                    <div id="separate_commissions_container" class="hidden grid grid-cols-2 gap-4">
+                        <div>
+                             <label for="opening_commission" class="block text-sm font-medium text-gray-300 mb-1">Opening Commission</label>
+                             <input type="number" step="0.01" id="opening_commission" value="0" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="0.65">
+                        </div>
+                        <div>
+                             <label for="closing_commission" class="block text-sm font-medium text-gray-300 mb-1">Closing Commission</label>
+                             <input type="number" step="0.01" id="closing_commission" value="0" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="0.65">
+                        </div>
+                    </div>
+                </div>
+
+
+                <div class="mb-4">
+                    <label for="max_risk" class="block text-sm font-medium text-gray-300 mb-1">Max Risk / Collateral</label>
+                    <div class="flex">
+                        <input type="number" step="1" id="max_risk" value="0" required class="w-full bg-gray-700 border border-gray-600 rounded-l-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="500">
+                          <button type="button" id="autoCalcRiskBtn" class="bg-gray-600 hover:bg-gray-500 text-white font-semibold py-2 px-4 rounded-r-lg transition hidden">Auto</button>
+                    </div>
+                </div>
+
+                <!-- Notes & Tags -->
+                <div class="mb-4">
+                    <label for="notes" class="block text-sm font-medium text-gray-300 mb-1">Notes</label>
+                    <textarea id="notes" rows="3" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="Trade thesis, management, etc."></textarea>
+                </div>
+                 <div class="mb-6">
+                    <label for="tags" class="block text-sm font-medium text-gray-300 mb-1">Tags</label>
+                    <input type="text" id="tags" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="earnings, iv crush, spy (comma-separated)">
+                </div>
+                
+                <!-- Footer -->
+                <div class="flex justify-end gap-4">
+                    <button type="button" id="cancelBtn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-6 rounded-lg transition">Cancel</button>
+                    <button type="submit" id="saveBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-lg transition">Save Trade</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Import Trades Modal -->
+    <div id="importModal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-gray-800 rounded-xl shadow-2xl w-full max-w-2xl modal-content overflow-y-auto">
+            <div class="p-6 sm:p-8">
+                <h2 class="text-2xl font-bold text-white mb-4">Import Trades from CSV</h2>
+                
+                <div class="bg-gray-900/50 p-4 rounded-lg mb-6">
+                    <h3 class="font-semibold text-white mb-2">Instructions</h3>
+                    <ol class="list-decimal list-inside text-gray-400 text-sm space-y-2">
+                        <li>Download the CSV template. This ensures you have the correct columns.</li>
+                        <li>Fill in your trade data. See the required columns and formats below.</li>
+                        <li>Save your file as a CSV.</li>
+                        <li>Click "Choose File" and select your saved CSV file.</li>
+                        <li>Click "Import" to add the trades to your currently active account.</li>
+                    </ol>
+                </div>
+
+                <div class="bg-gray-900/50 p-4 rounded-lg mb-6">
+                     <h3 class="font-semibold text-white mb-2">Columns & Format</h3>
+                     <ul class="text-gray-400 text-xs space-y-1">
+                        <li><strong class="text-gray-300">Required:</strong> Ticker, TradeType, OpenDate, CloseDate, ExpirationDate, Strikes, Quantity, EntryPrice, ExitPrice</li>
+                        <li><strong class="text-gray-300">Dates:</strong> Must be in YYYY-MM-DD format.</li>
+                        <li><strong class="text-gray-300">Strikes:</strong> Comma-separated for multi-strike strategies (e.g., "450,455").</li>
+                        <li><strong class="text-gray-300">Commissions:</strong> Provide either `CommissionsPerContract` OR both `OpeningCommission` and `ClosingCommission`.</li>
+                        <li><strong class="text-gray-300">ExpirationDate2:</strong> Required for Calendar Spreads.</li>
+                        <li><strong class="text-gray-300">Quantity2, EntryPrice2, ExitPrice2:</strong> Required for Ratio Spreads.</li>
+                        <li><strong class="text-gray-300">Expired:</strong> Enter TRUE if the trade expired worthless (sets exit price to 0).</li>
+                        <li><strong class="text-gray-300">Optional:</strong> MaxRisk, Notes, Tags (comma-separated).</li>
+                     </ul>
+                </div>
+                
+                <div class="flex items-center gap-4 mb-4">
+                    <input type="file" id="csvFileInput" accept=".csv" class="hidden">
+                    <label for="csvFileInput" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg cursor-pointer transition">Choose File</label>
+                    <span id="fileName" class="text-gray-400 text-sm">No file selected</span>
+                </div>
+                <div id="importStatus" class="text-sm mb-4"></div>
+
+                <div class="flex justify-between items-center">
+                    <button type="button" id="downloadTemplateBtn" class="text-indigo-400 hover:text-indigo-300 text-sm font-semibold">Download Template</button>
+                    <div class="flex gap-4">
+                         <button type="button" id="cancelImportBtn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-6 rounded-lg transition">Cancel</button>
+                         <button type="button" id="processImportBtn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-lg transition">Import</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Reset Data Modal -->
+    <div id="resetModal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-gray-800 rounded-xl shadow-2xl w-full max-w-md modal-content">
+            <div class="p-6 sm:p-8">
+                <h2 class="text-2xl font-bold text-red-400 mb-4">Reset Current Account</h2>
+                <p class="text-gray-400 mb-6">This will permanently delete all trades and transactions for the <strong id="reset-account-name" class="text-white"></strong> account. This action cannot be undone. To confirm, type "RESET" below.</p>
+                <input type="text" id="resetConfirmInput" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white mb-6 focus:ring-2 focus:ring-red-500 focus:outline-none" placeholder="Type RESET to confirm">
+                <div class="flex justify-end gap-4">
+                    <button type="button" id="cancelResetBtn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-6 rounded-lg transition">Cancel</button>
+                    <button type="button" id="confirmResetBtn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded-lg transition opacity-50 cursor-not-allowed" disabled>Confirm Reset</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Settings & Accounts Modal -->
+    <div id="settingsModal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-gray-800 rounded-xl shadow-2xl w-full max-w-lg modal-content overflow-y-auto">
+            <div class="p-6 sm:p-8">
+                <h2 class="text-2xl font-bold text-white mb-6">Settings & Accounts</h2>
+                
+                <!-- General Settings -->
+                <div class="mb-8">
+                    <h3 class="text-lg font-semibold text-indigo-400 mb-4 border-b border-gray-700 pb-2">General Settings</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label for="setting-currency" class="block text-sm font-medium text-gray-300 mb-1">Currency Symbol</label>
+                            <input type="text" id="setting-currency" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="$">
+                        </div>
+                         <div>
+                            <label for="setting-commission" class="block text-sm font-medium text-gray-300 mb-1">Default Commission</label>
+                            <input type="number" step="0.01" id="setting-commission" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="0.65">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Starting Balance -->
+                <div class="mb-8">
+                    <h3 class="text-lg font-semibold text-indigo-400 mb-4 border-b border-gray-700 pb-2">Starting Balance</h3>
+                    <p class="text-xs text-gray-500 mb-3">Set the initial deposit for the currently active account (<strong id="settings-active-account-name" class="text-white"></strong>).</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <input type="number" id="startingBalance" step="100" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="10000">
+                        <input type="date" id="startingBalanceDate" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                    </div>
+                    <button id="saveStartingBalance" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition w-full mt-2">Save Balance</button>
+                </div>
+
+                <!-- Account Management -->
+                 <div class="mb-8">
+                    <h3 class="text-lg font-semibold text-indigo-400 mb-4 border-b border-gray-700 pb-2">Manage Accounts</h3>
+                    <div id="accounts-list-manager" class="space-y-3 mb-6">
+                        <!-- Account manager list will be injected here -->
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <input type="text" id="newAccountName" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="New account name...">
+                        <button id="addAccountBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition whitespace-nowrap disabled:bg-indigo-800 disabled:cursor-not-allowed">Add Account</button>
+                    </div>
+                    <p id="account-limit-msg" class="text-xs text-gray-500 mt-2 text-right hidden">Maximum of 5 accounts.</p>
+                </div>
+
+                <!-- Sync Account -->
+                <div class="mb-8">
+                    <h3 class="text-lg font-semibold text-indigo-400 mb-4 border-b border-gray-700 pb-2">Sync Across Devices</h3>
+                    <p class="text-sm text-gray-400 mb-3">To sync data, copy your current Account ID and use the "Link Device" option on your other device.</p>
+                    
+                    <label for="currentAccountId" class="block text-sm font-medium text-gray-300 mb-1">Your Current Account ID</label>
+                    <div class="flex items-center gap-2 mb-4">
+                        <input type="text" id="currentAccountId" readonly class="w-full bg-gray-900 border border-gray-600 rounded-lg px-3 py-2 text-gray-400 focus:outline-none">
+                        <button id="copyAccountIdBtn" class="bg-gray-600 hover:bg-gray-500 text-white font-semibold py-2 px-3 rounded-lg transition">Copy</button>
+                    </div>
+
+                    <label for="linkAccountIdInput" class="block text-sm font-medium text-gray-300 mb-1">Enter an existing Account ID to link this device</label>
+                    <div class="flex items-center gap-4">
+                        <input type="text" id="linkAccountIdInput" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="Paste Account ID here...">
+                        <button id="linkDeviceBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition whitespace-nowrap">Link Device</button>
+                    </div>
+                </div>
+
+
+                <!-- Sample Data -->
+                <div id="sample-data-wrapper" class="mt-8">
+                     <h3 class="text-lg font-semibold text-indigo-400 mb-4 border-b border-gray-700 pb-2">Sample Data</h3>
+                     <p class="text-sm text-gray-400 mb-3">Your current account is empty. You can load a sample set of trades to explore the dashboard's features.</p>
+                     <button id="loadSampleDataBtn" class="bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-4 rounded-lg transition w-full">Load Sample Data</button>
+                </div>
+
+
+                 <div class="flex justify-end mt-8">
+                    <button type="button" id="closeSettingsBtn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-6 rounded-lg transition">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- The only script tag should be this one -->
     <script type="module" src="js/main.js"></script>
