@@ -27,8 +27,9 @@
         .modal-content {
             max-height: 90vh;
         }
+        /* Responsive calendar day height */
         .calendar-day {
-            min-height: 6rem;
+            min-height: 5rem;
         }
          .toggle-bg:after {
             content: '';
@@ -54,6 +55,9 @@
             .calendar-pnl-text {
                 font-size: 0.75rem; /* back to text-xs */
                 line-height: 1rem;
+            }
+            .calendar-day {
+                min-height: 6rem;
             }
         }
         /* Make chart bars clickable */
@@ -108,12 +112,12 @@
                  <div id="account-switcher" class="flex flex-wrap items-center gap-2 mb-4 border-b border-gray-700 pb-4">
                      <!-- Account tabs will be injected here -->
                  </div>
-                <div class="flex justify-between items-center w-full">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center w-full gap-4">
                     <div>
                         <h3 class="text-sm font-medium text-gray-400">Total Account Value</h3>
-                        <p id="total-account-value" class="text-4xl font-bold text-white mt-1">$0.00</p>
+                        <p id="total-account-value" class="text-3xl sm:text-4xl font-bold text-white mt-1">$0.00</p>
                     </div>
-                    <div class="text-right">
+                    <div class="text-left sm:text-right w-full sm:w-auto">
                         <p class="text-sm font-medium text-gray-400">Total Deposits</p>
                         <p id="total-deposits" class="text-lg font-semibold text-blue-400">$0.00</p>
                         <p class="text-sm font-medium text-gray-400 mt-2">Total Withdrawals</p>
@@ -129,25 +133,25 @@
             <div class="bg-gray-800 p-5 rounded-xl shadow-lg col-span-1 flex flex-col justify-center">
                 <div>
                     <h3 class="text-sm font-medium text-gray-400">Total P&L</h3>
-                    <p id="kpi-total-pnl" class="text-3xl font-bold text-green-400 mt-1">$0.00</p>
+                    <p id="kpi-total-pnl" class="text-2xl sm:text-3xl font-bold text-green-400 mt-1">$0.00</p>
                 </div>
             </div>
             <div class="bg-gray-800 p-5 rounded-xl shadow-lg col-span-1 flex flex-col justify-center">
                 <div>
                     <h3 class="text-sm font-medium text-gray-400">Win Rate</h3>
-                    <p id="kpi-win-rate" class="text-3xl font-bold text-white mt-1">0%</p>
+                    <p id="kpi-win-rate" class="text-2xl sm:text-3xl font-bold text-white mt-1">0%</p>
                 </div>
             </div>
             <div class="bg-gray-800 p-5 rounded-xl shadow-lg col-span-1 flex flex-col justify-center">
                 <div>
                     <h3 class="text-sm font-medium text-gray-400">Average ROC %</h3>
-                    <p id="kpi-avg-roc" class="text-3xl font-bold text-white mt-1">0.0%</p>
+                    <p id="kpi-avg-roc" class="text-2xl sm:text-3xl font-bold text-white mt-1">0.0%</p>
                 </div>
             </div>
             <div class="bg-gray-800 p-5 rounded-xl shadow-lg col-span-1 flex flex-col justify-center">
                 <div>
                     <h3 class="text-sm font-medium text-gray-400">Trades</h3>
-                    <p id="kpi-total-trades" class="text-3xl font-bold text-white mt-1">0</p>
+                    <p id="kpi-total-trades" class="text-2xl sm:text-3xl font-bold text-white mt-1">0</p>
                 </div>
             </div>
 
@@ -242,13 +246,13 @@
             <!-- Toggleable Main View: Calendar / Strategy -->
             <div class="bg-gray-800 p-5 rounded-xl shadow-lg md:col-span-2 lg:col-span-4">
                  <div class="flex flex-wrap justify-between items-center mb-4 gap-4">
-                     <div class="flex items-center gap-4">
+                     <div class="flex flex-wrap items-center gap-4">
                         <h3 id="main-view-title" class="text-lg font-semibold text-white">Trading Calendar</h3>
-                        <div id="calendar-controls-wrapper">
+                        <div id="calendar-controls-wrapper" class="flex items-center justify-between w-full sm:w-auto">
                             <button id="prev-period" class="bg-gray-700 p-2 rounded-lg hover:bg-gray-600 transition">
                                 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
                             </button>
-                             <span id="calendar-period-label" class="font-semibold text-lg mx-4">October 2025</span>
+                             <span id="calendar-period-label" class="font-semibold text-base sm:text-lg mx-2 text-center">October 2025</span>
                             <button id="next-period" class="bg-gray-700 p-2 rounded-lg hover:bg-gray-600 transition">
                                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
                             </button>
@@ -263,9 +267,11 @@
 
                 <!-- Calendar View -->
                 <div id="calendar-view">
-                     <div class="flex items-center gap-2 mb-4" id="calendar-view-toggle-buttons">
-                       <button data-view="month" class="calendar-view-btn bg-indigo-600 text-white py-1 px-3 rounded-lg text-sm transition">Month</button>
-                       <button data-view="week" class="calendar-view-btn bg-gray-700 hover:bg-gray-600 text-gray-300 py-1 px-3 rounded-lg text-sm transition">Week</button>
+                     <div class="flex flex-wrap items-center gap-4 mb-4">
+                        <div id="calendar-view-toggle-buttons" class="flex items-center gap-2">
+                           <button data-view="month" class="calendar-view-btn bg-indigo-600 text-white py-1 px-3 rounded-lg text-sm transition">Month</button>
+                           <button data-view="week" class="calendar-view-btn bg-gray-700 hover:bg-gray-600 text-gray-300 py-1 px-3 rounded-lg text-sm transition">Week</button>
+                        </div>
                     </div>
                     <div id="calendar-grid" class="grid grid-cols-7 gap-1 text-center"></div>
                     <div id="calendar-summary" class="text-right mt-2 text-sm text-gray-400"></div>
@@ -300,11 +306,15 @@
             <!-- Recent Trades Table -->
             <div class="bg-gray-800 p-5 rounded-xl shadow-lg col-span-1 md:col-span-2 lg:col-span-4">
                 <div class="flex flex-wrap justify-between items-center mb-4 gap-y-4">
-                    <div class="flex items-center gap-4">
+                    <div class="flex items-center gap-4 flex-wrap">
                         <h3 class="text-lg font-semibold text-white">Activity Log</h3>
                         <div id="chart-filter-display" class="hidden items-center gap-2 bg-gray-700 rounded-lg pr-2">
                             <span class="text-sm text-gray-300 pl-3 py-1"></span>
                             <button id="clear-chart-filter" class="text-red-400 hover:text-red-300 font-bold text-xl leading-none pb-1">&times;</button>
+                        </div>
+                        <div id="calendar-filter-info" class="hidden items-center gap-2 bg-gray-700 rounded-lg pr-2">
+                           <span id="filtered-day-span" class="text-sm text-gray-300 pl-3 py-1"></span>
+                           <button id="unfilter-day-btn" class="text-red-400 hover:text-red-300 font-bold text-xl leading-none pb-1" title="Clear date filter">&times;</button>
                         </div>
                     </div>
                     <div class="ml-auto flex items-center gap-4 flex-wrap">
@@ -337,16 +347,16 @@
                                 </th>
                                 <th class="p-3 font-semibold">Type</th>
                                 <th class="p-3 font-semibold">Description</th>
-                                <th class="p-3 font-semibold text-right">
+                                <th class="p-3 font-semibold text-right hidden md:table-cell">
                                      <button class="sort-btn flex items-center gap-1 w-full justify-end hover:text-white transition" data-sort="duration">Duration<span class="sort-indicator"></span></button>
                                 </th>
                                 <th class="p-3 font-semibold text-right">
                                      <button class="sort-btn flex items-center gap-1 w-full justify-end hover:text-white transition" data-sort="amount">Amount<span class="sort-indicator"></span></button>
                                 </th>
-                                <th class="p-3 font-semibold text-right">
+                                <th class="p-3 font-semibold text-right hidden lg:table-cell">
                                      <button class="sort-btn flex items-center gap-1 w-full justify-end hover:text-white transition" data-sort="roc">ROC %<span class="sort-indicator"></span></button>
                                 </th>
-                                <th class="p-3 font-semibold text-right">Actions</th>
+                                <th class="p-3 font-semibold text-right pr-4">Actions</th>
                             </tr>
                         </thead>
                         <tbody id="recent-trades-body">
@@ -947,6 +957,9 @@
             const nextPeriodBtn = document.getElementById('next-period');
             const calendarMonthWeekToggle = document.getElementById('calendar-view-toggle-buttons');
             const calendarSummary = document.getElementById('calendar-summary');
+            const calendarFilterInfo = document.getElementById('calendar-filter-info');
+            const filteredDaySpan = document.getElementById('filtered-day-span');
+            const unfilterDayBtn = document.getElementById('unfilter-day-btn');
             
             // Reset Modal Elements
             const resetDataBtn = document.getElementById('resetDataBtn');
@@ -1905,9 +1918,10 @@
                     } else if (item && item.transaction_type === 'trade') {
                         const detailsRow = document.createElement('tr');
                         detailsRow.className = 'details-row bg-gray-800';
+                        const numCols = activityLogHeader.querySelectorAll('th:not(.hidden)').length;
 
                         const totalCommissions = getTradeCommissions(item);
-                        let content = `<td colspan="7" class="p-0">`;
+                        let content = `<td colspan="${numCols}" class="p-0">`;
 
                         if (item.ratio) {
                             // Custom layout for Ratio Spreads
@@ -2056,15 +2070,27 @@
             tradeFilters.addEventListener('click', (e) => {
                 const filterButton = e.target.closest('.filter-btn');
                 if (!filterButton) return;
-                clearAllFilters();
+                
+                // Deactivate all other buttons
+                document.querySelectorAll('#trade-filters .filter-btn').forEach(btn => {
+                    btn.classList.remove('bg-indigo-600', 'text-white');
+                    btn.classList.add('bg-gray-700', 'text-gray-300');
+                });
+
                 tradeTableFilter = filterButton.dataset.filter;
                 currentPage = 1; 
 
+                // Activate clicked button
                 filterButton.classList.add('bg-indigo-600', 'text-white');
                 filterButton.classList.remove('bg-gray-700', 'text-gray-300');
 
+                // Clear other filter types
+                selectedCalendarDate = null;
+                chartFilter = { type: null, value: null, displayValue: null };
+
                 updateDashboard();
             });
+
 
             clearChartFilterBtn.addEventListener('click', () => {
                 clearAllFilters();
@@ -2170,6 +2196,9 @@
                     console.log("Dashboard update skipped: auth not ready or no data.");
                     return;
                 }
+                
+                const getItemDate = (item) => dayjs(item.transaction_type === 'trade' ? item.close : item.date);
+
                 renderAccountSwitcher();
                 
                 const allTransactions = getActiveTransactions();
@@ -2246,7 +2275,7 @@
                 // Update KPI cards
                 const pnlElement = document.getElementById('kpi-total-pnl');
                 pnlElement.textContent = formatCurrency(currentKpis.totalPnl);
-                pnlElement.className = `text-3xl font-bold mt-1 ${currentKpis.totalPnl >= 0 ? 'text-green-400' : 'text-red-400'}`;
+                pnlElement.className = `text-2xl sm:text-3xl font-bold mt-1 ${currentKpis.totalPnl >= 0 ? 'text-green-400' : 'text-red-400'}`;
                 
                 document.getElementById('kpi-win-rate').textContent = `${currentKpis.winRate.toFixed(1)}%`;
                 document.getElementById('kpi-avg-roc').textContent = `${currentKpis.avgRoc.toFixed(1)}%`;
@@ -2487,9 +2516,18 @@
                 // Calendar Logic
                 renderCalendar();
 
-                // Update Recent Activity Table based on filter
+                // --- Activity Log Filtering ---
                 let filteredActivity = allTransactions;
                 
+                // Show calendar filter status
+                if (selectedCalendarDate) {
+                     filteredDaySpan.textContent = `Filtered to: ${dayjs(selectedCalendarDate).format('MMM D, YYYY')}`;
+                     calendarFilterInfo.classList.remove('hidden');
+                } else {
+                     calendarFilterInfo.classList.add('hidden');
+                }
+
+                // Apply filters in order of precedence: Chart > Calendar > Dropdown
                 if (chartFilter.type) {
                     switch (chartFilter.type) {
                         case 'strategy':
@@ -2511,22 +2549,11 @@
                             filteredActivity = allTransactions.filter(t => t.transaction_type === 'trade' && t.pnl >= min && t.pnl < max);
                             break;
                     }
-                    document.querySelectorAll('#trade-filters .filter-btn').forEach(btn => {
-                        btn.classList.remove('bg-indigo-600', 'text-white');
-                        btn.classList.add('bg-gray-700', 'hover:bg-gray-600', 'text-gray-300');
-                    });
                 } else if (selectedCalendarDate) {
                     filteredActivity = allTransactions.filter(item => {
-                        if (item.transaction_type === 'trade') {
-                            return dayjs(item.close).isSame(selectedCalendarDate, 'day');
-                        }
-                        return false;
+                        const itemDate = getItemDate(item);
+                        return itemDate.isSame(selectedCalendarDate, 'day');
                     });
-                    document.querySelectorAll('#trade-filters .filter-btn').forEach(btn => {
-                        btn.classList.remove('bg-indigo-600', 'text-white');
-                        btn.classList.add('bg-gray-700', 'hover:bg-gray-600', 'text-gray-300');
-                    });
-                    document.querySelector('#trade-filters .filter-btn[data-filter="trades"]').classList.add('bg-indigo-600', 'text-white');
                 } else {
                     // Category filter
                     switch(tradeTableFilter) {
@@ -2552,20 +2579,21 @@
                     }
                 }
                 
-                // Search filter
+                // Search filter (applies on top of other filters)
                 if (logSearchFilter) {
                     filteredActivity = filteredActivity.filter(item => {
                         if (item.transaction_type === 'trade') {
                            return item.ticker.toLowerCase().includes(logSearchFilter) || 
                                  (item.tags && item.tags.toLowerCase().includes(logSearchFilter));
                         }
-                        return false; // Don't show non-trades in search results for now
+                        if (item.notes) {
+                            return item.notes.toLowerCase().includes(logSearchFilter);
+                        }
+                        return false; 
                     });
                 }
 
                 // Sorting logic
-                const getItemDate = (item) => dayjs(item.transaction_type === 'trade' ? item.close : item.date);
-
                 filteredActivity.sort((a, b) => {
                     let valA, valB;
                     switch (sortBy) {
@@ -2647,7 +2675,6 @@
                         
                         let strikeDescription = '';
                         if (item.strikes && item.strikes.length > 0) {
-                            // Creates a clean strike description like "450/445" or just "450"
                             strikeDescription = item.strikes.join('/');
                         }
                         description = `${item.ticker} ${strikeDescription} ${item.type}`;
@@ -2670,10 +2697,10 @@
                         <td class="p-3 text-gray-400">${date}</td>
                         <td class="p-3 font-semibold">${type}</td>
                         <td class="p-3 text-gray-400">${description}</td>
-                        <td class="p-3 text-gray-400 text-right">${duration}</td>
+                        <td class="p-3 text-gray-400 text-right hidden md:table-cell">${duration}</td>
                         <td class="p-3 text-right font-mono ${amountColor}">${amount >= 0 ? '+' : ''}${formatCurrency(amount)}</td>
-                        <td class="p-3 text-right font-mono ${amountColor}">${roc}</td>
-                        <td class="p-3 text-right">
+                        <td class="p-3 text-right font-mono ${amountColor} hidden lg:table-cell">${roc}</td>
+                        <td class="p-3 text-right pr-4">
                             ${item.transaction_type === 'trade' ? 
                             `<button class="edit-btn p-1 text-gray-400 hover:text-white" data-id="${item.id}"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg></button>` : ''}
                             ${!item.isInitial ? `<button class="delete-btn p-1 text-gray-400 hover:text-red-500" data-id="${item.id}"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg></button>`: ''}
@@ -2685,10 +2712,11 @@
                 // Render Footer
                 const totalAmountColor = totalAmount >= 0 ? 'text-green-400' : 'text-red-400';
                 activityLogFooter.innerHTML = `
-                    <td colspan="4" class="p-3 text-right">Total for ${filteredActivity.length} items:</td>
+                    <td class="p-3" colspan="3"></td>
+                    <td class="p-3 text-right hidden md:table-cell">Total:</td>
                     <td class="p-3 text-right font-mono ${totalAmountColor}">${formatCurrency(totalAmount)}</td>
-                    <td class="p-3 text-right font-mono ${avgRocTotal >= 0 ? 'text-green-400' : 'text-red-400'}">${avgRocTotal.toFixed(1)}%</td>
-                    <td></td>
+                    <td class="p-3 text-right font-mono ${avgRocTotal >= 0 ? 'text-green-400' : 'text-red-400'} hidden lg:table-cell">${avgRocTotal.toFixed(1)}%</td>
+                    <td class="pr-4"></td>
                 `;
                 
                 // Render Pagination
@@ -2907,6 +2935,8 @@
                         const isToday = day.isSame(dayjs(), 'day');
                         const isWeekend = day.day() === 0 || day.day() === 6;
                         const isSelected = selectedCalendarDate && day.isSame(selectedCalendarDate, 'day');
+                        const hasTrades = data.wins > 0 || data.losses > 0;
+                        const isClickable = !isWeekend && hasTrades;
 
                         
                         let tradeDots = '';
@@ -2919,7 +2949,7 @@
 
 
                         calendarGrid.innerHTML += `
-                            <div class="calendar-day p-1 sm:p-2 rounded-lg text-left flex flex-col border-2 transition ${isToday ? 'border-indigo-500/50' : 'border-transparent'} ${isSelected ? '!border-indigo-500' : ''} ${isWeekend ? 'bg-gray-800/50 text-gray-600' : 'cursor-pointer'}" 
+                            <div class="calendar-day p-1 sm:p-2 rounded-lg text-left flex flex-col border-2 transition ${isToday ? 'border-indigo-500/50' : 'border-transparent'} ${isSelected ? '!border-indigo-500' : ''} ${isWeekend ? 'bg-gray-800/50 text-gray-600' : (isClickable ? 'cursor-pointer' : '')}" 
                                  style="${!isWeekend ? `background-color: ${bgColor};` : ''}"
                                  data-date="${dateStr}">
                                 <span class="font-semibold text-xs sm:text-sm ${isToday ? 'text-indigo-400' : ''}">${i}</span>
@@ -2968,6 +2998,8 @@
                         const isToday = day.isSame(dayjs(), 'day');
                         const isWeekend = day.day() === 0 || day.day() === 6;
                         const isSelected = selectedCalendarDate && day.isSame(selectedCalendarDate, 'day');
+                        const hasTrades = data.wins > 0 || data.losses > 0;
+                        const isClickable = !isWeekend && hasTrades;
                         
                         let tradeDots = '';
                         if (data.wins > 0 || data.losses > 0) {
@@ -2978,7 +3010,7 @@
                         }
 
                         calendarGrid.innerHTML += `
-                            <div class="calendar-day p-1 sm:p-2 rounded-lg text-left flex flex-col border-2 transition ${isToday ? 'border-indigo-500/50' : 'border-transparent'} ${isSelected ? '!border-indigo-500' : ''} ${isWeekend ? 'bg-gray-800/50 text-gray-600' : 'cursor-pointer'}" 
+                            <div class="calendar-day p-1 sm:p-2 rounded-lg text-left flex flex-col border-2 transition ${isToday ? 'border-indigo-500/50' : 'border-transparent'} ${isSelected ? '!border-indigo-500' : ''} ${isWeekend ? 'bg-gray-800/50 text-gray-600' : (isClickable ? 'cursor-pointer' : '')}" 
                                  style="${!isWeekend ? `background-color: ${bgColor};` : ''}"
                                  data-date="${dateStr}">
                                 <span class="font-semibold text-xs sm:text-sm ${isToday ? 'text-indigo-400' : ''}">${day.format('D')}</span>
@@ -2992,17 +3024,30 @@
 
             calendarGrid.addEventListener('click', (e) => {
                 const dayEl = e.target.closest('.calendar-day');
-                if (dayEl && dayEl.dataset.date) {
+                if (dayEl && dayEl.dataset.date && dayEl.classList.contains('cursor-pointer')) {
                     const date = dayEl.dataset.date;
-                    if (selectedCalendarDate === date) {
-                        selectedCalendarDate = null; // Toggle off
-                    } else {
-                        selectedCalendarDate = date;
-                    }
-                    chartFilter = { type: null, value: null, displayValue: null }; // Clear chart filter
+                    // Toggle selection
+                    selectedCalendarDate = selectedCalendarDate === date ? null : date;
+                    
+                    // Clear other filter types
+                    chartFilter = { type: null, value: null, displayValue: null }; 
+                    tradeTableFilter = 'all';
+                    document.querySelectorAll('#trade-filters .filter-btn').forEach(btn => {
+                        const isAllButton = btn.dataset.filter === 'all';
+                        btn.classList.toggle('bg-indigo-600', isAllButton);
+                        btn.classList.toggle('text-white', isAllButton);
+                        btn.classList.toggle('bg-gray-700', !isAllButton);
+                        btn.classList.toggle('text-gray-300', !isAllButton);
+                    });
+
                     currentPage = 1;
                     updateDashboard();
                 }
+            });
+
+            unfilterDayBtn.addEventListener('click', () => {
+                selectedCalendarDate = null;
+                updateDashboard();
             });
 
             prevPeriodBtn.addEventListener('click', () => {
@@ -3028,7 +3073,11 @@
                 renderCalendar();
             });
             
-            window.addEventListener('resize', renderCalendar);
+            window.addEventListener('resize', () => {
+                if (mainView === 'calendar') {
+                    renderCalendar();
+                }
+            });
 
             function exportActivityLogToCSV() {
                 const headers = ['Date', 'Type', 'Description', 'Duration (Days)', 'Amount', 'ROC %', 'Notes', 'Tags'];
