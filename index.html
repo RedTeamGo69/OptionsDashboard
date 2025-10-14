@@ -800,8 +800,11 @@
             dataUserId = userId; // Ensure global variable is set
 
             const isCanvasEnvironment = typeof __app_id !== 'undefined';
+            // Sanitize app_id to remove invalid characters for Firestore paths
+            const appId = isCanvasEnvironment ? __app_id.replace(/\//g, '_') : 'local-dev';
+
             const docRef = isCanvasEnvironment
-                ? doc(db, 'artifacts', __app_id, 'users', userId, 'data', 'main')
+                ? doc(db, 'artifacts', appId, 'users', userId, 'data', 'main')
                 : doc(db, 'options-odyssey-users', userId);
 
             appDataUnsubscribe = onSnapshot(docRef, (docSnap) => {
@@ -845,9 +848,6 @@
             });
         }
 
-
-        window.dayjs.extend(window.dayjs_plugin_quarterOfYear);
-        window.dayjs.extend(window.dayjs_plugin_weekOfYear);
 
         document.addEventListener('DOMContentLoaded', () => {
             // Define a global appData object to be accessible by Firebase functions
@@ -979,8 +979,9 @@
                     return;
                 }
                 const isCanvasEnvironment = typeof __app_id !== 'undefined';
+                const appId = isCanvasEnvironment ? __app_id.replace(/\//g, '_') : 'local-dev';
                 const docRef = isCanvasEnvironment
-                    ? doc(db, 'artifacts', __app_id, 'users', dataUserId, 'data', 'main')
+                    ? doc(db, 'artifacts', appId, 'users', dataUserId, 'data', 'main')
                     : doc(db, 'options-odyssey-users', dataUserId);
                 try {
                     // Use setDoc to overwrite the document with the current app state
@@ -1321,12 +1322,20 @@
                     // Double check it's not the active one
                     if (accountId === window.appData.activeAccountId || window.appData.accounts.length <= 1) return;
                     
+                    const deletedWasActive = accountId === window.appData.activeAccountId;
+                    
                     window.appData.accounts = window.appData.accounts.filter(acc => acc.id !== accountId);
                     delete window.appData.transactions[accountId];
+
+                    // If the deleted account was the active one, switch to the first remaining account
+                    if (deletedWasActive) {
+                        window.appData.activeAccountId = window.appData.accounts[0].id;
+                    }
                     
                     saveState();
                     renderSettingsModal(); // Re-render the list inside the modal
                     renderAccountSwitcher(); // Re-render the top tabs
+                    updateDashboard(); // Refresh dashboard with new active account
                 }
             });
 
@@ -1474,6 +1483,21 @@
             function calculateRawPnl(trade) {
                 const multiplier = 100;
                 
+                // Define credit strategies (those not in the debit list)
+                const debitStrategies = ['Long Call', 'Long Put', 'Long Call Spread', 'Long Put Spread', 'Long Straddle', 'Long Strangle', 'Long Butterfly', 'Calendar Spread'];
+                const isCreditStrategy = !debitStrategies.includes(trade.type);
+
+                // Handle expired credit strategies explicitly for clarity and robustness
+                if (trade.isExpired && isCreditStrategy) {
+                    if (trade.ratio) {
+                        // For Short Ratio, credit from short leg, debit from long leg
+                        const credit = trade.entry_price * trade.quantity * multiplier;
+                        const debit = trade.entry_price_2 * trade.quantity_2 * multiplier;
+                        return trade.type === 'Short Ratio Spread' ? credit - debit : debit - credit;
+                    }
+                    return trade.entry_price * trade.quantity * multiplier;
+                }
+
                 // Handle Ratio Spreads
                 if (trade.ratio) {
                     let pnl1 = 0;
@@ -1494,7 +1518,6 @@
                 // Handle Standard Spreads
                 const { entry_price, exit_price, quantity, type } = trade;
                 let pnl = 0;
-                const debitStrategies = ['Long Call', 'Long Put', 'Long Call Spread', 'Long Put Spread', 'Long Straddle', 'Long Strangle', 'Long Butterfly', 'Calendar Spread'];
                 if (debitStrategies.includes(type)) {
                     pnl = (exit_price - entry_price) * quantity * multiplier;
                 } 
@@ -1601,7 +1624,7 @@
                     exit_price_2: details.ratio === true ? parseFloat(document.getElementById('exit_price_2').value) : null,
                 };
                 
-                tradeData.pnl = calculatePnl(tradeData);
+                tradeData.pnl = parseFloat(calculatePnl(tradeData).toFixed(2));
 
                 if (tradeId) {
                     const index = allTransactions.findIndex(t => t.id == tradeId);
@@ -1749,10 +1772,19 @@
                                 return obj;
                             }, {});
                             
+                            // Validate required fields
                             if (!row.Ticker || !row.TradeType || !row.OpenDate || !row.CloseDate || !row.ExpirationDate) {
                                 throw new Error(`Missing required data on row ${i + 1}.`);
                             }
-                             if (!dayjs(row.OpenDate).isValid() || !dayjs(row.CloseDate).isValid() || !dayjs(row.ExpirationDate).isValid()) {
+                            
+                            // Validate dates are not weekends
+                            const openDate = dayjs(row.OpenDate);
+                            const closeDate = dayjs(row.CloseDate);
+                            if (openDate.day() === 0 || openDate.day() === 6 || closeDate.day() === 0 || closeDate.day() === 6) {
+                                throw new Error(`Weekend dates are not allowed on row ${i + 1}.`);
+                            }
+
+                             if (!openDate.isValid() || !closeDate.isValid() || !dayjs(row.ExpirationDate).isValid()) {
                                 throw new Error(`Invalid date format on row ${i + 1}. Please use YYYY-MM-DD.`);
                             }
                             
@@ -3118,3 +3150,4 @@
     </script>
 </body>
 </html>
+
