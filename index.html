@@ -737,16 +737,16 @@
         async function initializeFirebase() {
              const isCanvasEnvironment = typeof __firebase_config !== 'undefined' && __firebase_config !== '{}';
             
-            const firebaseConfig = isCanvasEnvironment
+             const firebaseConfig = isCanvasEnvironment
                 ? JSON.parse(__firebase_config)
                 : {
-                      apiKey: "AIzaSyBz1r3idn-lJlPzol1V3QfBz_28iJvzbpg",
-                      authDomain: "options-odssey.firebaseapp.com",
-                      projectId: "options-odssey",
-                      storageBucket: "options-odssey.firebasestorage.app",
-                      messagingSenderId: "684769306457",
-                      appId: "1:684769306457:web:fa3beccbfd031decaf4e48",
-                      measurementId: "G-2FLCF4T2JQ"
+                     apiKey: "AIzaSyBz1r3idn-lJlPzol1V3QfBz_28iJvzbpg",
+                     authDomain: "options-odssey.firebaseapp.com",
+                     projectId: "options-odssey",
+                     storageBucket: "options-odssey.firebasestorage.app",
+                     messagingSenderId: "684769306457",
+                     appId: "1:684769306457:web:fa3beccbfd031decaf4e48",
+                     measurementId: "G-2FLCF4T2JQ"
                   };
             
             const initialAuthToken = isCanvasEnvironment ? (typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null) : null;
@@ -1098,7 +1098,7 @@
 
             function renderSettingsModal() {
                  if (!window.appData.settings) {
-                    window.appData.settings = { currency: '$', defaultCommission: 0.65 };
+                     window.appData.settings = { currency: '$', defaultCommission: 0.65 };
                  }
                 // Populate general settings
                 currencySettingInput.value = window.appData.settings.currency || '$';
@@ -1811,7 +1811,7 @@
                             }
 
                              if (!openDate.isValid() || !closeDate.isValid() || !dayjs(row.ExpirationDate).isValid()) {
-                                throw new Error(`Invalid date format on row ${i + 1}. Please use YYYY-MM-DD.`);
+                                 throw new Error(`Invalid date format on row ${i + 1}. Please use YYYY-MM-DD.`);
                             }
                             
                             const type = row.TradeType;
@@ -2113,6 +2113,10 @@
 
             equityCurveFilterSelect.addEventListener('change', (e) => {
                 equityTimeFilter = e.target.value;
+                 if (window.appData && window.appData.settings) {
+                    window.appData.settings.equityTimeFilter = equityTimeFilter;
+                    saveState();
+                }
                 customDateFilterWrapper.classList.toggle('hidden', equityTimeFilter !== 'custom');
                 updateDashboard();
             });
@@ -2170,6 +2174,10 @@
             
             dateModeToggle.addEventListener('change', () => {
                 dateMode = dateModeToggle.checked ? 'live' : 'dynamic';
+                 if (window.appData && window.appData.settings) {
+                    window.appData.settings.dateMode = dateMode;
+                    saveState();
+                }
                 if(dateMode === 'live') {
                     dateModeLiveLabel.classList.add('text-indigo-400', 'font-semibold');
                     dateModeDynamicLabel.classList.remove('text-indigo-400', 'font-semibold');
@@ -2210,6 +2218,29 @@
                     return;
                 }
                 
+                // --- Restore settings from appData ---
+                if (window.appData.settings) {
+                    equityTimeFilter = window.appData.settings.equityTimeFilter || 'all';
+                    dateMode = window.appData.settings.dateMode || 'live';
+
+                    // Update UI elements to reflect the loaded state
+                    equityCurveFilterSelect.value = equityTimeFilter;
+                    dateModeToggle.checked = (dateMode === 'live');
+
+                    // Manually trigger UI updates associated with these settings
+                    if (dateMode === 'live') {
+                        dateModeLiveLabel.classList.add('text-indigo-400', 'font-semibold');
+                        dateModeDynamicLabel.classList.remove('text-indigo-400', 'font-semibold');
+                        dateModeDynamicLabel.classList.add('text-gray-400');
+                    } else {
+                        dateModeDynamicLabel.classList.add('text-indigo-400', 'font-semibold');
+                        dateModeLiveLabel.classList.remove('text-indigo-400', 'font-semibold');
+                        dateModeLiveLabel.classList.add('text-gray-400');
+                    }
+                    customDateFilterWrapper.classList.toggle('hidden', equityTimeFilter !== 'custom');
+                }
+                // --- End of restore settings ---
+
                 const getItemDate = (item) => dayjs(item.transaction_type === 'trade' ? item.close : item.date);
 
                 renderAccountSwitcher();
@@ -2596,7 +2627,7 @@
                 if (logSearchFilter) {
                     filteredActivity = filteredActivity.filter(item => {
                         if (item.transaction_type === 'trade') {
-                           return item.ticker.toLowerCase().includes(logSearchFilter) || 
+                            return item.ticker.toLowerCase().includes(logSearchFilter) || 
                                  (item.tags && item.tags.toLowerCase().includes(logSearchFilter));
                         }
                         if (item.notes) {
@@ -2866,7 +2897,7 @@
                         labels: Object.keys(pnlByDay),
                         datasets: [{ label: 'Total P&L', data: Object.values(pnlByDay), backgroundColor: Object.values(pnlByDay).map(pnl => pnl >= 0 ? 'rgba(52, 211, 153, 0.7)' : 'rgba(251, 113, 133, 0.7)') }]
                     },
-                      options: { ...analyticsChartOptions, onClick: (event, elements) => {
+                     options: { ...analyticsChartOptions, onClick: (event, elements) => {
                         if (elements.length > 0) {
                             const elementIndex = elements[0].index;
                             const clickedLabel = event.chart.data.labels[elementIndex];
@@ -3224,4 +3255,3 @@
     </script>
 </body>
 </html>
-
