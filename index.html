@@ -823,6 +823,14 @@
                     console.log("Firestore data received.");
                     const firestoreData = docSnap.data();
                     window.appData = { ...window.appData, ...firestoreData };
+                    if (!window.appData.settings) window.appData.settings = {};
+                    window.appData.settings = {
+                        currency: '$', 
+                        defaultCommission: 0.65,
+                        equityTimeFilter: 'all',
+                        dateMode: 'live',
+                        ...window.appData.settings
+                    };
                     hasInitialized = true; // Mark as initialized with data
                     window.updateDashboard(); 
                 } else if (!hasInitialized) {
@@ -1011,7 +1019,12 @@
                     accounts: [{ id: defaultAccountId, name: 'Account 1' }],
                     activeAccountId: defaultAccountId,
                     transactions: { [defaultAccountId]: [] },
-                    settings: { currency: '$', defaultCommission: 0.65 }
+                    settings: { 
+                        currency: '$', 
+                        defaultCommission: 0.65,
+                        equityTimeFilter: 'all',
+                        dateMode: 'live' 
+                    }
                 };
             }
             
