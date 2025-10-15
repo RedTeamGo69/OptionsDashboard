@@ -160,14 +160,6 @@
                 <div class="flex flex-wrap justify-between items-center mb-4 gap-4">
                     <h3 class="text-lg font-semibold text-white">P&L Curve</h3>
                      <div class="flex items-center gap-4 flex-wrap">
-                         <div class="flex items-center gap-2 text-sm">
-                             <span id="date-mode-dynamic-label" class="text-gray-400">Dynamic</span>
-                             <label for="date-mode-toggle" class="relative inline-flex items-center cursor-pointer">
-                                 <input type="checkbox" id="date-mode-toggle" class="sr-only">
-                                 <div class="w-11 h-6 bg-gray-600 rounded-full toggle-bg"></div>
-                             </label>
-                             <span id="date-mode-live-label" class="text-indigo-400 font-semibold">Live</span>
-                         </div>
                         <select id="equity-curve-filter-select" class="bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none">
                             <option value="all">All Time</option>
                             <option value="ytd">Year to Date (YTD)</option>
@@ -828,7 +820,6 @@
                         currency: '$', 
                         defaultCommission: 0.65,
                         equityTimeFilter: 'all',
-                        dateMode: 'live',
                         ...window.appData.settings
                     };
                     hasInitialized = true; // Mark as initialized with data
@@ -868,6 +859,9 @@
 
 
         document.addEventListener('DOMContentLoaded', () => {
+            dayjs.extend(window.dayjs_plugin_quarterOfYear);
+            dayjs.extend(window.dayjs_plugin_weekOfYear);
+
             // Define a global appData object to be accessible by Firebase functions
             window.appData = {};
             
@@ -881,7 +875,6 @@
             let currentPage = 1;
             const itemsPerPage = 10;
             let mainView = 'calendar'; // 'calendar', 'strategy', or 'analytics'
-            let dateMode = 'live'; // 'live' or 'dynamic'
             let sortBy = 'date';
             let sortDirection = 'desc';
             let selectedCalendarDate = null;
@@ -940,9 +933,6 @@
             const separateCommissionsCheckbox = document.getElementById('separate_commissions');
             const singleCommissionContainer = document.getElementById('single_commission_container');
             const separateCommissionsContainer = document.getElementById('separate_commissions_container');
-            const dateModeToggle = document.getElementById('date-mode-toggle');
-            const dateModeDynamicLabel = document.getElementById('date-mode-dynamic-label');
-            const dateModeLiveLabel = document.getElementById('date-mode-live-label');
             const customDateFilterWrapper = document.getElementById('custom-date-filter-wrapper');
             const customStartDateInput = document.getElementById('custom-start-date');
             const customEndDateInput = document.getElementById('custom-end-date');
@@ -1022,8 +1012,7 @@
                     settings: { 
                         currency: '$', 
                         defaultCommission: 0.65,
-                        equityTimeFilter: 'all',
-                        dateMode: 'live' 
+                        equityTimeFilter: 'all'
                     }
                 };
             }
@@ -2171,24 +2160,6 @@
                 mainView = btn.dataset.view;
                 updateDashboard();
             });
-            
-            dateModeToggle.addEventListener('change', () => {
-                dateMode = dateModeToggle.checked ? 'live' : 'dynamic';
-                 if (window.appData && window.appData.settings) {
-                    window.appData.settings.dateMode = dateMode;
-                    saveState();
-                }
-                if(dateMode === 'live') {
-                    dateModeLiveLabel.classList.add('text-indigo-400', 'font-semibold');
-                    dateModeDynamicLabel.classList.remove('text-indigo-400', 'font-semibold');
-                    dateModeDynamicLabel.classList.add('text-gray-400');
-                } else {
-                    dateModeDynamicLabel.classList.add('text-indigo-400', 'font-semibold');
-                    dateModeLiveLabel.classList.remove('text-indigo-400', 'font-semibold');
-                    dateModeLiveLabel.classList.add('text-gray-400');
-                }
-                updateDashboard();
-            });
 
             function setChartFilter(type, value, displayValue = null) {
                 const currentDisplayValue = chartFilter.displayValue || chartFilter.value;
@@ -2221,22 +2192,9 @@
                 // --- Restore settings from appData ---
                 if (window.appData.settings) {
                     equityTimeFilter = window.appData.settings.equityTimeFilter || 'all';
-                    dateMode = window.appData.settings.dateMode || 'live';
-
+                    
                     // Update UI elements to reflect the loaded state
                     equityCurveFilterSelect.value = equityTimeFilter;
-                    dateModeToggle.checked = (dateMode === 'live');
-
-                    // Manually trigger UI updates associated with these settings
-                    if (dateMode === 'live') {
-                        dateModeLiveLabel.classList.add('text-indigo-400', 'font-semibold');
-                        dateModeDynamicLabel.classList.remove('text-indigo-400', 'font-semibold');
-                        dateModeDynamicLabel.classList.add('text-gray-400');
-                    } else {
-                        dateModeDynamicLabel.classList.add('text-indigo-400', 'font-semibold');
-                        dateModeLiveLabel.classList.remove('text-indigo-400', 'font-semibold');
-                        dateModeLiveLabel.classList.add('text-gray-400');
-                    }
                     customDateFilterWrapper.classList.toggle('hidden', equityTimeFilter !== 'custom');
                 }
                 // --- End of restore settings ---
@@ -2249,12 +2207,7 @@
                 const trades = allTransactions.filter(t => t.transaction_type === 'trade');
                 const validTrades = trades.filter(t => ![0, 6].includes(dayjs(t.close).day()));
                 
-                let now;
-                if (dateMode === 'live') {
-                    now = dayjs();
-                } else {
-                    now = allTransactions.length > 0 ? dayjs(Math.max(...allTransactions.map(t => dayjs(t.transaction_type === 'trade' ? t.close : t.date)))) : dayjs();
-                }
+                const now = allTransactions.length > 0 ? dayjs(Math.max(...allTransactions.map(t => dayjs(t.transaction_type === 'trade' ? t.close : t.date)))) : dayjs();
                 
                 let currentPeriodTrades = validTrades;
                 
@@ -3255,3 +3208,4 @@
     </script>
 </body>
 </html>
+
