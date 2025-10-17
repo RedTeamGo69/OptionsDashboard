@@ -158,7 +158,14 @@
             <!-- Visualizations -->
             <div class="bg-gray-800 p-5 rounded-xl shadow-lg col-span-1 md:col-span-2 lg:col-span-3">
                 <div class="flex flex-wrap justify-between items-center mb-4 gap-4">
-                    <h3 class="text-lg font-semibold text-white">P&L Curve</h3>
+                    <div class="flex items-center gap-4">
+                        <h3 class="text-lg font-semibold text-white">P&L View</h3>
+                        <!-- P&L Chart Type Toggle -->
+                        <div id="pnl-chart-toggle" class="flex items-center gap-1 bg-gray-900/50 rounded-lg p-1">
+                            <button data-chart-type="line" class="pnl-chart-btn text-xs px-3 py-1 rounded-md transition">Curve</button>
+                            <button data-chart-type="bar" class="pnl-chart-btn text-xs px-3 py-1 rounded-md transition">Bars</button>
+                        </div>
+                    </div>
                      <div class="flex items-center gap-4 flex-wrap">
                         <select id="equity-curve-filter-select" class="bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none">
                             <option value="all">All Time</option>
@@ -820,6 +827,7 @@
                         currency: '$', 
                         defaultCommission: 0.65,
                         equityTimeFilter: 'all',
+                        pnlChartType: 'line', // Add default for bar chart toggle
                         ...window.appData.settings
                     };
                     hasInitialized = true; // Mark as initialized with data
@@ -939,6 +947,7 @@
             const activityLogHeader = document.getElementById('activity-log-header');
             const chartFilterDisplay = document.getElementById('chart-filter-display');
             const clearChartFilterBtn = document.getElementById('clear-chart-filter');
+            const pnlChartToggle = document.getElementById('pnl-chart-toggle');
             
             // Main View Toggle Elements
             const mainViewToggle = document.getElementById('main-view-toggle');
@@ -1012,7 +1021,8 @@
                     settings: { 
                         currency: '$', 
                         defaultCommission: 0.65,
-                        equityTimeFilter: 'all'
+                        equityTimeFilter: 'all',
+                        pnlChartType: 'line' // Default P&L chart
                     }
                 };
             }
@@ -1862,6 +1872,18 @@
 
 
             // --- TABLE & CHART EVENT LISTENERS ---
+            pnlChartToggle.addEventListener('click', (e) => {
+                const btn = e.target.closest('.pnl-chart-btn');
+                if (btn) {
+                    const newType = btn.dataset.chartType;
+                    if (window.appData.settings.pnlChartType !== newType) {
+                        window.appData.settings.pnlChartType = newType;
+                        saveState();
+                        updateDashboard();
+                    }
+                }
+            });
+
             activityLogHeader.addEventListener('click', (e) => {
                 const sortBtn = e.target.closest('.sort-btn');
                 if (sortBtn) {
@@ -2207,33 +2229,34 @@
                 const trades = allTransactions.filter(t => t.transaction_type === 'trade');
                 const validTrades = trades.filter(t => ![0, 6].includes(dayjs(t.close).day()));
                 
-                const now = allTransactions.length > 0 ? dayjs(Math.max(...allTransactions.map(t => dayjs(t.transaction_type === 'trade' ? t.close : t.date)))) : dayjs();
-                
                 let currentPeriodTrades = validTrades;
                 
                 // Determine date ranges for current and previous periods
                 let currentStartDate, currentEndDate;
+
+                // Use the REAL current date for time period filters like "This Month", "YTD", etc.
+                const referenceDateForFilters = dayjs();
                 
                 switch (equityTimeFilter) {
                     case 'today':
-                        currentStartDate = now.clone().startOf('day');
-                        currentEndDate = now.clone().endOf('day');
+                        currentStartDate = referenceDateForFilters.clone().startOf('day');
+                        currentEndDate = referenceDateForFilters.clone().endOf('day');
                         break;
                     case 'this-week':
-                        currentStartDate = now.clone().startOf('week');
-                        currentEndDate = now.clone().endOf('week');
+                        currentStartDate = referenceDateForFilters.clone().startOf('week');
+                        currentEndDate = referenceDateForFilters.clone().endOf('week');
                         break;
                     case 'mtd':
-                        currentStartDate = now.clone().startOf('month');
-                        currentEndDate = now.clone().endOf('month');
+                        currentStartDate = referenceDateForFilters.clone().startOf('month');
+                        currentEndDate = referenceDateForFilters.clone().endOf('month');
                         break;
                     case 'qtd':
-                        currentStartDate = now.clone().startOf('quarter');
-                        currentEndDate = now.clone().endOf('quarter');
+                        currentStartDate = referenceDateForFilters.clone().startOf('quarter');
+                        currentEndDate = referenceDateForFilters.clone().endOf('quarter');
                         break;
                     case 'ytd':
-                        currentStartDate = now.clone().startOf('year');
-                        currentEndDate = now.clone().endOf('year');
+                        currentStartDate = referenceDateForFilters.clone().startOf('year');
+                        currentEndDate = referenceDateForFilters.clone().endOf('year');
                         break;
                     case 'custom':
                         const start = dayjs(customStartDateInput.value);
@@ -2350,10 +2373,19 @@
                 document.getElementById('stats-total-comm').textContent = formatCurrency(totalCommissions);
 
 
-                // --- P&L Curve Logic ---
+                // --- P&L Chart Logic ---
+                const pnlChartType = (window.appData.settings && window.appData.settings.pnlChartType) || 'line';
+                // Update toggle button UI
+                document.querySelectorAll('.pnl-chart-btn').forEach(btn => {
+                    const isSelected = btn.dataset.chartType === pnlChartType;
+                    btn.classList.toggle('bg-indigo-600', isSelected);
+                    btn.classList.toggle('text-white', isSelected);
+                    btn.classList.toggle('bg-gray-900/50', !isSelected); // Use the container's bg color for non-selected
+                });
+
                 const sortedTrades = [...validTrades].sort((a,b) => new Date(a.close) - new Date(b.close));
                 let chartStartDate = null;
-                let chartEndDate = now.endOf('day');
+                let chartEndDate = referenceDateForFilters.endOf('day');
                 
                 const accountStartDate = allTransactions.find(t => t.isInitial)?.date;
 
@@ -2368,92 +2400,148 @@
                     chartStartDate = dayjs(accountStartDate);
                 }
 
-                let periodStartingPnl = 0;
-                let periodTrades = [];
-                let startingLabel = 'Start';
-
+                let periodTrades = sortedTrades;
                 if (chartStartDate && chartStartDate.isValid()) {
-                    const priorTrades = sortedTrades.filter(t => dayjs(t.close).isBefore(chartStartDate));
-                    periodStartingPnl = priorTrades.reduce((acc, trade) => acc + trade.pnl, 0);
-
                     periodTrades = sortedTrades.filter(t => {
                         const eventDate = dayjs(t.close);
                         return !eventDate.isBefore(chartStartDate) && !eventDate.isAfter(chartEndDate);
                     });
-                    startingLabel = chartStartDate.format('MM/DD/YY');
                 }
-
-                let runningPnl = periodStartingPnl;
-                const pnlData = periodTrades.map(trade => {
-                    runningPnl += trade.pnl;
-                    return runningPnl;
-                });
                 
-                const pnlLabels = periodTrades.map(t => dayjs(t.close).format('MM/DD/YY'));
-
                 if (pnlCurveChart) pnlCurveChart.destroy();
-                pnlCurveChart = new Chart(document.getElementById('pnlCurveChart'), {
-                    type: 'line',
-                    data: {
-                        labels: [startingLabel, ...pnlLabels],
-                        datasets: [{
-                            label: 'Cumulative P&L',
-                            data: [periodStartingPnl, ...pnlData],
-                            fill: {
-                                target: 'origin',
-                                above: 'rgba(74, 222, 128, 0.2)',
-                                below: 'rgba(248, 113, 113, 0.2)'
-                            },
-                            tension: 0.3,
-                            segment: {
-                                borderColor: ctx => {
-                                    if (!ctx.p0 || !ctx.p1) return '#a78bfa'; // Default for start/end
-                                    if (ctx.p0.parsed.y >= 0 && ctx.p1.parsed.y >= 0) return 'rgba(74, 222, 128, 1)';
-                                    if (ctx.p0.parsed.y < 0 && ctx.p1.parsed.y < 0) return 'rgba(248, 113, 113, 1)';
-                                    return '#a78bfa';
+                
+                if (pnlChartType === 'line') {
+                    // --- CUMULATIVE P&L LINE CHART ---
+                    let periodStartingPnl = 0;
+                    let startingLabel = 'Start';
+                    
+                    if (chartStartDate && chartStartDate.isValid()) {
+                        const priorTrades = sortedTrades.filter(t => dayjs(t.close).isBefore(chartStartDate));
+                        periodStartingPnl = priorTrades.reduce((acc, trade) => acc + trade.pnl, 0);
+                        startingLabel = chartStartDate.format('MM/DD/YY');
+                    }
+
+                    let runningPnl = periodStartingPnl;
+                    const pnlData = periodTrades.map(trade => {
+                        runningPnl += trade.pnl;
+                        return runningPnl;
+                    });
+                    
+                    const pnlLabels = periodTrades.map(t => dayjs(t.close).format('MM/DD/YY'));
+
+                    pnlCurveChart = new Chart(document.getElementById('pnlCurveChart'), {
+                        type: 'line',
+                        data: {
+                            labels: [startingLabel, ...pnlLabels],
+                            datasets: [{
+                                label: 'Cumulative P&L',
+                                data: [periodStartingPnl, ...pnlData],
+                                fill: {
+                                    target: 'origin',
+                                    above: 'rgba(74, 222, 128, 0.2)',
+                                    below: 'rgba(248, 113, 113, 0.2)'
+                                },
+                                tension: 0.3,
+                                segment: {
+                                    borderColor: ctx => {
+                                        if (!ctx.p0 || !ctx.p1) return '#a78bfa'; // Default for start/end
+                                        if (ctx.p0.parsed.y >= 0 && ctx.p1.parsed.y >= 0) return 'rgba(74, 222, 128, 1)';
+                                        if (ctx.p0.parsed.y < 0 && ctx.p1.parsed.y < 0) return 'rgba(248, 113, 113, 1)';
+                                        return '#a78bfa';
+                                    }
+                                },
+                                pointBackgroundColor: ctx => ctx.raw >= 0 ? 'rgba(74, 222, 128, 1)' : 'rgba(248, 113, 113, 1)',
+                                pointBorderColor: ctx => ctx.raw >= 0 ? 'rgba(74, 222, 128, 1)' : 'rgba(248, 113, 113, 1)',
+                                pointHoverBackgroundColor: '#fff',
+                                pointHoverBorderColor: ctx => ctx.raw >= 0 ? 'rgba(74, 222, 128, 1)' : 'rgba(248, 113, 113, 1)'
+                            }]
+                        },
+                        options: {
+                            maintainAspectRatio: false,
+                            responsive: true,
+                            scales: {
+                                y: {
+                                    ticks: { color: '#9ca3af', callback: function(value) { return formatCurrency(value); } },
+                                    grid: { color: 'rgba(75, 85, 99, 0.5)' },
+                                    border: { display: false }
+                                },
+                                x: {
+                                    ticks: { color: '#9ca3af' },
+                                    grid: { display: false },
+                                    border: { display: false }
                                 }
                             },
-                            pointBackgroundColor: ctx => ctx.raw >= 0 ? 'rgba(74, 222, 128, 1)' : 'rgba(248, 113, 113, 1)',
-                            pointBorderColor: ctx => ctx.raw >= 0 ? 'rgba(74, 222, 128, 1)' : 'rgba(248, 113, 113, 1)',
-                            pointHoverBackgroundColor: '#fff',
-                            pointHoverBorderColor: ctx => ctx.raw >= 0 ? 'rgba(74, 222, 128, 1)' : 'rgba(248, 113, 113, 1)'
-                        }]
-                    },
-                    options: {
-                        maintainAspectRatio: false,
-                        responsive: true,
-                        scales: {
-                            y: {
-                                ticks: {
-                                    color: '#9ca3af',
-                                    callback: function(value) { return formatCurrency(value); }
-                                },
-                                grid: { color: 'rgba(75, 85, 99, 0.5)' },
-                                border: { display: false }
-                            },
-                            x: {
-                                ticks: { color: '#9ca3af' },
-                                grid: { display: false },
-                                border: { display: false }
-                            }
-                        },
-                        plugins: {
-                            legend: { display: false },
-                            tooltip: {
-                                callbacks: {
-                                    label: function(context) {
-                                        let label = context.dataset.label || '';
-                                        if (label) { label += ': '; }
-                                        if (context.parsed.y !== null) {
-                                            label += formatCurrency(context.parsed.y);
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            let label = context.dataset.label || '';
+                                            if (label) { label += ': '; }
+                                            if (context.parsed.y !== null) { label += formatCurrency(context.parsed.y); }
+                                            return label;
                                         }
-                                        return label;
                                     }
                                 }
                             }
                         }
-                    }
-                });
+                    });
+                } else {
+                    // --- DAILY P&L BAR CHART ---
+                    const dailyPnl = periodTrades.reduce((acc, trade) => {
+                        const closeDate = dayjs(trade.close).format('YYYY-MM-DD');
+                        if (!acc[closeDate]) {
+                            acc[closeDate] = 0;
+                        }
+                        acc[closeDate] += trade.pnl;
+                        return acc;
+                    }, {});
+
+                    const sortedDates = Object.keys(dailyPnl).sort((a, b) => dayjs(a).diff(dayjs(b)));
+                    const barLabels = sortedDates.map(date => dayjs(date).format('MM/DD/YY'));
+                    const barData = sortedDates.map(date => dailyPnl[date]);
+                    const barColors = barData.map(pnl => pnl >= 0 ? 'rgba(74, 222, 128, 0.7)' : 'rgba(248, 113, 113, 0.7)');
+
+                    pnlCurveChart = new Chart(document.getElementById('pnlCurveChart'), {
+                        type: 'bar',
+                        data: {
+                            labels: barLabels,
+                            datasets: [{
+                                label: 'Daily P&L',
+                                data: barData,
+                                backgroundColor: barColors
+                            }]
+                        },
+                        options: {
+                            maintainAspectRatio: false,
+                            responsive: true,
+                            scales: {
+                                y: {
+                                    ticks: { color: '#9ca3af', callback: function(value) { return formatCurrency(value); } },
+                                    grid: { color: 'rgba(75, 85, 99, 0.5)', zeroLineColor: '#9ca3af' },
+                                    border: { display: false }
+                                },
+                                x: {
+                                    ticks: { color: '#9ca3af' },
+                                    grid: { display: false },
+                                    border: { display: false }
+                                }
+                            },
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            let label = 'Daily P&L: ';
+                                            if (context.parsed.y !== null) { label += formatCurrency(context.parsed.y); }
+                                            return label;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
 
 
                 // P&L By Strategy Chart is now dynamic
