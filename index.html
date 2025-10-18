@@ -575,47 +575,56 @@
 
     <!-- Import Trades Modal -->
     <div id="importModal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50 hidden">
-        <div class="bg-gray-800 rounded-xl shadow-2xl w-full max-w-2xl modal-content overflow-y-auto">
+        <div class="bg-gray-800 rounded-xl shadow-2xl w-full max-w-4xl modal-content overflow-y-auto">
             <div class="p-6 sm:p-8">
-                <h2 class="text-2xl font-bold text-white mb-4">Import Trades from CSV</h2>
-                
-                <div class="bg-gray-900/50 p-4 rounded-lg mb-6">
-                    <h3 class="font-semibold text-white mb-2">Instructions</h3>
-                    <ol class="list-decimal list-inside text-gray-400 text-sm space-y-2">
-                        <li>Download the CSV template. This ensures you have the correct columns.</li>
-                        <li>Fill in your trade data. See the required columns and formats below.</li>
-                        <li>Save your file as a CSV.</li>
-                        <li>Click "Choose File" and select your saved CSV file.</li>
-                        <li>Click "Import" to add the trades to your currently active account.</li>
-                    </ol>
+                <div class="flex justify-between items-start">
+                    <h2 class="text-2xl font-bold text-white mb-4">Import Trades</h2>
+                    <button type="button" id="cancelImportBtn" class="text-gray-400 hover:text-white">&times;</button>
                 </div>
 
-                <div class="bg-gray-900/50 p-4 rounded-lg mb-6">
-                     <h3 class="font-semibold text-white mb-2">Columns & Format</h3>
-                     <ul class="text-gray-400 text-xs space-y-1">
-                        <li><strong class="text-gray-300">Required:</strong> Ticker, TradeType, OpenDate, CloseDate, ExpirationDate, Strikes, Quantity, EntryPrice, ExitPrice</li>
-                        <li><strong class="text-gray-300">Dates:</strong> Must be in YYYY-MM-DD format.</li>
-                        <li><strong class="text-gray-300">Strikes:</strong> Comma-separated for multi-strike strategies (e.g., "450,455").</li>
-                        <li><strong class="text-gray-300">Commissions:</strong> Provide either `CommissionsPerContract` OR both `OpeningCommission` and `ClosingCommission`.</li>
-                        <li><strong class="text-gray-300">ExpirationDate2:</strong> Required for Calendar Spreads.</li>
-                        <li><strong class="text-gray-300">Quantity2, EntryPrice2, ExitPrice2:</strong> Required for Ratio Spreads.</li>
-                        <li><strong class="text-gray-300">Expired:</strong> Enter TRUE if the trade expired worthless (sets exit price to 0).</li>
-                        <li><strong class="text-gray-300">Optional:</strong> MaxRisk, Notes, Tags (comma-separated).</li>
-                     </ul>
+                <!-- Step 1: Upload File -->
+                <div id="import-step-1">
+                    <div class="bg-gray-900/50 p-4 rounded-lg mb-6">
+                        <h3 class="font-semibold text-white mb-2">Instructions</h3>
+                        <p class="text-gray-400 text-sm">
+                            Upload your trades from any CSV file. On the next step, you'll match your file's columns to the dashboard's fields.
+                        </p>
+                    </div>
+                    <div class="flex items-center gap-4 mb-4">
+                        <input type="file" id="csvFileInput" accept=".csv" class="hidden">
+                        <label for="csvFileInput" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg cursor-pointer transition">Choose File</label>
+                        <span id="fileName" class="text-gray-400 text-sm">No file selected</span>
+                    </div>
+                    <div class="flex justify-end mt-6">
+                        <button type="button" id="import-next-btn-1" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed" disabled>Next: Map Columns</button>
+                    </div>
                 </div>
-                
-                <div class="flex items-center gap-4 mb-4">
-                    <input type="file" id="csvFileInput" accept=".csv" class="hidden">
-                    <label for="csvFileInput" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg cursor-pointer transition">Choose File</label>
-                    <span id="fileName" class="text-gray-400 text-sm">No file selected</span>
-                </div>
-                <div id="importStatus" class="text-sm mb-4"></div>
 
-                <div class="flex justify-between items-center">
-                    <button type="button" id="downloadTemplateBtn" class="text-indigo-400 hover:text-indigo-300 text-sm font-semibold">Download Template</button>
-                    <div class="flex gap-4">
-                         <button type="button" id="cancelImportBtn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-6 rounded-lg transition">Cancel</button>
-                         <button type="button" id="processImportBtn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-lg transition">Import</button>
+                <!-- Step 2: Map Columns -->
+                <div id="import-step-2" class="hidden">
+                    <p class="text-gray-400 text-sm mb-4">Match the dashboard fields to the columns from your uploaded file. We've tried to guess the best match.</p>
+                    <div id="column-mapping-area" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-4 max-h-96 overflow-y-auto p-4 bg-gray-900/50 rounded-lg">
+                        <!-- Mapping rows will be injected here by JS -->
+                    </div>
+                    <div class="flex justify-between items-center mt-6">
+                        <button type="button" id="import-back-btn-2" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-6 rounded-lg transition">Back</button>
+                        <button type="button" id="import-next-btn-2" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-lg transition">Next: Preview Data</button>
+                    </div>
+                </div>
+
+                <!-- Step 3: Preview and Confirm -->
+                <div id="import-step-3" class="hidden">
+                    <p class="text-gray-400 text-sm mb-4">Review your trades below. Rows in red have errors and will be skipped. Fix them in your original file and re-upload if necessary.</p>
+                    <div id="import-preview-area" class="max-h-96 overflow-auto border border-gray-700 rounded-lg">
+                        <table class="w-full text-sm text-left">
+                            <thead class="bg-gray-700 sticky top-0"><tr id="import-preview-header"></tr></thead>
+                            <tbody id="import-preview-body"></tbody>
+                        </table>
+                    </div>
+                     <div id="import-summary" class="text-right text-sm mt-2 font-semibold"></div>
+                    <div class="flex justify-between items-center mt-6">
+                        <button type="button" id="import-back-btn-3" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-6 rounded-lg transition">Back</button>
+                        <button type="button" id="confirmImportBtn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed">Confirm Import</button>
                     </div>
                 </div>
             </div>
@@ -921,16 +930,33 @@
             const totalDepositsEl = document.getElementById('total-deposits');
             const totalWithdrawalsEl = document.getElementById('total-withdrawals');
 
-            // Import Modal Elements
+            // --- IMPORT MODAL ELEMENTS (NEW) ---
             const importModal = document.getElementById('importModal');
             const importTradesBtn = document.getElementById('importTradesBtn');
             const cancelImportBtn = document.getElementById('cancelImportBtn');
-            const downloadTemplateBtn = document.getElementById('downloadTemplateBtn');
             const csvFileInput = document.getElementById('csvFileInput');
             const fileNameSpan = document.getElementById('fileName');
-            const processImportBtn = document.getElementById('processImportBtn');
-            const importStatus = document.getElementById('importStatus');
-            
+            const importStep1 = document.getElementById('import-step-1');
+            const importStep2 = document.getElementById('import-step-2');
+            const importStep3 = document.getElementById('import-step-3');
+            const importNextBtn1 = document.getElementById('import-next-btn-1');
+            const importBackBtn2 = document.getElementById('import-back-btn-2');
+            const importNextBtn2 = document.getElementById('import-next-btn-2');
+            const importBackBtn3 = document.getElementById('import-back-btn-3');
+            const confirmImportBtn = document.getElementById('confirmImportBtn');
+            const columnMappingArea = document.getElementById('column-mapping-area');
+            const importPreviewHeader = document.getElementById('import-preview-header');
+            const importPreviewBody = document.getElementById('import-preview-body');
+            const importSummary = document.getElementById('import-summary');
+
+            // --- Import State Variables ---
+            let csvFileContent = null;
+            let csvHeaders = [];
+            let csvDataRows = [];
+            let columnMapping = {};
+            let parsedTradesForPreview = [];
+
+
             // New Elements
             const logSearchInput = document.getElementById('logSearch');
             const exportCsvBtn = document.getElementById('exportCsvBtn');
@@ -1213,9 +1239,22 @@
 
                     updateStrikeInputs();
                 } else if (modalElement.id === 'importModal') {
+                    // Reset import modal to step 1
+                    importStep1.classList.remove('hidden');
+                    importStep2.classList.add('hidden');
+                    importStep3.classList.add('hidden');
+                    
                     fileNameSpan.textContent = 'No file selected';
-                    importStatus.textContent = '';
                     csvFileInput.value = '';
+                    importNextBtn1.disabled = true;
+                    
+                    // Clear state variables
+                    csvFileContent = null;
+                    csvHeaders = [];
+                    csvDataRows = [];
+                    columnMapping = {};
+                    parsedTradesForPreview = [];
+
                 } else if (modalElement.id === 'resetModal') {
                     resetConfirmInput.value = '';
                     confirmResetBtn.disabled = true;
@@ -1245,9 +1284,6 @@
             // Import Modal Listeners
             importTradesBtn.addEventListener('click', () => importModal.classList.remove('hidden'));
             cancelImportBtn.addEventListener('click', () => resetAndHideModal(importModal));
-            importModal.addEventListener('click', (e) => {
-                if (e.target === importModal) resetAndHideModal(importModal);
-            });
             
             // Reset Modal Listeners
             resetDataBtn.addEventListener('click', () => {
@@ -1554,23 +1590,21 @@
 
             function getTradeCommissions(trade) {
                 const { commissions, opening_commission, closing_commission, quantity, quantity_2, isExpired, ratio } = trade;
-                const totalQuantity = ratio ? quantity + quantity_2 : quantity;
 
                 if (opening_commission != null && closing_commission != null) {
+                    const totalQuantity = ratio ? quantity + quantity_2 : quantity;
                     return (opening_commission + closing_commission) * totalQuantity;
-                } else {
-                    // For single commission, assume it's per leg per side.
-                    // For a ratio spread, that's 4 transactions total if not expired.
-                    const sides = ratio ? 4 : 2;
-                    const effectiveQty = ratio ? (quantity + quantity_2) : quantity;
-
-                    if(isExpired) {
+                } else if (commissions != null) {
+                     // For single commission, assume it's per leg per side.
+                    if (isExpired) { // Only opening commission
                         return ratio ? (commissions * quantity) + (commissions * quantity_2) : (commissions * quantity);
-                    } else {
+                    } else { // Opening and closing
                          return ratio ? (commissions * quantity * 2) + (commissions * quantity_2 * 2) : (commissions * quantity * 2);
                     }
                 }
+                return 0; // No commission info provided
             }
+
 
             function calculatePnl(trade) {
                 const rawPnl = calculateRawPnl(trade);
@@ -1738,138 +1772,329 @@
                 modal.classList.remove('hidden');
             }
             
-            // --- IMPORT LOGIC ---
-            downloadTemplateBtn.addEventListener('click', () => {
-                const headers = "Ticker,TradeType,OpenDate,CloseDate,ExpirationDate,Strikes,Quantity,EntryPrice,ExitPrice,CommissionsPerContract,OpeningCommission,ClosingCommission,Expired,MaxRisk,Tags,Notes,ExpirationDate2,Quantity2,EntryPrice2,ExitPrice2";
-                const exampleRow = "SPY,Short Put Spread,2025-10-01,2025-10-10,2025-10-17,\"450,445\",10,1.20,0.40,,0.65,0.65,FALSE,400,\"spy,index\",\"Managed for profit\",,,,";
-                const csvContent = "data:text/csv;charset=utf-8," + headers + "\n" + exampleRow;
-                const encodedUri = encodeURI(csvContent);
-                const link = document.createElement("a");
-                link.setAttribute("href", encodedUri);
-                link.setAttribute("download", "trades_template.csv");
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-            });
-
+            // --- NEW INTERACTIVE IMPORT LOGIC ---
+            
+            // Step 1: File selection
             csvFileInput.addEventListener('change', () => {
-                if (csvFileInput.files.length > 0) {
-                    fileNameSpan.textContent = csvFileInput.files[0].name;
-                    importStatus.textContent = '';
-                } else {
-                    fileNameSpan.textContent = 'No file selected';
-                }
-            });
-
-            processImportBtn.addEventListener('click', () => {
                 const file = csvFileInput.files[0];
                 if (!file) {
-                    importStatus.textContent = 'Please select a file first.';
-                    importStatus.className = 'text-sm mb-4 text-red-400';
+                    fileNameSpan.textContent = 'No file selected';
+                    importNextBtn1.disabled = true;
                     return;
-                }
+                };
 
+                fileNameSpan.textContent = file.name;
                 const reader = new FileReader();
                 reader.onload = function(event) {
-                    try {
-                        const csv = event.target.result;
-                        const lines = csv.split(/[\r\n]+/).filter(line => line.trim() !== '');
-                        if (lines.length < 2) {
-                            throw new Error("CSV file is empty or has no data rows.");
-                        }
-
-                        const header = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
-                        const requiredHeaders = ["Ticker","TradeType","OpenDate","CloseDate","ExpirationDate","Strikes","Quantity","EntryPrice","ExitPrice"];
-                        const missingHeaders = requiredHeaders.filter(h => !header.includes(h));
-
-                        if (missingHeaders.length > 0) {
-                            throw new Error(`Missing required columns: ${missingHeaders.join(', ')}`);
-                        }
-                        
-                        const allTransactions = getActiveTransactions();
-                        const newTransactions = [];
-                        const startingId = allTransactions.length > 0 ? Math.max(...allTransactions.map(t => t.id)) + 1 : 0;
-
-                        for (let i = 1; i < lines.length; i++) {
-                            const values = lines[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
-                            const row = header.reduce((obj, col, index) => {
-                                obj[col] = (values[index] || '').trim().replace(/"/g, '');
-                                return obj;
-                            }, {});
-                            
-                            // Validate required fields
-                            if (!row.Ticker || !row.TradeType || !row.OpenDate || !row.CloseDate || !row.ExpirationDate) {
-                                throw new Error(`Missing required data on row ${i + 1}.`);
-                            }
-                            
-                            // Validate dates are not weekends
-                            const openDate = dayjs(row.OpenDate);
-                            const closeDate = dayjs(row.CloseDate);
-                            if (openDate.day() === 0 || openDate.day() === 6 || closeDate.day() === 0 || closeDate.day() === 6) {
-                                throw new Error(`Weekend dates are not allowed on row ${i + 1}.`);
-                            }
-
-                             if (!openDate.isValid() || !closeDate.isValid() || !dayjs(row.ExpirationDate).isValid()) {
-                                 throw new Error(`Invalid date format on row ${i + 1}. Please use YYYY-MM-DD.`);
-                            }
-                            
-                            const type = row.TradeType;
-                            const details = strategyDetails[type];
-                            if (!details) {
-                                throw new Error(`Invalid TradeType "${type}" on row ${i + 1}.`);
-                            }
-
-                            const tradeData = {
-                                transaction_type: 'trade',
-                                ticker: row.Ticker.toUpperCase(),
-                                type: type,
-                                open: row.OpenDate,
-                                close: row.CloseDate,
-                                expiration: row.ExpirationDate,
-                                strikes: (row.Strikes || '').split(',').map(s => parseFloat(s.trim())).filter(s => !isNaN(s)),
-                                quantity: parseInt(row.Quantity),
-                                entry_price: parseFloat(row.EntryPrice),
-                                exit_price: parseFloat(row.ExitPrice),
-                                max_risk: parseFloat(row.MaxRisk) || 0,
-                                tags: row.Tags || '',
-                                notes: row.Notes || '',
-                                isExpired: (row.Expired || '').toUpperCase() === 'TRUE',
-                                // Complex strategy fields
-                                expiration_2: (details.expirations === 2 && row.ExpirationDate2) ? row.ExpirationDate2 : null,
-                                ratio: details.ratio === true,
-                                quantity_2: (details.ratio === true && row.Quantity2) ? parseInt(row.Quantity2) : null,
-                                entry_price_2: (details.ratio === true && row.EntryPrice2) ? parseFloat(row.EntryPrice2) : null,
-                                exit_price_2: (details.ratio === true && row.ExitPrice2) ? parseFloat(row.ExitPrice2) : null,
-                                // Commission logic
-                                commissions: (row.CommissionsPerContract !== undefined && row.CommissionsPerContract !== '') ? parseFloat(row.CommissionsPerContract) : (appData.settings.defaultCommission || 0),
-                                opening_commission: (row.OpeningCommission !== undefined && row.OpeningCommission !== '') ? parseFloat(row.OpeningCommission) : null,
-                                closing_commission: (row.ClosingCommission !== undefined && row.ClosingCommission !== '') ? parseFloat(row.ClosingCommission) : null,
-                            };
-
-                            if (isNaN(tradeData.quantity) || isNaN(tradeData.entry_price) || isNaN(tradeData.exit_price)) {
-                                throw new Error(`Invalid number format for quantity or prices on row ${i + 1}.`);
-                            }
-
-                            tradeData.pnl = calculatePnl(tradeData);
-                            tradeData.id = startingId + newTransactions.length;
-                            newTransactions.push(tradeData);
-                        }
-
-                        window.appData.transactions[window.appData.activeAccountId] = [...allTransactions, ...newTransactions];
-                        saveState();
-                        updateDashboard();
-                        importStatus.textContent = `Successfully imported ${newTransactions.length} trades.`;
-                        importStatus.className = 'text-sm mb-4 text-green-400';
-                        setTimeout(() => resetAndHideModal(importModal), 2000);
-
-                    } catch (error) {
-                        importStatus.textContent = `Error: ${error.message}`;
-                        importStatus.className = 'text-sm mb-4 text-red-400';
+                    csvFileContent = event.target.result;
+                    const lines = csvFileContent.split(/[\r\n]+/).filter(line => line.trim() !== '');
+                    if (lines.length < 2) {
+                        // Handle error: not enough data
+                        console.error("CSV must have a header and at least one data row.");
+                        importNextBtn1.disabled = true;
+                        return;
                     }
+                    // Simple CSV header parsing (doesn't handle quotes in headers)
+                    csvHeaders = lines[0].split(',').map(h => h.trim());
+                    csvDataRows = lines.slice(1).map(line => line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(v => v.trim().replace(/"/g, '')));
+
+                    importNextBtn1.disabled = false;
                 };
                 reader.readAsText(file);
             });
 
+            // Step 1 -> 2
+            importNextBtn1.addEventListener('click', () => {
+                renderColumnMappingUI();
+                importStep1.classList.add('hidden');
+                importStep2.classList.remove('hidden');
+            });
+
+            // Step 2 <- 1
+            importBackBtn2.addEventListener('click', () => {
+                importStep2.classList.add('hidden');
+                importStep1.classList.remove('hidden');
+            });
+
+            // Step 2 -> 3
+            importNextBtn2.addEventListener('click', () => {
+                // Save the user's mapping
+                columnMapping = {};
+                document.querySelectorAll('.column-map-select').forEach(select => {
+                    if (select.value) { // Only map if a value is selected
+                       columnMapping[select.dataset.field] = select.value;
+                    }
+                });
+                renderImportPreviewUI();
+                importStep2.classList.add('hidden');
+                importStep3.classList.remove('hidden');
+            });
+
+            // Step 3 <- 2
+            importBackBtn3.addEventListener('click', () => {
+                importStep3.classList.add('hidden');
+                importStep2.classList.remove('hidden');
+            });
+
+            // Step 3: Final Import
+            confirmImportBtn.addEventListener('click', () => {
+                const validTrades = parsedTradesForPreview.filter(t => t.isValid);
+                if (validTrades.length === 0) return;
+
+                const allTransactions = getActiveTransactions();
+                const startingId = allTransactions.length > 0 ? Math.max(...allTransactions.map(t => t.id)) + 1 : 0;
+
+                const newTransactions = validTrades.map((trade, index) => {
+                    return { ...trade.data, id: startingId + index };
+                });
+                
+                window.appData.transactions[window.appData.activeAccountId] = [...allTransactions, ...newTransactions];
+                saveState();
+                updateDashboard();
+                resetAndHideModal(importModal);
+            });
+
+            function renderColumnMappingUI() {
+                const appFields = [
+                    { key: 'Ticker', required: true, synonyms: ['ticker', 'symbol', 'stock'] },
+                    { key: 'TradeType', required: true, synonyms: ['tradetype', 'strategy', 'type'] },
+                    { key: 'OpenDate', required: true, synonyms: ['opendate', 'open date', 'opened'] },
+                    { key: 'CloseDate', required: true, synonyms: ['closedate', 'close date', 'closed'] },
+                    { key: 'ExpirationDate', required: true, synonyms: ['expirationdate', 'expiration', 'exp'] },
+                    { key: 'Strikes', required: true, synonyms: ['strikes', 'strike'] },
+                    { key: 'Quantity', required: true, synonyms: ['quantity', 'qty'] },
+                    { key: 'EntryPrice', required: true, synonyms: ['entryprice', 'entry price', 'entry'] },
+                    { key: 'ExitPrice', required: true, synonyms: ['exitprice', 'exit price', 'exit'] },
+                    { key: 'Expired', required: false, synonyms: ['expired', 'expired worthless'] },
+                    { key: 'CommissionsPerContract', required: false, synonyms: ['commissionspercontract', 'commissions', 'comm'] },
+                    { key: 'OpeningCommission', required: false, synonyms: ['openingcommission', 'open comm'] },
+                    { key: 'ClosingCommission', required: false, synonyms: ['closingcommission', 'close comm'] },
+                    { key: 'MaxRisk', required: false, synonyms: ['maxrisk', 'risk', 'collateral'] },
+                    { key: 'Tags', required: false, synonyms: ['tags', 'tag'] },
+                    { key: 'Notes', required: false, synonyms: ['notes', 'note'] },
+                    { key: 'ExpirationDate2', required: false, synonyms: ['expirationdate2', 'exp2'] },
+                    { key: 'Quantity2', required: false, synonyms: ['quantity2', 'qty2'] },
+                    { key: 'EntryPrice2', required: false, synonyms: ['entryprice2', 'entry2'] },
+                    { key: 'ExitPrice2', required: false, synonyms: ['exitprice2', 'exit2'] },
+                ];
+
+                columnMappingArea.innerHTML = '';
+
+                appFields.forEach(field => {
+                    const row = document.createElement('div');
+                    row.className = 'flex flex-col';
+
+                    const label = document.createElement('label');
+                    label.htmlFor = `map-${field.key}`;
+                    label.className = 'text-sm font-medium text-gray-300 mb-1';
+                    label.innerHTML = `${field.key} ${field.required ? '<span class="text-red-400">*</span>' : ''}`;
+                    
+                    const select = document.createElement('select');
+                    select.id = `map-${field.key}`;
+                    select.dataset.field = field.key;
+                    select.className = 'column-map-select w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none';
+
+                    // Add default empty option
+                    select.innerHTML = `<option value="">- Skip this field -</option>`;
+                    
+                    // Add options from CSV headers
+                    csvHeaders.forEach(header => {
+                        const option = document.createElement('option');
+                        option.value = header;
+                        option.textContent = header;
+                        select.appendChild(option);
+                    });
+                    
+                    // Auto-select based on synonyms
+                    const lowerCaseHeaders = csvHeaders.map(h => h.toLowerCase());
+                    for (const synonym of field.synonyms) {
+                        const matchIndex = lowerCaseHeaders.indexOf(synonym);
+                        if (matchIndex > -1) {
+                            select.value = csvHeaders[matchIndex];
+                            break;
+                        }
+                    }
+
+                    row.appendChild(label);
+                    row.appendChild(select);
+                    columnMappingArea.appendChild(row);
+                });
+            }
+
+            function renderImportPreviewUI() {
+                parsedTradesForPreview = [];
+                importPreviewHeader.innerHTML = '';
+                importPreviewBody.innerHTML = '';
+
+                // Create header row from mapped fields
+                const mappedHeaders = ['Status', ...Object.values(columnMapping)];
+                importPreviewHeader.innerHTML = mappedHeaders.map(h => `<th class="p-2 font-semibold border-b border-gray-600">${h}</th>`).join('');
+
+                const headerToIndexMap = csvHeaders.reduce((acc, header, index) => {
+                    acc[header] = index;
+                    return acc;
+                }, {});
+
+
+                csvDataRows.forEach((row, rowIndex) => {
+                    const tradeObj = {};
+                    let validationError = null;
+                    
+                    try {
+                        // Use mapping to build a raw object
+                        const rawData = {};
+                        for (const [appField, csvHeader] of Object.entries(columnMapping)) {
+                             const colIndex = headerToIndexMap[csvHeader];
+                             if(colIndex !== undefined) {
+                                rawData[appField] = row[colIndex];
+                             }
+                        }
+
+                        // Validate required fields
+                        const requiredFields = ['Ticker', 'TradeType', 'OpenDate', 'CloseDate', 'ExpirationDate', 'Strikes', 'Quantity', 'EntryPrice', 'ExitPrice'];
+                        const missingField = requiredFields.find(f => !rawData[f]);
+                        if (missingField) {
+                            throw new Error(`Missing required field: ${missingField}`);
+                        }
+
+                        // --- SMART PARSING & NORMALIZATION ---
+                        const type = normalizeTradeType(rawData.TradeType);
+                        if (!type) {
+                            throw new Error(`Unrecognized TradeType: ${rawData.TradeType}`);
+                        }
+                        const details = strategyDetails[type];
+                        
+                        const openDate = dayjs(rawData.OpenDate);
+                        const closeDate = dayjs(rawData.CloseDate);
+                        if (!openDate.isValid() || !closeDate.isValid()) {
+                            throw new Error(`Invalid date format.`);
+                        }
+
+                        const tradeData = {
+                            transaction_type: 'trade',
+                            ticker: rawData.Ticker.toUpperCase(),
+                            type: type,
+                            open: openDate.format('YYYY-MM-DD'),
+                            close: closeDate.format('YYYY-MM-DD'),
+                            expiration: dayjs(rawData.ExpirationDate).format('YYYY-MM-DD'),
+                            strikes: (rawData.Strikes || '').split(/[,/ ]+/).map(s => parseFloat(s.trim())).filter(s => !isNaN(s)),
+                            quantity: parseInt(rawData.Quantity),
+                            entry_price: parseFloat(rawData.EntryPrice),
+                            exit_price: parseFloat(rawData.ExitPrice),
+                            isExpired: (rawData.Expired || '').toUpperCase() === 'TRUE',
+                            // Optional fields
+                            tags: rawData.Tags || '',
+                            notes: rawData.Notes || '',
+                            // Complex strategies
+                            ratio: details.ratio === true,
+                            expiration_2: (details.expirations === 2 && rawData.ExpirationDate2) ? dayjs(rawData.ExpirationDate2).format('YYYY-MM-DD') : null,
+                            quantity_2: (details.ratio === true && rawData.Quantity2) ? parseInt(rawData.Quantity2) : null,
+                            entry_price_2: (details.ratio === true && rawData.EntryPrice2) ? parseFloat(rawData.EntryPrice2) : null,
+                            exit_price_2: (details.ratio === true && rawData.ExitPrice2) ? parseFloat(rawData.ExitPrice2) : null,
+                        };
+
+                        // Smart Exit Price for expired
+                        if (tradeData.isExpired) {
+                            tradeData.exit_price = 0;
+                            if (tradeData.exit_price_2) tradeData.exit_price_2 = 0;
+                        }
+
+                        // Commission Logic
+                        if (rawData.OpeningCommission && rawData.ClosingCommission) {
+                            tradeData.opening_commission = parseFloat(rawData.OpeningCommission) || 0;
+                            tradeData.closing_commission = parseFloat(rawData.ClosingCommission) || 0;
+                        } else {
+                            tradeData.commissions = parseFloat(rawData.CommissionsPerContract) || (appData.settings.defaultCommission || 0);
+                        }
+                        
+                        // Smart Risk Calculation
+                        tradeData.max_risk = parseFloat(rawData.MaxRisk) || 0;
+                        if (tradeData.max_risk === 0) {
+                            tradeData.max_risk = calculateMaxRisk(tradeData);
+                        }
+
+                        tradeData.pnl = calculatePnl(tradeData);
+                        parsedTradesForPreview.push({ isValid: true, data: tradeData });
+
+                    } catch (e) {
+                         validationError = e.message;
+                         parsedTradesForPreview.push({ isValid: false, error: validationError, raw: row });
+                    }
+                    
+                    const tr = document.createElement('tr');
+                    tr.className = validationError ? 'bg-red-900/50' : 'bg-green-900/30';
+                    let rowHtml = `<td class="p-2 border-b border-gray-700">${validationError ? `<span class="text-red-400 font-semibold" title="${validationError}">Error</span>` : '<span class="text-green-400">OK</span>'}</td>`;
+                    
+                    for (const header of Object.values(columnMapping)) {
+                        const colIndex = headerToIndexMap[header];
+                        const cellValue = row[colIndex] || '';
+                        rowHtml += `<td class="p-2 border-b border-gray-700 truncate" title="${cellValue}">${cellValue}</td>`;
+                    }
+                    
+                    tr.innerHTML = rowHtml;
+                    importPreviewBody.appendChild(tr);
+                });
+                
+                // Update summary and confirm button
+                const validCount = parsedTradesForPreview.filter(t => t.isValid).length;
+                importSummary.textContent = `${validCount} of ${csvDataRows.length} trades are valid and will be imported.`;
+                confirmImportBtn.disabled = validCount === 0;
+                confirmImportBtn.classList.toggle('opacity-50', validCount === 0);
+                confirmImportBtn.classList.toggle('cursor-not-allowed', validCount === 0);
+            }
+
+            function normalizeTradeType(rawType) {
+                const type = rawType.toLowerCase().replace(/[\s-]/g, '');
+                
+                // Handle simple calls/puts, assume long
+                if (type === 'call') return 'Long Call';
+                if (type === 'put') return 'Long Put';
+                
+                // Simple Long/Short
+                if (type.includes('longcall') || type === 'lc') return 'Long Call';
+                if (type.includes('longput') || type === 'lp') return 'Long Put';
+                if (type.includes('shortcall') || type === 'sc') return 'Short Call';
+                if (type.includes('shortput') || type === 'sp') return 'Short Put';
+                
+                // Spreads
+                if (type.includes('longcallspread') || type.includes('debitcall') || type.includes('callspread')) return 'Long Call Spread';
+                if (type.includes('longputspread') || type.includes('debitput') || type.includes('putspread')) return 'Long Put Spread';
+                if (type.includes('shortcallspread') || type.includes('creditcall') || type.includes('bearcall')) return 'Short Call Spread';
+                if (type.includes('shortputspread') || type.includes('creditput') || type.includes('bullput')) return 'Short Put Spread';
+
+                // Complex
+                if (type.includes('ironcondor')) return 'Short Iron Condor';
+                if (type.includes('ironbutterfly') || type.includes('ironfly')) return 'Short Iron Butterfly';
+                if (type.includes('straddle')) return type.includes('short') ? 'Short Straddle' : 'Long Straddle';
+                if (type.includes('strangle')) return type.includes('short') ? 'Short Strangle' : 'Long Strangle';
+                if (type.includes('butterfly') || type.includes('fly')) return type.includes('short') ? 'Short Butterfly' : 'Long Butterfly';
+                if (type.includes('calendar')) return 'Calendar Spread';
+                if (type.includes('ratio')) return type.includes('short') ? 'Short Ratio Spread' : 'Long Ratio Spread';
+                
+                return null; // Not found
+            }
+            
+            function calculateMaxRisk(trade) {
+                 const details = strategyDetails[trade.type];
+                 const { strikes, quantity, entry_price } = trade;
+                 let calculatedRisk = 0;
+                 if (!details) return 0;
+                 
+                 if (details.risk === 'debit') {
+                    calculatedRisk = entry_price * 100 * quantity;
+                 } else if (details.risk === 'spread' && strikes.length >= 2) {
+                     const width = Math.abs(strikes[0] - strikes[1]);
+                     calculatedRisk = width * 100 * quantity;
+                     if (trade.type.includes('Short')) { // Credit spread
+                         const creditReceived = entry_price * 100 * quantity;
+                         calculatedRisk -= creditReceived;
+                     }
+                 } else if (details.risk === 'collateral' && strikes.length === 1) {
+                    const collateral = (strikes[0] * 100 * quantity) - (entry_price * 100 * quantity);
+                    calculatedRisk = collateral > 0 ? collateral : 0;
+                 }
+                 return Math.round(calculatedRisk);
+            }
 
             // --- TABLE & CHART EVENT LISTENERS ---
             pnlChartToggle.addEventListener('click', (e) => {
@@ -2158,22 +2383,9 @@
                 const quantity = parseInt(document.getElementById('quantity').value) || 1;
                 const entryPrice = parseFloat(document.getElementById('entry_price').value) || 0;
                 const maxRiskInput = document.getElementById('max_risk');
-                let calculatedRisk = 0;
-
-                if (details.risk === 'debit') {
-                    calculatedRisk = entryPrice * 100 * quantity;
-                } else if (details.risk === 'spread' && strikes.length >= 2 && !strikes.some(isNaN)) {
-                     const width = Math.abs(strikes[0] - strikes[1]);
-                     calculatedRisk = width * 100 * quantity;
-                     if (type.includes('Short')) {
-                         const creditReceived = entryPrice * 100 * quantity;
-                         calculatedRisk -= creditReceived;
-                     }
-                } else if (details.risk === 'collateral' && strikes.length === 1 && !isNaN(strikes[0])) {
-                    const collateral = (strikes[0] * 100 * quantity) - (entryPrice * 100 * quantity);
-                    calculatedRisk = collateral > 0 ? collateral : 0;
-                }
-                maxRiskInput.value = calculatedRisk.toFixed(0);
+                
+                const tempTrade = { type, strikes, quantity, entry_price };
+                maxRiskInput.value = calculateMaxRisk(tempTrade);
             });
             
             mainViewToggle.addEventListener('click', (e) => {
@@ -2621,8 +2833,25 @@
                         case 'ticker':
                             filteredActivity = allTransactions.filter(t => t.transaction_type === 'trade' && t.ticker === chartFilter.value);
                             break;
+                        case 'otherTickers':
+                            {
+                                const tickersToExclude = chartFilter.value;
+                                filteredActivity = allTransactions.filter(t => t.transaction_type === 'trade' && !tickersToExclude.includes(t.ticker));
+                            }
+                            break;
                         case 'tag':
                             filteredActivity = allTransactions.filter(t => t.transaction_type === 'trade' && t.tags && t.tags.split(',').map(tag => tag.trim()).includes(chartFilter.value));
+                            break;
+                        case 'otherTags':
+                             {
+                                const tagsToExclude = chartFilter.value;
+                                filteredActivity = allTransactions.filter(t => {
+                                    if (t.transaction_type !== 'trade' || !t.tags) return false;
+                                    const tradeTags = t.tags.split(',').map(tag => tag.trim());
+                                    // A trade is "other" if it has at least one tag that isn't in the top/bottom performers
+                                    return tradeTags.some(tag => !tagsToExclude.includes(tag));
+                                });
+                            }
                             break;
                         case 'day':
                             const dayMap = { 'Mon': 1, 'Tue': 2, 'Wed': 3, 'Thu': 4, 'Fri': 5 };
@@ -2876,23 +3105,68 @@
                     }, 
                 };
 
+                function processAndLimitChartData(dataObject, limit = 12, topN = 5, bottomN = 5) {
+                    let dataArray = Object.entries(dataObject).map(([label, pnl]) => ({ label, pnl }));
+
+                    if (dataArray.length <= limit) {
+                        dataArray.sort((a, b) => b.pnl - a.pnl);
+                        return {
+                            labels: dataArray.map(d => d.label),
+                            data: dataArray.map(d => d.pnl),
+                            topAndBottomLabels: dataArray.map(d => d.label)
+                        };
+                    }
+
+                    dataArray.sort((a, b) => b.pnl - a.pnl);
+
+                    const topItems = dataArray.slice(0, topN);
+                    const bottomItems = dataArray.slice(dataArray.length - bottomN);
+                    const middleItems = dataArray.slice(topN, dataArray.length - bottomN);
+                    
+                    const otherPnl = middleItems.reduce((acc, item) => acc + item.pnl, 0);
+
+                    let finalArray = [...topItems];
+                    if (middleItems.length > 0) {
+                        finalArray.push({ label: 'Other', pnl: otherPnl });
+                    }
+                    finalArray = [...finalArray, ...bottomItems];
+
+                    finalArray.sort((a, b) => b.pnl - a.pnl);
+                    
+                    const topAndBottomLabels = [...topItems, ...bottomItems].map(d => d.label);
+
+                    return {
+                        labels: finalArray.map(d => d.label),
+                        data: finalArray.map(d => d.pnl),
+                        topAndBottomLabels: topAndBottomLabels
+                    };
+                }
+
+
                 // P&L by Ticker
                 const pnlByTicker = trades.reduce((acc, trade) => {
                     if (!acc[trade.ticker]) acc[trade.ticker] = 0;
                     acc[trade.ticker] += trade.pnl;
                     return acc;
                 }, {});
+
+                const tickerChartData = processAndLimitChartData(pnlByTicker);
+
                 if (pnlByTickerChart) pnlByTickerChart.destroy();
                 pnlByTickerChart = new Chart(document.getElementById('pnlByTickerChart'), {
                     type: 'bar', data: {
-                        labels: Object.keys(pnlByTicker),
-                        datasets: [{ label: 'Total P&L', data: Object.values(pnlByTicker), backgroundColor: Object.values(pnlByTicker).map(pnl => pnl >= 0 ? 'rgba(74, 222, 128, 0.7)' : 'rgba(248, 113, 113, 0.7)') }]
+                        labels: tickerChartData.labels,
+                        datasets: [{ label: 'Total P&L', data: tickerChartData.data, backgroundColor: tickerChartData.data.map(pnl => pnl >= 0 ? 'rgba(74, 222, 128, 0.7)' : 'rgba(248, 113, 113, 0.7)') }]
                     },
                     options: { ...horizontalAnalyticsChartOptions, onClick: (event, elements) => {
                         if (elements.length > 0) {
                             const elementIndex = elements[0].index;
                             const clickedLabel = event.chart.data.labels[elementIndex];
-                            setChartFilter('ticker', clickedLabel);
+                            if (clickedLabel === 'Other') {
+                                setChartFilter('otherTickers', tickerChartData.topAndBottomLabels, 'Other');
+                            } else {
+                                setChartFilter('ticker', clickedLabel);
+                            }
                         }
                     }}
                 });
@@ -2908,17 +3182,24 @@
                     });
                     return acc;
                 }, {});
+
+                const tagChartData = processAndLimitChartData(pnlByTag);
+
                 if (pnlByTagChart) pnlByTagChart.destroy();
                 pnlByTagChart = new Chart(document.getElementById('pnlByTagChart'), {
                     type: 'bar', data: {
-                        labels: Object.keys(pnlByTag),
-                        datasets: [{ label: 'Total P&L', data: Object.values(pnlByTag), backgroundColor: Object.values(pnlByTag).map(pnl => pnl >= 0 ? 'rgba(96, 165, 250, 0.7)' : 'rgba(251, 146, 60, 0.7)') }]
+                        labels: tagChartData.labels,
+                        datasets: [{ label: 'Total P&L', data: tagChartData.data, backgroundColor: tagChartData.data.map(pnl => pnl >= 0 ? 'rgba(96, 165, 250, 0.7)' : 'rgba(251, 146, 60, 0.7)') }]
                     },
                     options: { ...horizontalAnalyticsChartOptions, onClick: (event, elements) => {
                         if (elements.length > 0) {
                             const elementIndex = elements[0].index;
                             const clickedLabel = event.chart.data.labels[elementIndex];
-                            setChartFilter('tag', clickedLabel);
+                             if (clickedLabel === 'Other') {
+                                setChartFilter('otherTags', tagChartData.topAndBottomLabels, 'Other');
+                            } else {
+                                setChartFilter('tag', clickedLabel);
+                            }
                         }
                     }}
                 });
@@ -3269,6 +3550,8 @@
                         entry_price: entryPrice,
                         exit_price: exitPrice,
                         commissions: 0.65,
+                        opening_commission: null,
+                        closing_commission: null,
                         max_risk: (entryPrice * 100) * (Math.floor(Math.random() * 5) + 1),
                         tags: tags[Math.floor(Math.random() * tags.length)],
                         notes: 'Sample trade data.',
