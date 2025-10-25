@@ -64,6 +64,15 @@
         #pnlByStrategyChart, #pnlByTickerChart, #pnlByTagChart, #pnlByDayChart, #pnlDistributionChart {
             cursor: pointer;
         }
+        /* Hide number input spinners */
+        input[type=number]::-webkit-inner-spin-button,
+        input[type=number]::-webkit-outer-spin-button {
+          -webkit-appearance: none;
+          margin: 0;
+        }
+        input[type=number] {
+          -moz-appearance: textfield; /* Firefox */
+        }
     </style>
 </head>
 <body class="bg-gray-900 text-gray-200 font-sans antialiased">
@@ -483,7 +492,8 @@
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
                         <div>
                             <label for="quantity" class="block text-sm font-medium text-gray-300 mb-1">Quantity</label>
-                            <input type="number" id="quantity" required min="1" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="5">
+                            <!-- Added step="1" -->
+                            <input type="number" id="quantity" required min="1" step="1" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="5">
                         </div>
                         <div>
                             <label for="entry_price" class="block text-sm font-medium text-gray-300 mb-1">Entry Price</label>
@@ -508,7 +518,8 @@
                      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
                         <div>
                             <label for="quantity_2" class="block text-sm font-medium text-gray-300 mb-1">Quantity 2</label>
-                            <input type="number" id="quantity_2" min="1" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="2">
+                            <!-- Added step="1" -->
+                            <input type="number" id="quantity_2" min="1" step="1" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="2">
                         </div>
                         <div>
                             <label for="entry_price_2" class="block text-sm font-medium text-gray-300 mb-1">Entry Price 2</label>
@@ -549,8 +560,8 @@
                 <div class="mb-4">
                     <label for="max_risk" class="block text-sm font-medium text-gray-300 mb-1">Max Risk / Collateral</label>
                     <div class="flex">
-                        <input type="number" step="1" id="max_risk" value="0" required class="w-full bg-gray-700 border border-gray-600 rounded-l-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="500">
-                          <button type="button" id="autoCalcRiskBtn" class="bg-gray-600 hover:bg-gray-500 text-white font-semibold py-2 px-4 rounded-r-lg transition hidden">Auto</button>
+                        <input type="number" step="1" id="max_risk" value="0" required class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="500">
+                          <!-- Removed Auto Button -->
                     </div>
                 </div>
 
@@ -960,7 +971,8 @@
             // New Elements
             const logSearchInput = document.getElementById('logSearch');
             const exportCsvBtn = document.getElementById('exportCsvBtn');
-            const autoCalcRiskBtn = document.getElementById('autoCalcRiskBtn');
+            // Removed autoCalcRiskBtn reference
+            // const autoCalcRiskBtn = document.getElementById('autoCalcRiskBtn');
             const activityLogFooter = document.getElementById('activity-log-footer');
             const paginationControls = document.getElementById('pagination-controls');
             const expiredCheckbox = document.getElementById('expired_worthless');
@@ -1237,7 +1249,10 @@
                     // Set default commission from settings
                     document.getElementById('commissions').value = window.appData.settings.defaultCommission || 0;
 
-                    updateStrikeInputs();
+                    // Reset trade type to default and update strikes for the default
+                    tradeTypeSelect.value = 'Long Call'; // Reset to default
+                    updateStrikeInputs(); // Ensure strikes for default are shown
+
                 } else if (modalElement.id === 'importModal') {
                     // Reset import modal to step 1
                     importStep1.classList.remove('hidden');
@@ -1264,9 +1279,16 @@
             
             // Trade Modal Listeners
             addTradeBtn.addEventListener('click', () => {
+                // Reset to default selection first
+                tradeTypeSelect.value = 'Long Call';
+                // Then update strike inputs based on the default
+                updateStrikeInputs();
+                // Then show modal
                 modal.classList.remove('hidden');
                 // Pre-fill default commission when opening for a new trade
                 document.getElementById('commissions').value = window.appData.settings.defaultCommission || 0;
+                 // Ensure quantity validation listener is attached
+                attachQuantityValidation();
             });
             cancelBtn.addEventListener('click', () => resetAndHideModal(modal));
             modal.addEventListener('click', (e) => {
@@ -1525,10 +1547,6 @@
                 document.getElementById('entry_price_2').required = isRatio;
                 document.getElementById('exit_price_2').required = isRatio;
 
-
-                const riskTypesWithAutoCalc = ['spread', 'debit', 'collateral'];
-                autoCalcRiskBtn.classList.toggle('hidden', !riskTypesWithAutoCalc.includes(details.risk));
-                
                 if (details.risk === 'undefined' || details.risk === 'custom') {
                     maxRiskInput.required = false;
                     maxRiskInput.placeholder = 'Collateral (Optional)';
@@ -1536,11 +1554,141 @@
                     maxRiskInput.required = true;
                     maxRiskInput.placeholder = '500';
                 }
+
+                 // Attach listeners to new strike inputs for auto-calc AFTER they are created
+                strikeContainer.querySelectorAll('input').forEach(input => {
+                    input.addEventListener('input', updateAutoCalculatedRisk);
+                });
+                 // Ensure quantity validation listener is attached
+                attachQuantityValidation();
+                
+                // Trigger calculation after inputs are updated and listeners attached
+                updateAutoCalculatedRisk();
             }
 
             tradeTypeSelect.addEventListener('change', updateStrikeInputs);
-            updateStrikeInputs();
-            
+            // updateStrikeInputs(); // Initial setup is now handled by addTradeBtn click
+
+            // Add listeners to other relevant fields for auto-calculation
+            document.getElementById('quantity').addEventListener('input', updateAutoCalculatedRisk);
+            document.getElementById('entry_price').addEventListener('input', updateAutoCalculatedRisk);
+
+             // --- Validation for Quantity Inputs ---
+            function enforceIntegerInput(event) {
+                const input = event.target;
+                if (input.value.includes('.')) {
+                    input.value = Math.round(parseFloat(input.value));
+                }
+            }
+
+            function attachQuantityValidation() {
+                 const qtyInput = document.getElementById('quantity');
+                 const qty2Input = document.getElementById('quantity_2');
+                 if (qtyInput) qtyInput.addEventListener('input', enforceIntegerInput);
+                 if (qty2Input) qty2Input.addEventListener('input', enforceIntegerInput);
+            }
+            // --- End Quantity Validation ---
+
+
+            // --- Auto-calculate Max Risk Function ---
+            function updateAutoCalculatedRisk() {
+                // console.log("[AutoRisk] updateAutoCalculatedRisk triggered");
+                if (!strikeContainer) {
+                    // console.log("[AutoRisk] strikeContainer not found");
+                    return;
+                }
+
+                const type = tradeTypeSelect.value;
+                const details = strategyDetails[type];
+                const maxRiskInput = document.getElementById('max_risk');
+                const riskTypesWithAutoCalc = ['spread', 'debit', 'collateral'];
+
+                if (!details || !riskTypesWithAutoCalc.includes(details.risk)) {
+                    // console.log("[AutoRisk] Not an auto-calculable risk type or no details");
+                    return;
+                }
+
+                const strikes = Array.from(strikeContainer.querySelectorAll('input')).map(input => parseFloat(input.value));
+                const quantity = parseInt(document.getElementById('quantity').value);
+                const entryPriceValue = parseFloat(document.getElementById('entry_price').value);
+
+                // console.log("[AutoRisk] Read values:", { type, quantity, entryPrice: entryPriceValue, strikes });
+
+                // --- Refined Validation ---
+                let inputsValid = true;
+                if (isNaN(quantity) || quantity <= 0) {
+                    // console.log("[AutoRisk] Invalid quantity");
+                    inputsValid = false;
+                }
+                if (isNaN(entryPriceValue)) {
+                    // console.log("[AutoRisk] Invalid entryPrice");
+                    inputsValid = false;
+                }
+                if (strikes.length !== details.strikes.length || strikes.some(isNaN)) {
+                    // console.log("[AutoRisk] Invalid or incomplete strikes", strikes, "Expected:", details.strikes.length);
+                    inputsValid = false;
+                }
+                // --- End Refined Validation ---
+
+                if (!inputsValid) {
+                    // console.log("[AutoRisk] Inputs invalid, returning.");
+                    return;
+                }
+
+                const tempTrade = { type, strikes, quantity, entry_price: entryPriceValue };
+                const calculatedRisk = calculateMaxRisk(tempTrade);
+
+                // console.log("[AutoRisk] Calculated risk:", calculatedRisk);
+
+                if (!isNaN(calculatedRisk)) {
+                    maxRiskInput.value = Math.round(calculatedRisk);
+                } else {
+                    // console.warn("[AutoRisk] Calculated risk was NaN for:", tempTrade);
+                }
+            }
+
+
+            function calculateMaxRisk(trade) {
+                 const details = strategyDetails[trade.type];
+                 const { strikes, quantity, entry_price } = trade;
+                 let calculatedRisk = 0;
+                 if (!details) return 0;
+
+                 // **Add explicit NaN checks for safety**
+                 if (isNaN(quantity) || quantity <= 0 || isNaN(entry_price)) {
+                     console.error("[calculateMaxRisk] Invalid quantity or entry_price received:", trade);
+                     return NaN; // Return NaN explicitl
+                 }
+
+
+                 if (details.risk === 'debit') {
+                    calculatedRisk = entry_price * 100 * quantity;
+                 } else if (details.risk === 'spread' && strikes.length >= 2) {
+                     // **Add NaN check for strikes here too**
+                     if (strikes.some(isNaN)) {
+                         console.error("[calculateMaxRisk] Invalid strikes received for spread:", trade);
+                         return NaN;
+                     }
+                     const width = Math.abs(strikes[0] - strikes[1]);
+                     calculatedRisk = width * 100 * quantity;
+                     if (trade.type.includes('Short')) { // Credit spread
+                         const creditReceived = entry_price * 100 * quantity;
+                         calculatedRisk -= creditReceived;
+                     }
+                 } else if (details.risk === 'collateral' && strikes.length === 1) {
+                     // **Add NaN check for strike**
+                     if (isNaN(strikes[0])) {
+                         console.error("[calculateMaxRisk] Invalid strike received for collateral:", trade);
+                         return NaN;
+                     }
+                    const collateral = (strikes[0] * 100 * quantity) - (entry_price * 100 * quantity);
+                    calculatedRisk = collateral > 0 ? collateral : 0;
+                 }
+
+                 // **Check final result before returning**
+                 return !isNaN(calculatedRisk) ? Math.round(calculatedRisk) : 0; // Return 0 if somehow still NaN
+            }
+
             function calculateRawPnl(trade) {
                 const multiplier = 100;
                 
@@ -1658,6 +1806,16 @@
                 const type = document.getElementById('trade_type').value;
                 const details = strategyDetails[type];
 
+                // **Use parseInt for quantities**
+                const quantityValue = parseInt(document.getElementById('quantity').value);
+                const quantity2Value = details.ratio === true ? parseInt(document.getElementById('quantity_2').value) : null;
+
+                // Basic validation for parsed quantities
+                if (isNaN(quantityValue) || quantityValue <= 0 || (details.ratio === true && (isNaN(quantity2Value) || quantity2Value <= 0)) ) {
+                     flashButton(saveBtn, 'Invalid Quantity!', 'bg-red-500', 3000);
+                     return;
+                }
+
                 const tradeData = {
                     transaction_type: 'trade',
                     ticker: document.getElementById('underlying_ticker').value.toUpperCase(),
@@ -1667,7 +1825,7 @@
                     expiration: document.getElementById('expiration_date').value,
                     expiration_2: details.expirations === 2 ? document.getElementById('expiration_date_2').value : null,
                     strikes: Array.from(strikeContainer.querySelectorAll('input')).map(input => parseFloat(input.value)),
-                    quantity: parseInt(document.getElementById('quantity').value),
+                    quantity: quantityValue, // Use parsed integer
                     entry_price: parseFloat(document.getElementById('entry_price').value),
                     exit_price: parseFloat(document.getElementById('exit_price').value),
                     commissions: parseFloat(document.getElementById('commissions').value),
@@ -1678,7 +1836,7 @@
                     notes: document.getElementById('notes').value,
                     isExpired: expiredCheckbox.checked,
                     ratio: details.ratio === true,
-                    quantity_2: details.ratio === true ? parseInt(document.getElementById('quantity_2').value) : null,
+                    quantity_2: quantity2Value, // Use parsed integer
                     entry_price_2: details.ratio === true ? parseFloat(document.getElementById('entry_price_2').value) : null,
                     exit_price_2: details.ratio === true ? parseFloat(document.getElementById('exit_price_2').value) : null,
                 };
@@ -1770,6 +1928,8 @@
                 }
 
                 modal.classList.remove('hidden');
+                // Ensure quantity validation listener is attached when editing
+                attachQuantityValidation();
             }
             
             // --- NEW INTERACTIVE IMPORT LOGIC ---
@@ -2079,10 +2239,22 @@
                  const { strikes, quantity, entry_price } = trade;
                  let calculatedRisk = 0;
                  if (!details) return 0;
-                 
+
+                 // **Add explicit NaN checks for safety**
+                 if (isNaN(quantity) || quantity <= 0 || isNaN(entry_price)) {
+                     console.error("[calculateMaxRisk] Invalid quantity or entry_price received:", trade);
+                     return NaN; // Return NaN explicitly
+                 }
+
+
                  if (details.risk === 'debit') {
                     calculatedRisk = entry_price * 100 * quantity;
                  } else if (details.risk === 'spread' && strikes.length >= 2) {
+                     // **Add NaN check for strikes here too**
+                     if (strikes.some(isNaN)) {
+                         console.error("[calculateMaxRisk] Invalid strikes received for spread:", trade);
+                         return NaN;
+                     }
                      const width = Math.abs(strikes[0] - strikes[1]);
                      calculatedRisk = width * 100 * quantity;
                      if (trade.type.includes('Short')) { // Credit spread
@@ -2090,10 +2262,17 @@
                          calculatedRisk -= creditReceived;
                      }
                  } else if (details.risk === 'collateral' && strikes.length === 1) {
+                     // **Add NaN check for strike**
+                     if (isNaN(strikes[0])) {
+                         console.error("[calculateMaxRisk] Invalid strike received for collateral:", trade);
+                         return NaN;
+                     }
                     const collateral = (strikes[0] * 100 * quantity) - (entry_price * 100 * quantity);
                     calculatedRisk = collateral > 0 ? collateral : 0;
                  }
-                 return Math.round(calculatedRisk);
+
+                 // **Check final result before returning**
+                 return !isNaN(calculatedRisk) ? Math.round(calculatedRisk) : 0; // Return 0 if somehow still NaN
             }
 
             // --- TABLE & CHART EVENT LISTENERS ---
@@ -2371,11 +2550,8 @@
                 updateDashboard();
             });
             
-            exportCsvBtn.addEventListener('click', () => {
-                 // This will use the globally scoped filteredActivity from the last updateDashboard call
-                 exportActivityLogToCSV();
-            });
-            
+            // Removed event listener for the now non-existent autoCalcRiskBtn
+            /*
             autoCalcRiskBtn.addEventListener('click', () => {
                 const type = tradeTypeSelect.value;
                 const details = strategyDetails[type];
@@ -2387,6 +2563,7 @@
                 const tempTrade = { type, strikes, quantity, entry_price };
                 maxRiskInput.value = calculateMaxRisk(tempTrade);
             });
+            */
             
             mainViewToggle.addEventListener('click', (e) => {
                 const btn = e.target.closest('.main-view-btn');
@@ -2846,10 +3023,10 @@
                              {
                                 const tagsToExclude = chartFilter.value;
                                 filteredActivity = allTransactions.filter(t => {
-                                    if (t.transaction_type !== 'trade' || !t.tags) return false;
+                                    if (t.transaction_type !== 'trade' || !t.tags) return true; // Keep non-trades or trades w/o tags if filtering "other"
                                     const tradeTags = t.tags.split(',').map(tag => tag.trim());
-                                    // A trade is "other" if it has at least one tag that isn't in the top/bottom performers
-                                    return tradeTags.some(tag => !tagsToExclude.includes(tag));
+                                    // A trade is "other" if none of its tags are in the top/bottom list
+                                    return !tradeTags.some(tag => tagsToExclude.includes(tag));
                                 });
                             }
                             break;
@@ -2961,6 +3138,9 @@
                     const displayValue = chartFilter.displayValue || chartFilter.value;
                     let typeDisplay = chartFilter.type.charAt(0).toUpperCase() + chartFilter.type.slice(1);
                     if (typeDisplay === 'PnlRange') typeDisplay = 'P&L Range';
+                    if (typeDisplay === 'OtherTickers') typeDisplay = 'Ticker';
+                    if (typeDisplay === 'OtherTags') typeDisplay = 'Tag';
+
                     filterSpan.textContent = `${typeDisplay}: ${displayValue}`;
                 } else {
                     chartFilterDisplay.classList.add('hidden');
@@ -3113,7 +3293,7 @@
                         return {
                             labels: dataArray.map(d => d.label),
                             data: dataArray.map(d => d.pnl),
-                            topAndBottomLabels: dataArray.map(d => d.label)
+                            topAndBottomLabels: dataArray.map(d => d.label) // All labels are top/bottom if not exceeding limit
                         };
                     }
 
@@ -3131,14 +3311,16 @@
                     }
                     finalArray = [...finalArray, ...bottomItems];
 
-                    finalArray.sort((a, b) => b.pnl - a.pnl);
+                    // Don't re-sort here, keep Top -> Other -> Bottom order visually
+                    // finalArray.sort((a, b) => b.pnl - a.pnl);
                     
+                    // These are the labels *not* included in "Other"
                     const topAndBottomLabels = [...topItems, ...bottomItems].map(d => d.label);
 
                     return {
                         labels: finalArray.map(d => d.label),
                         data: finalArray.map(d => d.pnl),
-                        topAndBottomLabels: topAndBottomLabels
+                        topAndBottomLabels: topAndBottomLabels 
                     };
                 }
 
