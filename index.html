@@ -492,7 +492,6 @@
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
                         <div>
                             <label for="quantity" class="block text-sm font-medium text-gray-300 mb-1">Quantity</label>
-                            <!-- Added step="1" -->
                             <input type="number" id="quantity" required min="1" step="1" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="5">
                         </div>
                         <div>
@@ -518,7 +517,6 @@
                      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
                         <div>
                             <label for="quantity_2" class="block text-sm font-medium text-gray-300 mb-1">Quantity 2</label>
-                            <!-- Added step="1" -->
                             <input type="number" id="quantity_2" min="1" step="1" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="2">
                         </div>
                         <div>
@@ -560,8 +558,8 @@
                 <div class="mb-4">
                     <label for="max_risk" class="block text-sm font-medium text-gray-300 mb-1">Max Risk / Collateral</label>
                     <div class="flex">
-                        <input type="number" step="1" id="max_risk" value="0" required class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="500">
-                          <!-- Removed Auto Button -->
+                        <input type="number" step="1" id="max_risk" value="0" required class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="Auto-calculated">
+                          <!-- Removed Auto Calc Button -->
                     </div>
                 </div>
 
@@ -719,15 +717,6 @@
                         <button id="linkDeviceBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition whitespace-nowrap">Link Device</button>
                     </div>
                 </div>
-
-
-                <!-- Sample Data -->
-                <div id="sample-data-wrapper" class="mt-8">
-                     <h3 class="text-lg font-semibold text-indigo-400 mb-4 border-b border-gray-700 pb-2">Sample Data</h3>
-                     <p class="text-sm text-gray-400 mb-3">Your current account is empty. You can load a sample set of trades to explore the dashboard's features.</p>
-                     <button id="loadSampleDataBtn" class="bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-4 rounded-lg transition w-full">Load Sample Data</button>
-                </div>
-
 
                  <div class="flex justify-end mt-8">
                     <button type="button" id="closeSettingsBtn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-6 rounded-lg transition">Close</button>
@@ -971,8 +960,7 @@
             // New Elements
             const logSearchInput = document.getElementById('logSearch');
             const exportCsvBtn = document.getElementById('exportCsvBtn');
-            // Removed autoCalcRiskBtn reference
-            // const autoCalcRiskBtn = document.getElementById('autoCalcRiskBtn');
+            // const autoCalcRiskBtn = document.getElementById('autoCalcRiskBtn'); // Removed
             const activityLogFooter = document.getElementById('activity-log-footer');
             const paginationControls = document.getElementById('pagination-controls');
             const expiredCheckbox = document.getElementById('expired_worthless');
@@ -1022,8 +1010,8 @@
             const accountListManagerEl = document.getElementById('accounts-list-manager');
             const currencySettingInput = document.getElementById('setting-currency');
             const commissionSettingInput = document.getElementById('setting-commission');
-            const sampleDataWrapper = document.getElementById('sample-data-wrapper');
-            const loadSampleDataBtn = document.getElementById('loadSampleDataBtn');
+            // const sampleDataWrapper = document.getElementById('sample-data-wrapper'); // Removed
+            // const loadSampleDataBtn = document.getElementById('loadSampleDataBtn'); // Removed
             const currentAccountIdInput = document.getElementById('currentAccountId');
             const copyAccountIdBtn = document.getElementById('copyAccountIdBtn');
             const linkAccountIdInput = document.getElementById('linkAccountIdInput');
@@ -1148,7 +1136,7 @@
                 }
 
                 // Populate starting balance fields
-                const allTransactions = getActiveTransactions();
+                const allTransactions = getActiveTransactions(); // Ensure this runs before the toggle below
                 const initialDeposit = allTransactions.find(t => t.isInitial);
                 if (initialDeposit) {
                     startingBalanceInput.value = initialDeposit.amount;
@@ -1158,8 +1146,11 @@
                     startingBalanceDateInput.value = '';
                 }
 
-                // Show/Hide Sample Data Button
-                sampleDataWrapper.classList.toggle('hidden', allTransactions.length > 0);
+                // Show/Hide Sample Data Button - Check if allTransactions is available
+                // Ensure allTransactions is an array before checking length
+                const hasTransactions = Array.isArray(allTransactions) && allTransactions.length > 0;
+                // sampleDataWrapper.classList.toggle('hidden', hasTransactions); // Removed
+
 
                 // Populate account manager
                 accountListManagerEl.innerHTML = '';
@@ -1249,10 +1240,7 @@
                     // Set default commission from settings
                     document.getElementById('commissions').value = window.appData.settings.defaultCommission || 0;
 
-                    // Reset trade type to default and update strikes for the default
-                    tradeTypeSelect.value = 'Long Call'; // Reset to default
-                    updateStrikeInputs(); // Ensure strikes for default are shown
-
+                    updateStrikeInputs();
                 } else if (modalElement.id === 'importModal') {
                     // Reset import modal to step 1
                     importStep1.classList.remove('hidden');
@@ -1279,16 +1267,10 @@
             
             // Trade Modal Listeners
             addTradeBtn.addEventListener('click', () => {
-                // Reset to default selection first
-                tradeTypeSelect.value = 'Long Call';
-                // Then update strike inputs based on the default
-                updateStrikeInputs();
-                // Then show modal
                 modal.classList.remove('hidden');
                 // Pre-fill default commission when opening for a new trade
                 document.getElementById('commissions').value = window.appData.settings.defaultCommission || 0;
-                 // Ensure quantity validation listener is attached
-                attachQuantityValidation();
+                document.getElementById('max_risk').value = 0; // Reset risk on new trade
             });
             cancelBtn.addEventListener('click', () => resetAndHideModal(modal));
             modal.addEventListener('click', (e) => {
@@ -1436,13 +1418,8 @@
                 }
             });
 
-            loadSampleDataBtn.addEventListener('click', () => {
-                window.appData.transactions[window.appData.activeAccountId] = generateDummyData();
-                saveState();
-                updateDashboard();
-                renderSettingsModal(); // Re-render modal to hide the button
-                flashButton(loadSampleDataBtn, 'Data Loaded!', 'bg-green-500');
-            });
+            // loadSampleDataBtn event listener removed
+
             
             separateCommissionsCheckbox.addEventListener('change', () => {
                 singleCommissionContainer.classList.toggle('hidden', separateCommissionsCheckbox.checked);
@@ -1526,14 +1503,16 @@
                 const leg1Title = document.getElementById('leg_1_title');
                 const exp2Container = document.getElementById('expiration_date_2_container');
                 
-                strikeContainer.innerHTML = '';
+                strikeContainer.innerHTML = ''; // Clear previous inputs
                 details.strikes.forEach((label, i) => {
-                    strikeContainer.innerHTML += `
-                        <div>
-                            <label for="strike_price_${i}" class="block text-sm font-medium text-gray-300 mb-1">${label}</label>
-                            <input type="number" step="0.01" id="strike_price_${i}" required class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="150.00">
-                        </div>
+                    const div = document.createElement('div');
+                    div.innerHTML = `
+                        <label for="strike_price_${i}" class="block text-sm font-medium text-gray-300 mb-1">${label}</label>
+                        <input type="number" step="0.01" id="strike_price_${i}" required class="strike-input w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="150.00">
                     `;
+                    strikeContainer.appendChild(div);
+                    // Add listener to the newly created strike input for auto-calculation
+                    div.querySelector('.strike-input').addEventListener('input', updateAutoCalculatedRisk);
                 });
                 
                 // Handle complex strategies visibility
@@ -1547,148 +1526,82 @@
                 document.getElementById('entry_price_2').required = isRatio;
                 document.getElementById('exit_price_2').required = isRatio;
 
+
+                const riskTypesWithAutoCalc = ['spread', 'debit', 'collateral'];
+                // Removed autoCalcRiskBtn visibility toggle
+                
                 if (details.risk === 'undefined' || details.risk === 'custom') {
                     maxRiskInput.required = false;
                     maxRiskInput.placeholder = 'Collateral (Optional)';
                 } else {
                     maxRiskInput.required = true;
-                    maxRiskInput.placeholder = '500';
+                    maxRiskInput.placeholder = 'Auto-calculated'; // Updated placeholder
                 }
-
-                 // Attach listeners to new strike inputs for auto-calc AFTER they are created
-                strikeContainer.querySelectorAll('input').forEach(input => {
-                    input.addEventListener('input', updateAutoCalculatedRisk);
-                });
-                 // Ensure quantity validation listener is attached
-                attachQuantityValidation();
                 
-                // Trigger calculation after inputs are updated and listeners attached
+                // Trigger calculation after inputs are added
                 updateAutoCalculatedRisk();
             }
 
-            tradeTypeSelect.addEventListener('change', updateStrikeInputs);
-            // updateStrikeInputs(); // Initial setup is now handled by addTradeBtn click
-
-            // Add listeners to other relevant fields for auto-calculation
-            document.getElementById('quantity').addEventListener('input', updateAutoCalculatedRisk);
-            document.getElementById('entry_price').addEventListener('input', updateAutoCalculatedRisk);
-
-             // --- Validation for Quantity Inputs ---
-            function enforceIntegerInput(event) {
-                const input = event.target;
-                if (input.value.includes('.')) {
-                    input.value = Math.round(parseFloat(input.value));
-                }
-            }
-
-            function attachQuantityValidation() {
-                 const qtyInput = document.getElementById('quantity');
-                 const qty2Input = document.getElementById('quantity_2');
-                 if (qtyInput) qtyInput.addEventListener('input', enforceIntegerInput);
-                 if (qty2Input) qty2Input.addEventListener('input', enforceIntegerInput);
-            }
-            // --- End Quantity Validation ---
-
-
-            // --- Auto-calculate Max Risk Function ---
+            // Function to handle automatic risk calculation
             function updateAutoCalculatedRisk() {
-                // console.log("[AutoRisk] updateAutoCalculatedRisk triggered");
-                if (!strikeContainer) {
-                    // console.log("[AutoRisk] strikeContainer not found");
-                    return;
-                }
+                // console.log("[AutoRisk] updateAutoCalculatedRisk triggered"); // Keep for debugging if needed
 
                 const type = tradeTypeSelect.value;
                 const details = strategyDetails[type];
                 const maxRiskInput = document.getElementById('max_risk');
-                const riskTypesWithAutoCalc = ['spread', 'debit', 'collateral'];
+                const quantityInput = document.getElementById('quantity');
+                const entryPriceInput = document.getElementById('entry_price');
+                const strikeInputs = Array.from(strikeContainer.querySelectorAll('.strike-input')); // Use class selector
 
-                if (!details || !riskTypesWithAutoCalc.includes(details.risk)) {
-                    // console.log("[AutoRisk] Not an auto-calculable risk type or no details");
-                    return;
-                }
+                const quantityValue = parseInt(quantityInput.value);
+                const entryPriceValue = parseFloat(entryPriceInput.value); // Use renamed variable
+                const strikes = strikeInputs.map(input => parseFloat(input.value));
 
-                const strikes = Array.from(strikeContainer.querySelectorAll('input')).map(input => parseFloat(input.value));
-                const quantity = parseInt(document.getElementById('quantity').value);
-                const entryPriceValue = parseFloat(document.getElementById('entry_price').value);
+                // console.log("[AutoRisk] Read values:", { type, quantity: quantityValue, entryPrice: entryPriceValue, strikes });
 
-                // console.log("[AutoRisk] Read values:", { type, quantity, entryPrice: entryPriceValue, strikes });
-
-                // --- Refined Validation ---
-                let inputsValid = true;
-                if (isNaN(quantity) || quantity <= 0) {
+                // Check if all necessary inputs are valid numbers
+                if (isNaN(quantityValue) || quantityValue <= 0) {
                     // console.log("[AutoRisk] Invalid quantity");
-                    inputsValid = false;
+                    return; // Don't calculate if quantity is invalid
                 }
                 if (isNaN(entryPriceValue)) {
-                    // console.log("[AutoRisk] Invalid entryPrice");
-                    inputsValid = false;
+                     // console.log("[AutoRisk] Invalid entryPrice");
+                    return; // Don't calculate if entry price is invalid
                 }
                 if (strikes.length !== details.strikes.length || strikes.some(isNaN)) {
-                    // console.log("[AutoRisk] Invalid or incomplete strikes", strikes, "Expected:", details.strikes.length);
-                    inputsValid = false;
-                }
-                // --- End Refined Validation ---
-
-                if (!inputsValid) {
-                    // console.log("[AutoRisk] Inputs invalid, returning.");
-                    return;
+                     // console.log(`[AutoRisk] Invalid or incomplete strikes`, strikes, `Expected: ${details.strikes.length}`);
+                    return; // Don't calculate if strikes are incomplete or invalid
                 }
 
-                const tempTrade = { type, strikes, quantity, entry_price: entryPriceValue };
-                const calculatedRisk = calculateMaxRisk(tempTrade);
+                const riskTypesWithAutoCalc = ['spread', 'debit', 'collateral'];
+                if (riskTypesWithAutoCalc.includes(details.risk)) {
+                    const tempTrade = { type, strikes, quantity: quantityValue, entry_price: entryPriceValue };
+                    const calculatedRisk = calculateMaxRisk(tempTrade);
+                    // console.log("[AutoRisk] Calculated risk:", calculatedRisk);
 
-                // console.log("[AutoRisk] Calculated risk:", calculatedRisk);
-
-                if (!isNaN(calculatedRisk)) {
-                    maxRiskInput.value = Math.round(calculatedRisk);
+                    if (!isNaN(calculatedRisk)) {
+                        maxRiskInput.value = calculatedRisk;
+                    } else {
+                        console.warn("[AutoRisk] Calculated risk was NaN for:", tempTrade);
+                        maxRiskInput.value = 0; // Default to 0 if calculation fails
+                    }
                 } else {
-                    // console.warn("[AutoRisk] Calculated risk was NaN for:", tempTrade);
+                    // console.log("[AutoRisk] Strategy risk type not auto-calculable:", details.risk);
+                    // Optionally clear the field or leave it as is for manual input
+                    // maxRiskInput.value = ''; // Or keep manual value if preferred
                 }
             }
 
 
-            function calculateMaxRisk(trade) {
-                 const details = strategyDetails[trade.type];
-                 const { strikes, quantity, entry_price } = trade;
-                 let calculatedRisk = 0;
-                 if (!details) return 0;
+            // Add event listeners for auto-calculation
+            tradeTypeSelect.addEventListener('change', updateStrikeInputs); // This now calls updateAutoCalculatedRisk internally
+            document.getElementById('quantity').addEventListener('input', updateAutoCalculatedRisk);
+            document.getElementById('entry_price').addEventListener('input', updateAutoCalculatedRisk);
+            // Strike input listeners are added dynamically in updateStrikeInputs
 
-                 // **Add explicit NaN checks for safety**
-                 if (isNaN(quantity) || quantity <= 0 || isNaN(entry_price)) {
-                     console.error("[calculateMaxRisk] Invalid quantity or entry_price received:", trade);
-                     return NaN; // Return NaN explicitl
-                 }
-
-
-                 if (details.risk === 'debit') {
-                    calculatedRisk = entry_price * 100 * quantity;
-                 } else if (details.risk === 'spread' && strikes.length >= 2) {
-                     // **Add NaN check for strikes here too**
-                     if (strikes.some(isNaN)) {
-                         console.error("[calculateMaxRisk] Invalid strikes received for spread:", trade);
-                         return NaN;
-                     }
-                     const width = Math.abs(strikes[0] - strikes[1]);
-                     calculatedRisk = width * 100 * quantity;
-                     if (trade.type.includes('Short')) { // Credit spread
-                         const creditReceived = entry_price * 100 * quantity;
-                         calculatedRisk -= creditReceived;
-                     }
-                 } else if (details.risk === 'collateral' && strikes.length === 1) {
-                     // **Add NaN check for strike**
-                     if (isNaN(strikes[0])) {
-                         console.error("[calculateMaxRisk] Invalid strike received for collateral:", trade);
-                         return NaN;
-                     }
-                    const collateral = (strikes[0] * 100 * quantity) - (entry_price * 100 * quantity);
-                    calculatedRisk = collateral > 0 ? collateral : 0;
-                 }
-
-                 // **Check final result before returning**
-                 return !isNaN(calculatedRisk) ? Math.round(calculatedRisk) : 0; // Return 0 if somehow still NaN
-            }
-
+            updateStrikeInputs(); // Initial call
+            
+            
             function calculateRawPnl(trade) {
                 const multiplier = 100;
                 
@@ -1806,16 +1719,6 @@
                 const type = document.getElementById('trade_type').value;
                 const details = strategyDetails[type];
 
-                // **Use parseInt for quantities**
-                const quantityValue = parseInt(document.getElementById('quantity').value);
-                const quantity2Value = details.ratio === true ? parseInt(document.getElementById('quantity_2').value) : null;
-
-                // Basic validation for parsed quantities
-                if (isNaN(quantityValue) || quantityValue <= 0 || (details.ratio === true && (isNaN(quantity2Value) || quantity2Value <= 0)) ) {
-                     flashButton(saveBtn, 'Invalid Quantity!', 'bg-red-500', 3000);
-                     return;
-                }
-
                 const tradeData = {
                     transaction_type: 'trade',
                     ticker: document.getElementById('underlying_ticker').value.toUpperCase(),
@@ -1825,7 +1728,7 @@
                     expiration: document.getElementById('expiration_date').value,
                     expiration_2: details.expirations === 2 ? document.getElementById('expiration_date_2').value : null,
                     strikes: Array.from(strikeContainer.querySelectorAll('input')).map(input => parseFloat(input.value)),
-                    quantity: quantityValue, // Use parsed integer
+                    quantity: parseInt(document.getElementById('quantity').value), // Use parseInt
                     entry_price: parseFloat(document.getElementById('entry_price').value),
                     exit_price: parseFloat(document.getElementById('exit_price').value),
                     commissions: parseFloat(document.getElementById('commissions').value),
@@ -1836,7 +1739,7 @@
                     notes: document.getElementById('notes').value,
                     isExpired: expiredCheckbox.checked,
                     ratio: details.ratio === true,
-                    quantity_2: quantity2Value, // Use parsed integer
+                    quantity_2: details.ratio === true ? parseInt(document.getElementById('quantity_2').value) : null, // Use parseInt
                     entry_price_2: details.ratio === true ? parseFloat(document.getElementById('entry_price_2').value) : null,
                     exit_price_2: details.ratio === true ? parseFloat(document.getElementById('exit_price_2').value) : null,
                 };
@@ -1904,7 +1807,7 @@
                     document.getElementById('commissions').value = item.commissions;
                 }
 
-                updateStrikeInputs();
+                updateStrikeInputs(); // This will also trigger risk calculation
                 item.strikes.forEach((strike, index) => {
                     const strikeInput = document.getElementById(`strike_price_${index}`);
                     if (strikeInput) strikeInput.value = strike;
@@ -1928,8 +1831,6 @@
                 }
 
                 modal.classList.remove('hidden');
-                // Ensure quantity validation listener is attached when editing
-                attachQuantityValidation();
             }
             
             // --- NEW INTERACTIVE IMPORT LOGIC ---
@@ -2138,7 +2039,7 @@
                             close: closeDate.format('YYYY-MM-DD'),
                             expiration: dayjs(rawData.ExpirationDate).format('YYYY-MM-DD'),
                             strikes: (rawData.Strikes || '').split(/[,/ ]+/).map(s => parseFloat(s.trim())).filter(s => !isNaN(s)),
-                            quantity: parseInt(rawData.Quantity),
+                            quantity: parseInt(rawData.Quantity), // Use parseInt
                             entry_price: parseFloat(rawData.EntryPrice),
                             exit_price: parseFloat(rawData.ExitPrice),
                             isExpired: (rawData.Expired || '').toUpperCase() === 'TRUE',
@@ -2148,7 +2049,7 @@
                             // Complex strategies
                             ratio: details.ratio === true,
                             expiration_2: (details.expirations === 2 && rawData.ExpirationDate2) ? dayjs(rawData.ExpirationDate2).format('YYYY-MM-DD') : null,
-                            quantity_2: (details.ratio === true && rawData.Quantity2) ? parseInt(rawData.Quantity2) : null,
+                            quantity_2: (details.ratio === true && rawData.Quantity2) ? parseInt(rawData.Quantity2) : null, // Use parseInt
                             entry_price_2: (details.ratio === true && rawData.EntryPrice2) ? parseFloat(rawData.EntryPrice2) : null,
                             exit_price_2: (details.ratio === true && rawData.ExitPrice2) ? parseFloat(rawData.ExitPrice2) : null,
                         };
@@ -2238,41 +2139,29 @@
                  const details = strategyDetails[trade.type];
                  const { strikes, quantity, entry_price } = trade;
                  let calculatedRisk = 0;
-                 if (!details) return 0;
 
-                 // **Add explicit NaN checks for safety**
-                 if (isNaN(quantity) || quantity <= 0 || isNaN(entry_price)) {
-                     console.error("[calculateMaxRisk] Invalid quantity or entry_price received:", trade);
-                     return NaN; // Return NaN explicitly
+                 // Add safety checks for input values
+                 if (!details || !Array.isArray(strikes) || typeof quantity !== 'number' || typeof entry_price !== 'number' || isNaN(quantity) || isNaN(entry_price)) {
+                    console.warn("[calculateMaxRisk] Invalid input provided:", trade);
+                    return 0; // Return 0 if essential info is missing or invalid
                  }
-
-
+                 
                  if (details.risk === 'debit') {
                     calculatedRisk = entry_price * 100 * quantity;
-                 } else if (details.risk === 'spread' && strikes.length >= 2) {
-                     // **Add NaN check for strikes here too**
-                     if (strikes.some(isNaN)) {
-                         console.error("[calculateMaxRisk] Invalid strikes received for spread:", trade);
-                         return NaN;
-                     }
+                 } else if (details.risk === 'spread' && strikes.length >= 2 && !strikes.some(isNaN)) {
                      const width = Math.abs(strikes[0] - strikes[1]);
                      calculatedRisk = width * 100 * quantity;
                      if (trade.type.includes('Short')) { // Credit spread
                          const creditReceived = entry_price * 100 * quantity;
                          calculatedRisk -= creditReceived;
                      }
-                 } else if (details.risk === 'collateral' && strikes.length === 1) {
-                     // **Add NaN check for strike**
-                     if (isNaN(strikes[0])) {
-                         console.error("[calculateMaxRisk] Invalid strike received for collateral:", trade);
-                         return NaN;
-                     }
+                 } else if (details.risk === 'collateral' && strikes.length === 1 && !isNaN(strikes[0])) {
                     const collateral = (strikes[0] * 100 * quantity) - (entry_price * 100 * quantity);
                     calculatedRisk = collateral > 0 ? collateral : 0;
                  }
 
-                 // **Check final result before returning**
-                 return !isNaN(calculatedRisk) ? Math.round(calculatedRisk) : 0; // Return 0 if somehow still NaN
+                 // Ensure the result is a valid number, default to 0 if not
+                 return isNaN(calculatedRisk) ? 0 : Math.round(calculatedRisk);
             }
 
             // --- TABLE & CHART EVENT LISTENERS ---
@@ -2550,20 +2439,12 @@
                 updateDashboard();
             });
             
-            // Removed event listener for the now non-existent autoCalcRiskBtn
-            /*
-            autoCalcRiskBtn.addEventListener('click', () => {
-                const type = tradeTypeSelect.value;
-                const details = strategyDetails[type];
-                const strikes = Array.from(strikeContainer.querySelectorAll('input')).map(input => parseFloat(input.value));
-                const quantity = parseInt(document.getElementById('quantity').value) || 1;
-                const entryPrice = parseFloat(document.getElementById('entry_price').value) || 0;
-                const maxRiskInput = document.getElementById('max_risk');
-                
-                const tempTrade = { type, strikes, quantity, entry_price };
-                maxRiskInput.value = calculateMaxRisk(tempTrade);
+            exportCsvBtn.addEventListener('click', () => {
+                 // This will use the globally scoped filteredActivity from the last updateDashboard call
+                 exportActivityLogToCSV();
             });
-            */
+            
+            // Removed autoCalcRiskBtn event listener
             
             mainViewToggle.addEventListener('click', (e) => {
                 const btn = e.target.closest('.main-view-btn');
@@ -3012,7 +2893,7 @@
                             break;
                         case 'otherTickers':
                             {
-                                const tickersToExclude = chartFilter.value;
+                                const tickersToExclude = chartFilter.value; // This is now an array of labels
                                 filteredActivity = allTransactions.filter(t => t.transaction_type === 'trade' && !tickersToExclude.includes(t.ticker));
                             }
                             break;
@@ -3021,11 +2902,12 @@
                             break;
                         case 'otherTags':
                              {
-                                const tagsToExclude = chartFilter.value;
+                                const tagsToExclude = chartFilter.value; // This is now an array of labels
                                 filteredActivity = allTransactions.filter(t => {
-                                    if (t.transaction_type !== 'trade' || !t.tags) return true; // Keep non-trades or trades w/o tags if filtering "other"
-                                    const tradeTags = t.tags.split(',').map(tag => tag.trim());
-                                    // A trade is "other" if none of its tags are in the top/bottom list
+                                    if (t.transaction_type !== 'trade') return false;
+                                    const tradeTags = t.tags ? t.tags.split(',').map(tag => tag.trim()) : [];
+                                    if (tradeTags.length === 0) return true; // Include untagged trades in "Other"
+                                    // Include if *none* of the trade's tags are in the excluded (top/bottom) list
                                     return !tradeTags.some(tag => tagsToExclude.includes(tag));
                                 });
                             }
@@ -3138,9 +3020,8 @@
                     const displayValue = chartFilter.displayValue || chartFilter.value;
                     let typeDisplay = chartFilter.type.charAt(0).toUpperCase() + chartFilter.type.slice(1);
                     if (typeDisplay === 'PnlRange') typeDisplay = 'P&L Range';
-                    if (typeDisplay === 'OtherTickers') typeDisplay = 'Ticker';
-                    if (typeDisplay === 'OtherTags') typeDisplay = 'Tag';
-
+                    if (typeDisplay === 'OtherTickers') typeDisplay = 'Other Tickers'; // Display name for the filter
+                    if (typeDisplay === 'OtherTags') typeDisplay = 'Other Tags';     // Display name for the filter
                     filterSpan.textContent = `${typeDisplay}: ${displayValue}`;
                 } else {
                     chartFilterDisplay.classList.add('hidden');
@@ -3285,23 +3166,24 @@
                     }, 
                 };
 
-                function processAndLimitChartData(dataObject, limit = 12, topN = 5, bottomN = 5) {
+                // Function to process data for Top N + Bottom N + Other charts
+                function processAndLimitChartData(dataObject, limit = 11, topN = 5, bottomN = 5) { // Limit 11 = 5 + 5 + 1(Other)
                     let dataArray = Object.entries(dataObject).map(([label, pnl]) => ({ label, pnl }));
 
                     if (dataArray.length <= limit) {
-                        dataArray.sort((a, b) => b.pnl - a.pnl);
+                        dataArray.sort((a, b) => b.pnl - a.pnl); // Sort all if fewer than limit
                         return {
                             labels: dataArray.map(d => d.label),
                             data: dataArray.map(d => d.pnl),
-                            topAndBottomLabels: dataArray.map(d => d.label) // All labels are top/bottom if not exceeding limit
+                            excludedLabels: [] // No labels excluded
                         };
                     }
 
                     dataArray.sort((a, b) => b.pnl - a.pnl);
 
                     const topItems = dataArray.slice(0, topN);
-                    const bottomItems = dataArray.slice(dataArray.length - bottomN);
-                    const middleItems = dataArray.slice(topN, dataArray.length - bottomN);
+                    const bottomItems = dataArray.slice(Math.max(topN, dataArray.length - bottomN)); // Ensure bottomN doesn't overlap topN if few items
+                    const middleItems = dataArray.slice(topN, Math.max(topN, dataArray.length - bottomN));
                     
                     const otherPnl = middleItems.reduce((acc, item) => acc + item.pnl, 0);
 
@@ -3311,16 +3193,14 @@
                     }
                     finalArray = [...finalArray, ...bottomItems];
 
-                    // Don't re-sort here, keep Top -> Other -> Bottom order visually
-                    // finalArray.sort((a, b) => b.pnl - a.pnl);
-                    
-                    // These are the labels *not* included in "Other"
+                    // Sort the final array for display, but keep track of which labels were NOT included in top/bottom
+                    finalArray.sort((a, b) => b.pnl - a.pnl); 
                     const topAndBottomLabels = [...topItems, ...bottomItems].map(d => d.label);
 
                     return {
                         labels: finalArray.map(d => d.label),
                         data: finalArray.map(d => d.pnl),
-                        topAndBottomLabels: topAndBottomLabels 
+                        excludedLabels: topAndBottomLabels // Labels *not* in "Other"
                     };
                 }
 
@@ -3345,7 +3225,8 @@
                             const elementIndex = elements[0].index;
                             const clickedLabel = event.chart.data.labels[elementIndex];
                             if (clickedLabel === 'Other') {
-                                setChartFilter('otherTickers', tickerChartData.topAndBottomLabels, 'Other');
+                                // Pass the labels that *are* shown (top/bottom) to exclude them
+                                setChartFilter('otherTickers', tickerChartData.excludedLabels, 'Other');
                             } else {
                                 setChartFilter('ticker', clickedLabel);
                             }
@@ -3378,7 +3259,8 @@
                             const elementIndex = elements[0].index;
                             const clickedLabel = event.chart.data.labels[elementIndex];
                              if (clickedLabel === 'Other') {
-                                setChartFilter('otherTags', tagChartData.topAndBottomLabels, 'Other');
+                                // Pass the labels that *are* shown (top/bottom) to exclude them
+                                setChartFilter('otherTags', tagChartData.excludedLabels, 'Other');
                             } else {
                                 setChartFilter('tag', clickedLabel);
                             }
@@ -3451,137 +3333,183 @@
 
              // --- CALENDAR FUNCTIONS ---
             function renderCalendar() {
-                const allTransactions = getActiveTransactions();
-                const trades = allTransactions.filter(t => t.transaction_type === 'trade');
-                const dailyData = trades.reduce((acc, trade) => {
-                    const closeDate = dayjs(trade.close).format('YYYY-MM-DD');
-                    if (!acc[closeDate]) acc[closeDate] = { pnl: 0, wins: 0, losses: 0 };
-                    acc[closeDate].pnl += trade.pnl;
-                    if (trade.pnl > 0) acc[closeDate].wins++; else acc[closeDate].losses++;
-                    return acc;
-                }, {});
-                
-                calendarGrid.innerHTML = '';
-                let periodPnl = 0;
+                try { // Add a try...catch block for better error reporting
+                    // console.log("[Calendar Render] Starting renderCalendar...");
+                    const allTransactions = getActiveTransactions();
+                    const trades = allTransactions.filter(t => t.transaction_type === 'trade');
+                    // console.log(`[Calendar Render] Found ${trades.length} trades.`);
 
-                if (calendarView === 'month') {
-                    calendarGrid.classList.remove('grid-cols-7');
-                    calendarGrid.classList.add('md:grid-cols-8', 'grid-cols-7');
-                    calendarPeriodLabel.textContent = calendarDate.format('MMMM YYYY');
-                    const startOfMonth = calendarDate.startOf('month');
-                    const daysInMonth = calendarDate.daysInMonth();
-                    const startDay = startOfMonth.day();
-                    
-                    const headers = ['S', 'M', 'T', 'W', 'T', 'F', 'S', '<span class="hidden md:inline">Weekly</span>'];
-                    calendarGrid.innerHTML = headers.map((day, i) => `<div class="font-bold text-xs text-gray-500 p-2 ${i === 7 ? 'text-right' : ''} ${i === 7 ? 'hidden md:block' : ''}">${day}</div>`).join('');
+                    // **Modify dailyData to store sorted trades**
+                    const dailyData = trades.reduce((acc, trade) => {
+                        const closeDate = dayjs(trade.close).format('YYYY-MM-DD');
+                        if (!acc[closeDate]) {
+                            // Initialize with an empty trades array
+                            acc[closeDate] = { pnl: 0, trades: [] };
+                        }
+                        // Add safety check for pnl
+                        acc[closeDate].pnl += (trade.pnl || 0); // Use 0 if pnl is undefined/NaN
+                        // Add the full trade object
+                        acc[closeDate].trades.push(trade);
+                        return acc;
+                    }, {});
+                    // console.log("[Calendar Render] dailyData created:", dailyData);
 
 
-                    for (let i = 0; i < startDay; i++) {
-                        calendarGrid.innerHTML += '<div></div>';
-                    }
+                    // **Sort trades within each day by ID (entry order)**
+                    Object.values(dailyData).forEach(dayData => {
+                        dayData.trades.sort((a, b) => a.id - b.id);
+                    });
+                    // console.log("[Calendar Render] Trades within dailyData sorted.");
 
-                    let weeklyPnl = 0;
-                    for (let i = 1; i <= daysInMonth; i++) {
-                        const day = startOfMonth.date(i);
-                        const dateStr = day.format('YYYY-MM-DD');
-                        const data = dailyData[dateStr] || { pnl: 0, wins: 0, losses: 0 };
-                        periodPnl += data.pnl;
-                        weeklyPnl += data.pnl;
 
-                        let bgColor = 'bg-gray-700/50';
-                        if (data.pnl > 0) bgColor = `rgba(34, 197, 94, ${Math.min(0.2 + data.pnl / 1000, 1)})`;
-                        if (data.pnl < 0) bgColor = `rgba(239, 68, 68, ${Math.min(0.2 + Math.abs(data.pnl) / 1000, 1)})`;
-                        
-                        const isToday = day.isSame(dayjs(), 'day');
-                        const isWeekend = day.day() === 0 || day.day() === 6;
-                        const isSelected = selectedCalendarDate && day.isSame(selectedCalendarDate, 'day');
-                        const hasTrades = data.wins > 0 || data.losses > 0;
-                        const isClickable = !isWeekend && hasTrades;
+                    calendarGrid.innerHTML = '';
+                    let periodPnl = 0;
 
-                        
-                        let tradeDots = '';
-                        if (data.wins > 0 || data.losses > 0) {
-                            tradeDots = '<div class="flex flex-wrap mt-1">';
-                            for(let w=0; w < data.wins; w++) tradeDots += '<div class="h-1.5 w-1.5 bg-green-400 rounded-full mr-1 mb-1"></div>';
-                            for(let l=0; l < data.losses; l++) tradeDots += '<div class="h-1.5 w-1.5 bg-red-400 rounded-full mr-1 mb-1"></div>';
-                            tradeDots += '</div>';
+                    if (calendarView === 'month') {
+                        calendarGrid.classList.remove('grid-cols-7');
+                        calendarGrid.classList.add('md:grid-cols-8', 'grid-cols-7');
+                        calendarPeriodLabel.textContent = calendarDate.format('MMMM YYYY');
+                        const startOfMonth = calendarDate.startOf('month');
+                        const daysInMonth = calendarDate.daysInMonth();
+                        const startDay = startOfMonth.day();
+
+                        const headers = ['S', 'M', 'T', 'W', 'T', 'F', 'S', '<span class="hidden md:inline">Weekly</span>'];
+                        calendarGrid.innerHTML = headers.map((day, i) => `<div class="font-bold text-xs text-gray-500 p-2 ${i === 7 ? 'text-right' : ''} ${i === 7 ? 'hidden md:block' : ''}">${day}</div>`).join('');
+
+                        for (let i = 0; i < startDay; i++) {
+                            calendarGrid.innerHTML += '<div></div>';
                         }
 
+                        let weeklyPnl = 0;
+                        for (let i = 1; i <= daysInMonth; i++) {
+                            const day = startOfMonth.date(i);
+                            const dateStr = day.format('YYYY-MM-DD');
+                            // Use default with trades array if no data
+                            const data = dailyData[dateStr] || { pnl: 0, trades: [] };
+                             // console.log(`[Calendar Render] Processing Day ${i}:`, data); // Log data for each day
+                            periodPnl += data.pnl;
+                            weeklyPnl += data.pnl;
 
-                        calendarGrid.innerHTML += `
-                            <div class="calendar-day p-1 sm:p-2 rounded-lg text-left flex flex-col border-2 transition ${isToday ? 'border-indigo-500/50' : 'border-transparent'} ${isSelected ? '!border-indigo-500' : ''} ${isWeekend ? 'bg-gray-800/50 text-gray-600' : (isClickable ? 'cursor-pointer' : '')}" 
-                                 style="${!isWeekend ? `background-color: ${bgColor};` : ''}"
-                                 data-date="${dateStr}">
-                                <span class="font-semibold text-xs sm:text-sm ${isToday ? 'text-indigo-400' : ''}">${i}</span>
-                                ${tradeDots}
-                                ${data.pnl !== 0 ? `<span class="calendar-pnl-text mt-auto font-bold ${data.pnl > 0 ? 'text-green-300' : 'text-red-300'}">${formatCurrency(data.pnl)}</span>` : ''}
-                            </div>`;
+                            let bgColor = 'bg-gray-700/50';
+                            if (data.pnl > 0) bgColor = `rgba(34, 197, 94, ${Math.min(0.2 + data.pnl / 1000, 1)})`;
+                            if (data.pnl < 0) bgColor = `rgba(239, 68, 68, ${Math.min(0.2 + Math.abs(data.pnl) / 1000, 1)})`;
 
-                        if (day.day() === 6 ) { // If it's a Saturday
+                            const isToday = day.isSame(dayjs(), 'day');
+                            const isWeekend = day.day() === 0 || day.day() === 6;
+                            const isSelected = selectedCalendarDate && day.isSame(selectedCalendarDate, 'day');
+                            const hasTrades = data.trades.length > 0; // Check trades array length
+                            const isClickable = !isWeekend && hasTrades;
+
+                            // **Generate dots by iterating through sorted trades**
+                            let tradeDots = '';
+                            if (hasTrades) {
+                                tradeDots = '<div class="flex flex-wrap mt-1">';
+                                data.trades.forEach((trade, index) => {
+                                    // Add safety check for trade.pnl before generating dot
+                                    if (typeof trade.pnl === 'number') {
+                                        const dotColor = trade.pnl > 0 ? 'bg-green-400' : 'bg-red-400';
+                                        tradeDots += `<div class="h-1.5 w-1.5 ${dotColor} rounded-full mr-1 mb-1"></div>`;
+                                    } else {
+                                        console.warn(`[Calendar Render] Invalid PnL found for trade on ${dateStr}, index ${index}:`, trade);
+                                        // Optionally add a placeholder dot for invalid PnL
+                                        tradeDots += `<div class="h-1.5 w-1.5 bg-gray-500 rounded-full mr-1 mb-1" title="Invalid PnL"></div>`;
+                                    }
+                                });
+                                tradeDots += '</div>';
+                                // console.log(`[Calendar Render] Day ${i} - Trade Dots HTML: ${tradeDots}`); // Log generated dots HTML
+                            }
+
+
+                            calendarGrid.innerHTML += `
+                                <div class="calendar-day p-1 sm:p-2 rounded-lg text-left flex flex-col border-2 transition ${isToday ? 'border-indigo-500/50' : 'border-transparent'} ${isSelected ? '!border-indigo-500' : ''} ${isWeekend ? 'bg-gray-800/50 text-gray-600' : (isClickable ? 'cursor-pointer' : '')}"
+                                     style="${!isWeekend ? `background-color: ${bgColor};` : ''}"
+                                     data-date="${dateStr}">
+                                    <span class="font-semibold text-xs sm:text-sm ${isToday ? 'text-indigo-400' : ''}">${i}</span>
+                                    ${tradeDots}
+                                    ${data.pnl !== 0 ? `<span class="calendar-pnl-text mt-auto font-bold ${data.pnl > 0 ? 'text-green-300' : 'text-red-300'}">${formatCurrency(data.pnl)}</span>` : ''}
+                                </div>`;
+
+                            if (day.day() === 6 ) { // If it's a Saturday
+                                const pnlColor = weeklyPnl > 0 ? 'text-green-400' : weeklyPnl < 0 ? 'text-red-400' : 'text-gray-400';
+                                calendarGrid.innerHTML += `<div class="hidden md:flex items-center justify-end font-semibold text-xs pr-2 ${pnlColor}">${formatCurrency(weeklyPnl)}</div>`;
+                                weeklyPnl = 0;
+                            }
+                        }
+
+                        // After loop, handle the final week if month doesn't end on Saturday
+                        const lastDayOfMonth = calendarDate.endOf('month');
+                        if(lastDayOfMonth.day() !== 6) {
+                            for (let j = lastDayOfMonth.day(); j < 6; j++) {
+                               calendarGrid.innerHTML += '<div class="hidden md:block"></div>';
+                            }
                             const pnlColor = weeklyPnl > 0 ? 'text-green-400' : weeklyPnl < 0 ? 'text-red-400' : 'text-gray-400';
                             calendarGrid.innerHTML += `<div class="hidden md:flex items-center justify-end font-semibold text-xs pr-2 ${pnlColor}">${formatCurrency(weeklyPnl)}</div>`;
-                            weeklyPnl = 0;
-                        }
-                    }
-                    
-                    // After loop, handle the final week if month doesn't end on Saturday
-                    const lastDayOfMonth = calendarDate.endOf('month');
-                    if(lastDayOfMonth.day() !== 6) {
-                        for (let j = lastDayOfMonth.day(); j < 6; j++) {
-                           calendarGrid.innerHTML += '<div class="hidden md:block"></div>';
-                        }
-                        const pnlColor = weeklyPnl > 0 ? 'text-green-400' : weeklyPnl < 0 ? 'text-red-400' : 'text-gray-400';
-                        calendarGrid.innerHTML += `<div class="hidden md:flex items-center justify-end font-semibold text-xs pr-2 ${pnlColor}">${formatCurrency(weeklyPnl)}</div>`;
-                    }
-
-
-                } else { // Week view
-                    calendarGrid.classList.remove('grid-cols-8');
-                    calendarGrid.classList.add('grid-cols-7');
-                    const startOfWeek = calendarDate.startOf('week');
-                    const endOfWeek = calendarDate.endOf('week');
-                    calendarPeriodLabel.textContent = `${startOfWeek.format('MMM D')} - ${endOfWeek.format('MMM D, YYYY')}`;
-
-                    const days = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
-                    calendarGrid.innerHTML = days.map(day => `<div class="font-bold text-xs text-gray-500 p-2">${day}</div>`).join('');
-
-                    for (let i = 0; i < 7; i++) {
-                        const day = startOfWeek.add(i, 'day');
-                        const dateStr = day.format('YYYY-MM-DD');
-                        const data = dailyData[dateStr] || { pnl: 0, wins: 0, losses: 0 };
-                        periodPnl += data.pnl;
-
-                        let bgColor = 'bg-gray-700/50';
-                        if (data.pnl > 0) bgColor = `rgba(34, 197, 94, ${Math.min(0.2 + data.pnl / 1000, 1)})`;
-                        if (data.pnl < 0) bgColor = `rgba(239, 68, 68, ${Math.min(0.2 + Math.abs(data.pnl) / 1000, 1)})`;
-                        
-                        const isToday = day.isSame(dayjs(), 'day');
-                        const isWeekend = day.day() === 0 || day.day() === 6;
-                        const isSelected = selectedCalendarDate && day.isSame(selectedCalendarDate, 'day');
-                        const hasTrades = data.wins > 0 || data.losses > 0;
-                        const isClickable = !isWeekend && hasTrades;
-                        
-                        let tradeDots = '';
-                        if (data.wins > 0 || data.losses > 0) {
-                            tradeDots = '<div class="flex flex-wrap mt-1">';
-                            for(let w=0; w < data.wins; w++) tradeDots += '<div class="h-1.5 w-1.5 bg-green-400 rounded-full mr-1 mb-1"></div>';
-                            for(let l=0; l < data.losses; l++) tradeDots += '<div class="h-1.5 w-1.5 bg-red-400 rounded-full mr-1 mb-1"></div>';
-                            tradeDots += '</div>';
                         }
 
-                        calendarGrid.innerHTML += `
-                            <div class="calendar-day p-1 sm:p-2 rounded-lg text-left flex flex-col border-2 transition ${isToday ? 'border-indigo-500/50' : 'border-transparent'} ${isSelected ? '!border-indigo-500' : ''} ${isWeekend ? 'bg-gray-800/50 text-gray-600' : (isClickable ? 'cursor-pointer' : '')}" 
-                                 style="${!isWeekend ? `background-color: ${bgColor};` : ''}"
-                                 data-date="${dateStr}">
-                                <span class="font-semibold text-xs sm:text-sm ${isToday ? 'text-indigo-400' : ''}">${day.format('D')}</span>
-                                ${tradeDots}
-                                ${data.pnl !== 0 ? `<span class="calendar-pnl-text mt-auto font-bold ${data.pnl > 0 ? 'text-green-300' : 'text-red-300'}">${formatCurrency(data.pnl)}</span>` : ''}
-                            </div>`;
+
+                    } else { // Week view
+                        calendarGrid.classList.remove('grid-cols-8');
+                        calendarGrid.classList.add('grid-cols-7');
+                        const startOfWeek = calendarDate.startOf('week');
+                        const endOfWeek = calendarDate.endOf('week');
+                        calendarPeriodLabel.textContent = `${startOfWeek.format('MMM D')} - ${endOfWeek.format('MMM D, YYYY')}`;
+
+                        const days = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+                        calendarGrid.innerHTML = days.map(day => `<div class="font-bold text-xs text-gray-500 p-2">${day}</div>`).join('');
+
+                        for (let i = 0; i < 7; i++) {
+                            const day = startOfWeek.add(i, 'day');
+                            const dateStr = day.format('YYYY-MM-DD');
+                            // Use default with trades array if no data
+                            const data = dailyData[dateStr] || { pnl: 0, trades: [] };
+                            periodPnl += data.pnl;
+
+                            let bgColor = 'bg-gray-700/50';
+                            if (data.pnl > 0) bgColor = `rgba(34, 197, 94, ${Math.min(0.2 + data.pnl / 1000, 1)})`;
+                            if (data.pnl < 0) bgColor = `rgba(239, 68, 68, ${Math.min(0.2 + Math.abs(data.pnl) / 1000, 1)})`;
+
+                            const isToday = day.isSame(dayjs(), 'day');
+                            const isWeekend = day.day() === 0 || day.day() === 6;
+                            const isSelected = selectedCalendarDate && day.isSame(selectedCalendarDate, 'day');
+                            const hasTrades = data.trades.length > 0; // Check trades array length
+                            const isClickable = !isWeekend && hasTrades;
+
+                            // **Generate dots by iterating through sorted trades**
+                            let tradeDots = '';
+                            if (hasTrades) {
+                                tradeDots = '<div class="flex flex-wrap mt-1">';
+                                data.trades.forEach((trade, index) => {
+                                    // Add safety check for trade.pnl before generating dot
+                                    if (typeof trade.pnl === 'number') {
+                                        const dotColor = trade.pnl > 0 ? 'bg-green-400' : 'bg-red-400';
+                                        tradeDots += `<div class="h-1.5 w-1.5 ${dotColor} rounded-full mr-1 mb-1"></div>`;
+                                    } else {
+                                        console.warn(`[Calendar Render] Invalid PnL found for trade on ${dateStr}, index ${index}:`, trade);
+                                        tradeDots += `<div class="h-1.5 w-1.5 bg-gray-500 rounded-full mr-1 mb-1" title="Invalid PnL"></div>`;
+                                    }
+                                });
+                                tradeDots += '</div>';
+                            }
+
+                            calendarGrid.innerHTML += `
+                                <div class="calendar-day p-1 sm:p-2 rounded-lg text-left flex flex-col border-2 transition ${isToday ? 'border-indigo-500/50' : 'border-transparent'} ${isSelected ? '!border-indigo-500' : ''} ${isWeekend ? 'bg-gray-800/50 text-gray-600' : (isClickable ? 'cursor-pointer' : '')}"
+                                     style="${!isWeekend ? `background-color: ${bgColor};` : ''}"
+                                     data-date="${dateStr}">
+                                    <span class="font-semibold text-xs sm:text-sm ${isToday ? 'text-indigo-400' : ''}">${day.format('D')}</span>
+                                    ${tradeDots}
+                                    ${data.pnl !== 0 ? `<span class="calendar-pnl-text mt-auto font-bold ${data.pnl > 0 ? 'text-green-300' : 'text-red-300'}">${formatCurrency(data.pnl)}</span>` : ''}
+                                </div>`;
+                        }
                     }
+                     calendarSummary.textContent = `Period P&L: ${formatCurrency(periodPnl)}`;
+                     // console.log("[Calendar Render] Finished renderCalendar successfully.");
+                } catch (error) {
+                    console.error("[Calendar Render] Error during calendar rendering:", error);
+                    // Optionally display an error message to the user in the UI
+                    calendarGrid.innerHTML = `<div class="col-span-7 text-center text-red-400 p-4">Error loading calendar. Please check the console.</div>`;
                 }
-                 calendarSummary.textContent = `Period P&L: ${formatCurrency(periodPnl)}`;
             }
-
+            
             calendarGrid.addEventListener('click', (e) => {
                 const dayEl = e.target.closest('.calendar-day');
                 if (dayEl && dayEl.dataset.date && dayEl.classList.contains('cursor-pointer')) {
@@ -3679,77 +3607,7 @@
                 document.body.removeChild(link);
             }
 
-            function generateDummyData() {
-                const startDate = dayjs('2025-07-01');
-                const endDate = dayjs('2025-09-30');
-                const data = [];
-                const tickers = ['SPY', 'QQQ', 'AAPL', 'TSLA', 'NVDA', 'AMD', 'GOOG'];
-                const strategies = Object.keys(strategyDetails);
-                const tags = ['earnings', 'swing', '0DTE', 'theta', 'lotto', 'momentum'];
-
-                const getRandomWeekday = (start, end) => {
-                    let date;
-                    do {
-                        const randomDay = Math.random() * end.diff(start, 'day');
-                        date = start.add(randomDay, 'day');
-                    } while (date.day() === 0 || date.day() === 6);
-                    return date;
-                };
-
-                data.push({ id: 0, transaction_type: 'deposit', amount: 25000, date: '2025-07-01', notes: 'Initial Deposit', isInitial: true });
-
-                for (let i = 1; i <= 60; i++) {
-                    const openDate = getRandomWeekday(startDate, endDate.subtract(1, 'week'));
-                    const closeDate = getRandomWeekday(openDate.add(1, 'day'), openDate.add(2, 'weeks'));
-                    const entryPrice = parseFloat((Math.random() * 5 + 0.5).toFixed(2));
-                    let exitPrice;
-                    const isWinner = Math.random() > 0.45; // 55% win rate
-                    
-                    if (isWinner) {
-                        exitPrice = parseFloat((entryPrice * (1 + (Math.random() * 1.5 + 0.2))).toFixed(2));
-                    } else {
-                        exitPrice = parseFloat((entryPrice * (1 - (Math.random() * 0.8 + 0.1))).toFixed(2));
-                    }
-                    
-                    const type = strategies[Math.floor(Math.random() * strategies.length)];
-                    const details = strategyDetails[type];
-                    let strikes = [];
-                    const startStrike = 100 + Math.floor(Math.random() * 50);
-                    for (let j = 0; j < details.strikes.length; j++) {
-                        strikes.push(startStrike + (j * 5)); // e.g., 150, 155, 160...
-                    }
-
-                    const trade = {
-                        id: i,
-                        transaction_type: 'trade',
-                        ticker: tickers[Math.floor(Math.random() * tickers.length)],
-                        type: type,
-                        open: openDate.format('YYYY-MM-DD'),
-                        close: closeDate.format('YYYY-MM-DD'),
-                        expiration: closeDate.add(Math.floor(Math.random() * 20) + 5, 'day').format('YYYY-MM-DD'),
-                        strikes: strikes,
-                        quantity: Math.floor(Math.random() * 5) + 1,
-                        entry_price: entryPrice,
-                        exit_price: exitPrice,
-                        commissions: 0.65,
-                        opening_commission: null,
-                        closing_commission: null,
-                        max_risk: (entryPrice * 100) * (Math.floor(Math.random() * 5) + 1),
-                        tags: tags[Math.floor(Math.random() * tags.length)],
-                        notes: 'Sample trade data.',
-                        isExpired: Math.random() > 0.9,
-                        ratio: details.ratio === true,
-                        expiration_2: details.expirations === 2 ? closeDate.add(Math.floor(Math.random() * 20) + 28, 'day').format('YYYY-MM-DD') : null,
-                        quantity_2: details.ratio === true ? (Math.floor(Math.random() * 5) + 1) * 2 : null,
-                        entry_price_2: details.ratio === true ? parseFloat((entryPrice * 0.7).toFixed(2)) : null,
-                        exit_price_2: details.ratio === true ? parseFloat((exitPrice * 0.6).toFixed(2)) : null,
-                    };
-
-                    trade.pnl = calculatePnl(trade); // Recalculate PNL with commissions
-                    data.push(trade);
-                }
-                return data;
-            }
+            // generateDummyData function removed
 
             // Initial dashboard load
             initialize();
@@ -3761,3 +3619,4 @@
     </script>
 </body>
 </html>
+
