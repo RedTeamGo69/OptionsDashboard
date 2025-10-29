@@ -1148,7 +1148,7 @@
                 }
 
                 // Populate starting balance fields
-                const allTransactions = getActiveTransactions(); // Ensure this runs before the toggle below
+                const allTransactions = getActiveTransactions();
                 const initialDeposit = allTransactions.find(t => t.isInitial);
                 if (initialDeposit) {
                     startingBalanceInput.value = initialDeposit.amount;
@@ -1158,11 +1158,8 @@
                     startingBalanceDateInput.value = '';
                 }
 
-                // Show/Hide Sample Data Button - Check if allTransactions is available
-                // Ensure allTransactions is an array before checking length
-                const hasTransactions = Array.isArray(allTransactions) && allTransactions.length > 0;
-                sampleDataWrapper.classList.toggle('hidden', hasTransactions);
-
+                // Show/Hide Sample Data Button
+                sampleDataWrapper.classList.toggle('hidden', allTransactions.length > 0);
 
                 // Populate account manager
                 accountListManagerEl.innerHTML = '';
@@ -1613,7 +1610,7 @@
 
                 const strikes = Array.from(strikeContainer.querySelectorAll('input')).map(input => parseFloat(input.value));
                 const quantity = parseInt(document.getElementById('quantity').value);
-                const entryPriceValue = parseFloat(document.getElementById('entry_price').value); // Renamed variable
+                const entryPriceValue = parseFloat(document.getElementById('entry_price').value);
 
                 // console.log("[AutoRisk] Read values:", { type, quantity, entryPrice: entryPriceValue, strikes });
 
@@ -1638,8 +1635,7 @@
                     return;
                 }
 
-                // Pass the correctly named variable
-                const tempTrade = { type, strikes, quantity, entry_price: entryPriceValue }; 
+                const tempTrade = { type, strikes, quantity, entry_price: entryPriceValue };
                 const calculatedRisk = calculateMaxRisk(tempTrade);
 
                 // console.log("[AutoRisk] Calculated risk:", calculatedRisk);
@@ -1661,7 +1657,7 @@
                  // **Add explicit NaN checks for safety**
                  if (isNaN(quantity) || quantity <= 0 || isNaN(entry_price)) {
                      console.error("[calculateMaxRisk] Invalid quantity or entry_price received:", trade);
-                     return NaN; // Return NaN explicitly
+                     return NaN; // Return NaN explicitl
                  }
 
 
@@ -3027,13 +3023,9 @@
                              {
                                 const tagsToExclude = chartFilter.value;
                                 filteredActivity = allTransactions.filter(t => {
-                                    // Keep non-trades
-                                    if (t.transaction_type !== 'trade') return true; 
-                                    // Keep trades with no tags when filtering "other"
-                                    if (!t.tags || t.tags.trim() === '') return true; 
-                                    
+                                    if (t.transaction_type !== 'trade' || !t.tags) return true; // Keep non-trades or trades w/o tags if filtering "other"
                                     const tradeTags = t.tags.split(',').map(tag => tag.trim());
-                                    // A trade is "other" if *none* of its tags are in the top/bottom list
+                                    // A trade is "other" if none of its tags are in the top/bottom list
                                     return !tradeTags.some(tag => tagsToExclude.includes(tag));
                                 });
                             }
@@ -3457,183 +3449,137 @@
                 });
             }
 
-            // --- CALENDAR FUNCTIONS ---
+             // --- CALENDAR FUNCTIONS ---
             function renderCalendar() {
-                try { // Add a try...catch block for better error reporting
-                    // console.log("[Calendar Render] Starting renderCalendar...");
-                    const allTransactions = getActiveTransactions();
-                    const trades = allTransactions.filter(t => t.transaction_type === 'trade');
-                    // console.log(`[Calendar Render] Found ${trades.length} trades.`);
+                const allTransactions = getActiveTransactions();
+                const trades = allTransactions.filter(t => t.transaction_type === 'trade');
+                const dailyData = trades.reduce((acc, trade) => {
+                    const closeDate = dayjs(trade.close).format('YYYY-MM-DD');
+                    if (!acc[closeDate]) acc[closeDate] = { pnl: 0, wins: 0, losses: 0 };
+                    acc[closeDate].pnl += trade.pnl;
+                    if (trade.pnl > 0) acc[closeDate].wins++; else acc[closeDate].losses++;
+                    return acc;
+                }, {});
+                
+                calendarGrid.innerHTML = '';
+                let periodPnl = 0;
 
-                    // **Modify dailyData to store sorted trades**
-                    const dailyData = trades.reduce((acc, trade) => {
-                        const closeDate = dayjs(trade.close).format('YYYY-MM-DD');
-                        if (!acc[closeDate]) {
-                            // Initialize with an empty trades array
-                            acc[closeDate] = { pnl: 0, trades: [] };
-                        }
-                        // Add safety check for pnl
-                        acc[closeDate].pnl += (trade.pnl || 0); // Use 0 if pnl is undefined/NaN
-                        // Add the full trade object
-                        acc[closeDate].trades.push(trade);
-                        return acc;
-                    }, {});
-                    // console.log("[Calendar Render] dailyData created:", dailyData);
-
-
-                    // **Sort trades within each day by ID (entry order)**
-                    Object.values(dailyData).forEach(dayData => {
-                        dayData.trades.sort((a, b) => a.id - b.id);
-                    });
-                    // console.log("[Calendar Render] Trades within dailyData sorted.");
+                if (calendarView === 'month') {
+                    calendarGrid.classList.remove('grid-cols-7');
+                    calendarGrid.classList.add('md:grid-cols-8', 'grid-cols-7');
+                    calendarPeriodLabel.textContent = calendarDate.format('MMMM YYYY');
+                    const startOfMonth = calendarDate.startOf('month');
+                    const daysInMonth = calendarDate.daysInMonth();
+                    const startDay = startOfMonth.day();
+                    
+                    const headers = ['S', 'M', 'T', 'W', 'T', 'F', 'S', '<span class="hidden md:inline">Weekly</span>'];
+                    calendarGrid.innerHTML = headers.map((day, i) => `<div class="font-bold text-xs text-gray-500 p-2 ${i === 7 ? 'text-right' : ''} ${i === 7 ? 'hidden md:block' : ''}">${day}</div>`).join('');
 
 
-                    calendarGrid.innerHTML = '';
-                    let periodPnl = 0;
+                    for (let i = 0; i < startDay; i++) {
+                        calendarGrid.innerHTML += '<div></div>';
+                    }
 
-                    if (calendarView === 'month') {
-                        calendarGrid.classList.remove('grid-cols-7');
-                        calendarGrid.classList.add('md:grid-cols-8', 'grid-cols-7');
-                        calendarPeriodLabel.textContent = calendarDate.format('MMMM YYYY');
-                        const startOfMonth = calendarDate.startOf('month');
-                        const daysInMonth = calendarDate.daysInMonth();
-                        const startDay = startOfMonth.day();
+                    let weeklyPnl = 0;
+                    for (let i = 1; i <= daysInMonth; i++) {
+                        const day = startOfMonth.date(i);
+                        const dateStr = day.format('YYYY-MM-DD');
+                        const data = dailyData[dateStr] || { pnl: 0, wins: 0, losses: 0 };
+                        periodPnl += data.pnl;
+                        weeklyPnl += data.pnl;
 
-                        const headers = ['S', 'M', 'T', 'W', 'T', 'F', 'S', '<span class="hidden md:inline">Weekly</span>'];
-                        calendarGrid.innerHTML = headers.map((day, i) => `<div class="font-bold text-xs text-gray-500 p-2 ${i === 7 ? 'text-right' : ''} ${i === 7 ? 'hidden md:block' : ''}">${day}</div>`).join('');
+                        let bgColor = 'bg-gray-700/50';
+                        if (data.pnl > 0) bgColor = `rgba(34, 197, 94, ${Math.min(0.2 + data.pnl / 1000, 1)})`;
+                        if (data.pnl < 0) bgColor = `rgba(239, 68, 68, ${Math.min(0.2 + Math.abs(data.pnl) / 1000, 1)})`;
+                        
+                        const isToday = day.isSame(dayjs(), 'day');
+                        const isWeekend = day.day() === 0 || day.day() === 6;
+                        const isSelected = selectedCalendarDate && day.isSame(selectedCalendarDate, 'day');
+                        const hasTrades = data.wins > 0 || data.losses > 0;
+                        const isClickable = !isWeekend && hasTrades;
 
-                        for (let i = 0; i < startDay; i++) {
-                            calendarGrid.innerHTML += '<div></div>';
-                        }
-
-                        let weeklyPnl = 0;
-                        for (let i = 1; i <= daysInMonth; i++) {
-                            const day = startOfMonth.date(i);
-                            const dateStr = day.format('YYYY-MM-DD');
-                            // Use default with trades array if no data
-                            const data = dailyData[dateStr] || { pnl: 0, trades: [] };
-                             // console.log(`[Calendar Render] Processing Day ${i}:`, data); // Log data for each day
-                            periodPnl += data.pnl;
-                            weeklyPnl += data.pnl;
-
-                            let bgColor = 'bg-gray-700/50';
-                            if (data.pnl > 0) bgColor = `rgba(34, 197, 94, ${Math.min(0.2 + data.pnl / 1000, 1)})`;
-                            if (data.pnl < 0) bgColor = `rgba(239, 68, 68, ${Math.min(0.2 + Math.abs(data.pnl) / 1000, 1)})`;
-
-                            const isToday = day.isSame(dayjs(), 'day');
-                            const isWeekend = day.day() === 0 || day.day() === 6;
-                            const isSelected = selectedCalendarDate && day.isSame(selectedCalendarDate, 'day');
-                            const hasTrades = data.trades.length > 0; // Check trades array length
-                            const isClickable = !isWeekend && hasTrades;
-
-                            // **Generate dots by iterating through sorted trades**
-                            let tradeDots = '';
-                            if (hasTrades) {
-                                tradeDots = '<div class="flex flex-wrap mt-1">';
-                                data.trades.forEach((trade, index) => {
-                                    // Add safety check for trade.pnl before generating dot
-                                    if (typeof trade.pnl === 'number') {
-                                        const dotColor = trade.pnl > 0 ? 'bg-green-400' : 'bg-red-400';
-                                        tradeDots += `<div class="h-1.5 w-1.5 ${dotColor} rounded-full mr-1 mb-1"></div>`;
-                                    } else {
-                                        console.warn(`[Calendar Render] Invalid PnL found for trade on ${dateStr}, index ${index}:`, trade);
-                                        // Optionally add a placeholder dot for invalid PnL
-                                        tradeDots += `<div class="h-1.5 w-1.5 bg-gray-500 rounded-full mr-1 mb-1" title="Invalid PnL"></div>`;
-                                    }
-                                });
-                                tradeDots += '</div>';
-                                // console.log(`[Calendar Render] Day ${i} - Trade Dots HTML: ${tradeDots}`); // Log generated dots HTML
-                            }
-
-
-                            calendarGrid.innerHTML += `
-                                <div class="calendar-day p-1 sm:p-2 rounded-lg text-left flex flex-col border-2 transition ${isToday ? 'border-indigo-500/50' : 'border-transparent'} ${isSelected ? '!border-indigo-500' : ''} ${isWeekend ? 'bg-gray-800/50 text-gray-600' : (isClickable ? 'cursor-pointer' : '')}"
-                                     style="${!isWeekend ? `background-color: ${bgColor};` : ''}"
-                                     data-date="${dateStr}">
-                                    <span class="font-semibold text-xs sm:text-sm ${isToday ? 'text-indigo-400' : ''}">${i}</span>
-                                    ${tradeDots}
-                                    ${data.pnl !== 0 ? `<span class="calendar-pnl-text mt-auto font-bold ${data.pnl > 0 ? 'text-green-300' : 'text-red-300'}">${formatCurrency(data.pnl)}</span>` : ''}
-                                </div>`;
-
-                            if (day.day() === 6 ) { // If it's a Saturday
-                                const pnlColor = weeklyPnl > 0 ? 'text-green-400' : weeklyPnl < 0 ? 'text-red-400' : 'text-gray-400';
-                                calendarGrid.innerHTML += `<div class="hidden md:flex items-center justify-end font-semibold text-xs pr-2 ${pnlColor}">${formatCurrency(weeklyPnl)}</div>`;
-                                weeklyPnl = 0;
-                            }
+                        
+                        let tradeDots = '';
+                        if (data.wins > 0 || data.losses > 0) {
+                            tradeDots = '<div class="flex flex-wrap mt-1">';
+                            for(let w=0; w < data.wins; w++) tradeDots += '<div class="h-1.5 w-1.5 bg-green-400 rounded-full mr-1 mb-1"></div>';
+                            for(let l=0; l < data.losses; l++) tradeDots += '<div class="h-1.5 w-1.5 bg-red-400 rounded-full mr-1 mb-1"></div>';
+                            tradeDots += '</div>';
                         }
 
-                        // After loop, handle the final week if month doesn't end on Saturday
-                        const lastDayOfMonth = calendarDate.endOf('month');
-                        if(lastDayOfMonth.day() !== 6) {
-                            for (let j = lastDayOfMonth.day(); j < 6; j++) {
-                               calendarGrid.innerHTML += '<div class="hidden md:block"></div>';
-                            }
+
+                        calendarGrid.innerHTML += `
+                            <div class="calendar-day p-1 sm:p-2 rounded-lg text-left flex flex-col border-2 transition ${isToday ? 'border-indigo-500/50' : 'border-transparent'} ${isSelected ? '!border-indigo-500' : ''} ${isWeekend ? 'bg-gray-800/50 text-gray-600' : (isClickable ? 'cursor-pointer' : '')}" 
+                                 style="${!isWeekend ? `background-color: ${bgColor};` : ''}"
+                                 data-date="${dateStr}">
+                                <span class="font-semibold text-xs sm:text-sm ${isToday ? 'text-indigo-400' : ''}">${i}</span>
+                                ${tradeDots}
+                                ${data.pnl !== 0 ? `<span class="calendar-pnl-text mt-auto font-bold ${data.pnl > 0 ? 'text-green-300' : 'text-red-300'}">${formatCurrency(data.pnl)}</span>` : ''}
+                            </div>`;
+
+                        if (day.day() === 6 ) { // If it's a Saturday
                             const pnlColor = weeklyPnl > 0 ? 'text-green-400' : weeklyPnl < 0 ? 'text-red-400' : 'text-gray-400';
                             calendarGrid.innerHTML += `<div class="hidden md:flex items-center justify-end font-semibold text-xs pr-2 ${pnlColor}">${formatCurrency(weeklyPnl)}</div>`;
-                        }
-
-
-                    } else { // Week view
-                        calendarGrid.classList.remove('grid-cols-8');
-                        calendarGrid.classList.add('grid-cols-7');
-                        const startOfWeek = calendarDate.startOf('week');
-                        const endOfWeek = calendarDate.endOf('week');
-                        calendarPeriodLabel.textContent = `${startOfWeek.format('MMM D')} - ${endOfWeek.format('MMM D, YYYY')}`;
-
-                        const days = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
-                        calendarGrid.innerHTML = days.map(day => `<div class="font-bold text-xs text-gray-500 p-2">${day}</div>`).join('');
-
-                        for (let i = 0; i < 7; i++) {
-                            const day = startOfWeek.add(i, 'day');
-                            const dateStr = day.format('YYYY-MM-DD');
-                            // Use default with trades array if no data
-                            const data = dailyData[dateStr] || { pnl: 0, trades: [] };
-                            periodPnl += data.pnl;
-
-                            let bgColor = 'bg-gray-700/50';
-                            if (data.pnl > 0) bgColor = `rgba(34, 197, 94, ${Math.min(0.2 + data.pnl / 1000, 1)})`;
-                            if (data.pnl < 0) bgColor = `rgba(239, 68, 68, ${Math.min(0.2 + Math.abs(data.pnl) / 1000, 1)})`;
-
-                            const isToday = day.isSame(dayjs(), 'day');
-                            const isWeekend = day.day() === 0 || day.day() === 6;
-                            const isSelected = selectedCalendarDate && day.isSame(selectedCalendarDate, 'day');
-                            const hasTrades = data.trades.length > 0; // Check trades array length
-                            const isClickable = !isWeekend && hasTrades;
-
-                            // **Generate dots by iterating through sorted trades**
-                            let tradeDots = '';
-                            if (hasTrades) {
-                                tradeDots = '<div class="flex flex-wrap mt-1">';
-                                data.trades.forEach((trade, index) => {
-                                    // Add safety check for trade.pnl before generating dot
-                                    if (typeof trade.pnl === 'number') {
-                                        const dotColor = trade.pnl > 0 ? 'bg-green-400' : 'bg-red-400';
-                                        tradeDots += `<div class="h-1.5 w-1.5 ${dotColor} rounded-full mr-1 mb-1"></div>`;
-                                    } else {
-                                        console.warn(`[Calendar Render] Invalid PnL found for trade on ${dateStr}, index ${index}:`, trade); // Fixed missing parenthesis
-                                        tradeDots += `<div class="h-1.5 w-1.5 bg-gray-500 rounded-full mr-1 mb-1" title="Invalid PnL"></div>`;
-                                    }
-                                });
-                                tradeDots += '</div>';
-                            }
-
-                            calendarGrid.innerHTML += `
-                                <div class="calendar-day p-1 sm:p-2 rounded-lg text-left flex flex-col border-2 transition ${isToday ? 'border-indigo-500/50' : 'border-transparent'} ${isSelected ? '!border-indigo-500' : ''} ${isWeekend ? 'bg-gray-800/50 text-gray-600' : (isClickable ? 'cursor-pointer' : '')}"
-                                     style="${!isWeekend ? `background-color: ${bgColor};` : ''}"
-                                     data-date="${dateStr}">
-                                    <span class="font-semibold text-xs sm:text-sm ${isToday ? 'text-indigo-400' : ''}">${day.format('D')}</span>
-                                    ${tradeDots}
-                                    ${data.pnl !== 0 ? `<span class="calendar-pnl-text mt-auto font-bold ${data.pnl > 0 ? 'text-green-300' : 'text-red-300'}">${formatCurrency(data.pnl)}</span>` : ''}
-                                </div>`;
+                            weeklyPnl = 0;
                         }
                     }
-                     calendarSummary.textContent = `Period P&L: ${formatCurrency(periodPnl)}`;
-                     // console.log("[Calendar Render] Finished renderCalendar successfully.");
-                } catch (error) {
-                    console.error("[Calendar Render] Error during calendar rendering:", error);
-                    // Optionally display an error message to the user in the UI
-                    calendarGrid.innerHTML = `<div class="col-span-7 text-center text-red-400 p-4">Error loading calendar. Please check the console.</div>`;
+                    
+                    // After loop, handle the final week if month doesn't end on Saturday
+                    const lastDayOfMonth = calendarDate.endOf('month');
+                    if(lastDayOfMonth.day() !== 6) {
+                        for (let j = lastDayOfMonth.day(); j < 6; j++) {
+                           calendarGrid.innerHTML += '<div class="hidden md:block"></div>';
+                        }
+                        const pnlColor = weeklyPnl > 0 ? 'text-green-400' : weeklyPnl < 0 ? 'text-red-400' : 'text-gray-400';
+                        calendarGrid.innerHTML += `<div class="hidden md:flex items-center justify-end font-semibold text-xs pr-2 ${pnlColor}">${formatCurrency(weeklyPnl)}</div>`;
+                    }
+
+
+                } else { // Week view
+                    calendarGrid.classList.remove('grid-cols-8');
+                    calendarGrid.classList.add('grid-cols-7');
+                    const startOfWeek = calendarDate.startOf('week');
+                    const endOfWeek = calendarDate.endOf('week');
+                    calendarPeriodLabel.textContent = `${startOfWeek.format('MMM D')} - ${endOfWeek.format('MMM D, YYYY')}`;
+
+                    const days = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+                    calendarGrid.innerHTML = days.map(day => `<div class="font-bold text-xs text-gray-500 p-2">${day}</div>`).join('');
+
+                    for (let i = 0; i < 7; i++) {
+                        const day = startOfWeek.add(i, 'day');
+                        const dateStr = day.format('YYYY-MM-DD');
+                        const data = dailyData[dateStr] || { pnl: 0, wins: 0, losses: 0 };
+                        periodPnl += data.pnl;
+
+                        let bgColor = 'bg-gray-700/50';
+                        if (data.pnl > 0) bgColor = `rgba(34, 197, 94, ${Math.min(0.2 + data.pnl / 1000, 1)})`;
+                        if (data.pnl < 0) bgColor = `rgba(239, 68, 68, ${Math.min(0.2 + Math.abs(data.pnl) / 1000, 1)})`;
+                        
+                        const isToday = day.isSame(dayjs(), 'day');
+                        const isWeekend = day.day() === 0 || day.day() === 6;
+                        const isSelected = selectedCalendarDate && day.isSame(selectedCalendarDate, 'day');
+                        const hasTrades = data.wins > 0 || data.losses > 0;
+                        const isClickable = !isWeekend && hasTrades;
+                        
+                        let tradeDots = '';
+                        if (data.wins > 0 || data.losses > 0) {
+                            tradeDots = '<div class="flex flex-wrap mt-1">';
+                            for(let w=0; w < data.wins; w++) tradeDots += '<div class="h-1.5 w-1.5 bg-green-400 rounded-full mr-1 mb-1"></div>';
+                            for(let l=0; l < data.losses; l++) tradeDots += '<div class="h-1.5 w-1.5 bg-red-400 rounded-full mr-1 mb-1"></div>';
+                            tradeDots += '</div>';
+                        }
+
+                        calendarGrid.innerHTML += `
+                            <div class="calendar-day p-1 sm:p-2 rounded-lg text-left flex flex-col border-2 transition ${isToday ? 'border-indigo-500/50' : 'border-transparent'} ${isSelected ? '!border-indigo-500' : ''} ${isWeekend ? 'bg-gray-800/50 text-gray-600' : (isClickable ? 'cursor-pointer' : '')}" 
+                                 style="${!isWeekend ? `background-color: ${bgColor};` : ''}"
+                                 data-date="${dateStr}">
+                                <span class="font-semibold text-xs sm:text-sm ${isToday ? 'text-indigo-400' : ''}">${day.format('D')}</span>
+                                ${tradeDots}
+                                ${data.pnl !== 0 ? `<span class="calendar-pnl-text mt-auto font-bold ${data.pnl > 0 ? 'text-green-300' : 'text-red-300'}">${formatCurrency(data.pnl)}</span>` : ''}
+                            </div>`;
+                    }
                 }
+                 calendarSummary.textContent = `Period P&L: ${formatCurrency(periodPnl)}`;
             }
 
             calendarGrid.addEventListener('click', (e) => {
@@ -3733,7 +3679,6 @@
                 document.body.removeChild(link);
             }
 
-            // --- Function to generate dummy data ---
             function generateDummyData() {
                 const startDate = dayjs('2025-07-01');
                 const endDate = dayjs('2025-09-30');
@@ -3816,4 +3761,3 @@
     </script>
 </body>
 </html>
-
